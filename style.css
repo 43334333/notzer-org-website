@@ -1,0 +1,156 @@
+/* --- General Styles --- */
+body {
+    background-color: #121212; /* A comfortable dark grey */
+    color: #EFEFEF; /* An easy-to-read off-white */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1, h2, h3 {
+    color: #FFFFFF;
+    line-height: 1.2;
+}
+
+a {
+    color: #4dabf7; /* A bright blue for links */
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* --- Header & Navigation --- */
+.header {
+    background-color: #1F1F1F;
+    border-bottom: 1px solid #333;
+    padding: 1rem 0;
+    text-align: center;
+}
+
+.header .org-name {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #FFFFFF;
+    margin: 0;
+}
+
+.nav {
+    margin-top: 1rem;
+}
+
+.nav a {
+    color: #EFEFEF;
+    margin: 0 15px;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+/* --- Buttons --- */
+.cta-button {
+    display: inline-block;
+    background-color: #4dabf7;
+    color: #121212;
+    font-weight: bold;
+    padding: 12px 25px;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    text-align: center;
+    margin-top: 15px;
+}
+
+.cta-button:hover {
+    background-color: #74c0fc;
+    text-decoration: none;
+}
+
+/* --- Main Content Sections --- */
+.section {
+    padding: 40px 0;
+    border-bottom: 1px solid #333;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2.2rem;
+    margin-bottom: 30px;
+}
+
+/* --- Campaign Card List --- */
+.campaign-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 25px;
+}
+
+.campaign-card {
+    background-color: #1F1F1F;
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 25px;
+}
+
+/* --- Forms --- */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 5px;
+    color: #EFEFEF;
+    font-size: 1rem;
+    box-sizing: border-box; /* Important for width calculation */
+}
+
+.form-group textarea {
+    min-height: 150px;
+    resize: vertical;
+}
+
+/* --- Footer --- */
+.footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 30px;
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+/* --- Mobile Adaptability --- */
+@media (max-width: 768px) {
+    .nav {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .nav a {
+        margin: 8px 0;
+    }
+    .section-title {
+        font-size: 1.8rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .campaign-grid {
+        grid-template-columns: repeat(2, 1fr); /* Two columns on larger screens */
+    }
+}
