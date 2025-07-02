@@ -148,6 +148,12 @@ a:hover {
         font-size: 1.8rem;
     }
 }
+/* --- Logo Styles --- */
+.header-logo {
+    max-height: 80px;  /* You can adjust this value */
+    width: auto;
+    margin-bottom: 10px;
+}
 
 @media (min-width: 768px) {
     .campaign-grid {
