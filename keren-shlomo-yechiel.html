@@ -25,156 +25,178 @@
         <!-- SECTION 1: Campaign Story -->
         <section class="section">
             <h2 class="section-title">Keren Shlomo Yechiel</h2>
-            <p style="text-align: center; font-style: italic; color: #aaa; font-size: 1.1rem;">In loving memory of a devoted father, husband, and pillar of his community.</p>
-            
-            <p>Our community has been shaken by the sudden and tragic loss of a beloved father and husband, taken from us at the young age of 52. Without warning, an entire family has been left without their breadwinner — a man who dedicated his life to providing for his wife and children, and who was known for his generosity, warmth, and unwavering commitment to his family and community.</p>
-            
-            <p><strong>Keren Shlomo Yechiel</strong> has been established to provide urgent and ongoing financial support to this grieving family as they navigate life without their father and provider. The funds raised will help cover immediate living expenses, outstanding obligations, and the long-term stability that this family so desperately needs during this unimaginably difficult time.</p>
-            
-            <p>The Talmud teaches us: <em>"Kol Yisrael areivim zeh bazeh"</em> — all of Israel is responsible for one another. Now is the time to come together and fulfill this sacred obligation. Every contribution, no matter the size, sends a powerful message to this family: <strong>you are not alone.</strong></p>
-            
-            <p>Your generosity can transform grief into hope and ensure that this family's future remains secure. Please give generously — the merit of your tzedakah in this time of need is immeasurable.</p>
+            <p style="text-align: center; font-style: italic; color: #aaa; font-size: 1.1rem; margin-top: -15px;">In loving memory of a devoted father, husband, and pillar of his community.</p>
+
+            <div style="max-width: 780px; margin: 0 auto;">
+                <p>Our community has been shaken by the sudden and tragic loss of a beloved father and husband, taken from us at the young age of 52. Without warning, an entire family has been left without their breadwinner &mdash; a man who dedicated his life to providing for his wife and children, and who was known for his generosity, warmth, and unwavering commitment to his family and community.</p>
+
+                <p><strong>Keren Shlomo Yechiel</strong> has been established to provide urgent and ongoing financial support to this grieving family as they navigate life without their father and provider. The funds raised will help cover immediate living expenses, outstanding obligations, and the long-term stability that this family so desperately needs during this unimaginably difficult time.</p>
+
+                <p>The Talmud teaches us: <em>&ldquo;Kol Yisrael areivim zeh bazeh&rdquo;</em> &mdash; all of Israel is responsible for one another. Now is the time to come together and fulfill this sacred obligation. Every contribution, no matter the size, sends a powerful message to this family: <strong>you are not alone.</strong></p>
+
+                <p>Your generosity can transform grief into hope and ensure that this family&rsquo;s future remains secure. Please give generously &mdash; the merit of your tzedakah in this time of need is immeasurable.</p>
+            </div>
         </section>
 
         <!-- SECTION 2: Donation Form -->
         <section class="section">
             <h3 style="text-align: center; font-size: 1.6rem; margin-bottom: 25px;">Make a Donation</h3>
-            
+
             <div class="donation-form">
                 <form id="donation-form">
-                    <!-- Amount Selection -->
-                    <label style="display: block; margin-bottom: 10px; font-weight: bold;">Select Amount</label>
-                    <div class="donation-amounts" id="amount-grid">
-                        <button type="button" class="amount-btn" data-amount="100">$100</button>
-                        <button type="button" class="amount-btn" data-amount="180">$180</button>
-                        <button type="button" class="amount-btn" data-amount="360">$360</button>
-                        <button type="button" class="amount-btn" data-amount="500">$500</button>
-                        <button type="button" class="amount-btn" data-amount="720">$720</button>
-                        <button type="button" class="amount-btn" data-amount="1000">$1,000</button>
-                        <button type="button" class="amount-btn" data-amount="1800">$1,800</button>
-                        <button type="button" class="amount-btn" data-amount="3600">$3,600</button>
-                        <button type="button" class="amount-btn" data-amount="5000">$5,000</button>
-                        <button type="button" class="amount-btn" data-amount="7200">$7,200</button>
-                        <button type="button" class="amount-btn" data-amount="10000">$10,000</button>
-                        <button type="button" class="amount-btn" data-amount="custom" id="custom-amount-btn">Other</button>
-                    </div>
-                    
-                    <div class="custom-amount-wrapper" id="custom-amount-wrapper" style="display: none;">
-                        <span class="currency-symbol">$</span>
-                        <input type="number" id="custom-amount" placeholder="Enter amount" min="1" step="0.01">
-                    </div>
+                    <div class="donation-columns">
+                        <!-- LEFT COLUMN: Personal Info -->
+                        <div class="donation-col">
+                            <h4 class="col-heading">Your Information</h4>
 
-                    <!-- Donor Information -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="donor-first-name">First Name</label>
-                            <input type="text" id="donor-first-name" name="firstName" required>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="donor-first-name">First Name <span class="req">*</span></label>
+                                    <input type="text" id="donor-first-name" name="firstName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="donor-last-name">Last Name <span class="req">*</span></label>
+                                    <input type="text" id="donor-last-name" name="lastName" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="donor-email">Email <span class="req">*</span></label>
+                                <input type="email" id="donor-email" name="email" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="donor-phone">Phone</label>
+                                <input type="tel" id="donor-phone" name="phone">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="donor-street">Address</label>
+                                <input type="text" id="donor-street" name="street" placeholder="Street Address">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="donor-city">City</label>
+                                    <input type="text" id="donor-city" name="city">
+                                </div>
+                                <div class="form-group" style="max-width: 80px;">
+                                    <label for="donor-state">State</label>
+                                    <input type="text" id="donor-state" name="state" maxlength="2" placeholder="NY">
+                                </div>
+                                <div class="form-group" style="max-width: 110px;">
+                                    <label for="donor-zip">ZIP</label>
+                                    <input type="text" id="donor-zip" name="zip" maxlength="10">
+                                </div>
+                            </div>
+
+                            <label class="toggle-label">
+                                <input type="checkbox" id="anonymous-check">
+                                <span>Make my donation anonymous</span>
+                            </label>
                         </div>
-                        <div class="form-group">
-                            <label for="donor-last-name">Last Name</label>
-                            <input type="text" id="donor-last-name" name="lastName" required>
+
+                        <!-- RIGHT COLUMN: Amount & Payment -->
+                        <div class="donation-col">
+                            <h4 class="col-heading">Donation Amount</h4>
+
+                            <div class="donation-amounts" id="amount-grid">
+                                <button type="button" class="amount-btn" data-amount="100">$100</button>
+                                <button type="button" class="amount-btn" data-amount="180">$180</button>
+                                <button type="button" class="amount-btn" data-amount="360">$360</button>
+                                <button type="button" class="amount-btn" data-amount="500">$500</button>
+                                <button type="button" class="amount-btn" data-amount="720">$720</button>
+                                <button type="button" class="amount-btn" data-amount="1000">$1,000</button>
+                                <button type="button" class="amount-btn" data-amount="1800">$1,800</button>
+                                <button type="button" class="amount-btn" data-amount="3600">$3,600</button>
+                                <button type="button" class="amount-btn" data-amount="5000">$5,000</button>
+                                <button type="button" class="amount-btn" data-amount="7200">$7,200</button>
+                                <button type="button" class="amount-btn" data-amount="10000">$10,000</button>
+                                <button type="button" class="amount-btn" data-amount="custom" id="custom-amount-btn">Other</button>
+                            </div>
+
+                            <div class="custom-amount-wrapper" id="custom-amount-wrapper" style="display: none;">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" id="custom-amount" placeholder="Enter amount" min="1" step="0.01">
+                            </div>
+
+                            <h4 class="col-heading" style="margin-top: 20px;">Payment Details</h4>
+
+                            <div class="ifield-container">
+                                <label>Card Number</label>
+                                <iframe id="card-number-iframe" data-ifields-id="card-number" data-ifields-placeholder="Card Number" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm"></iframe>
+                                <input data-ifields-id="card-number-token" name="xCardNum" type="hidden">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="card-exp">Exp (MMYY)</label>
+                                    <input type="text" id="card-exp" name="xExp" placeholder="MMYY" maxlength="4" required>
+                                </div>
+                                <div class="ifield-container" style="flex: 1;">
+                                    <label>CVV</label>
+                                    <iframe id="cvv-iframe" data-ifields-id="cvv" data-ifields-placeholder="CVV" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm"></iframe>
+                                    <input data-ifields-id="cvv-token" name="xCVV" type="hidden">
+                                </div>
+                            </div>
+
+                            <label data-ifields-id="card-data-error" style="color: #ff5252; font-size: 0.85rem;"></label>
+
+                            <div class="recurring-section">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="recurring-check">
+                                    <span>Make this a recurring donation</span>
+                                </label>
+                                <select class="recurring-select" id="recurring-frequency" style="display: none;">
+                                    <option value="">Select frequency...</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="biweekly">Every 2 Weeks</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="quarterly">Quarterly</option>
+                                    <option value="annually">Annually</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="donor-email">Email Address</label>
-                            <input type="email" id="donor-email" name="email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="donor-phone">Phone Number</label>
-                            <input type="tel" id="donor-phone" name="phone">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="donor-street">Billing Address</label>
-                        <input type="text" id="donor-street" name="street" placeholder="Street Address">
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="donor-city">City</label>
-                            <input type="text" id="donor-city" name="city">
-                        </div>
-                        <div class="form-group">
-                            <label for="donor-state">State</label>
-                            <input type="text" id="donor-state" name="state" maxlength="2" placeholder="e.g. NY">
-                        </div>
-                        <div class="form-group">
-                            <label for="donor-zip">ZIP Code</label>
-                            <input type="text" id="donor-zip" name="zip" maxlength="10">
-                        </div>
-                    </div>
-
-                    <!-- Card Payment via iFields -->
-                    <div class="ifield-container">
-                        <label>Card Number</label>
-                        <iframe id="card-number-iframe" data-ifields-id="card-number" data-ifields-placeholder="Card Number" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm"></iframe>
-                        <input data-ifields-id="card-number-token" name="xCardNum" type="hidden">
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="card-exp">Expiration (MMYY)</label>
-                            <input type="text" id="card-exp" name="xExp" placeholder="MMYY" maxlength="4" required>
-                        </div>
-                        <div class="ifield-container" style="flex: 1;">
-                            <label>CVV</label>
-                            <iframe id="cvv-iframe" data-ifields-id="cvv" data-ifields-placeholder="CVV" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm"></iframe>
-                            <input data-ifields-id="cvv-token" name="xCVV" type="hidden">
-                        </div>
-                    </div>
-
-                    <!-- Error display for iFields -->
-                    <label data-ifields-id="card-data-error" style="color: #ff5252; font-size: 0.9rem;"></label>
-
-                    <!-- Anonymous Toggle -->
-                    <div class="recurring-section">
-                        <label class="anonymous-toggle">
-                            <input type="checkbox" id="anonymous-check">
-                            <span>Make my donation anonymous</span>
-                        </label>
-                    </div>
-
-                    <!-- Recurring Donation -->
-                    <div class="recurring-section">
-                        <label>
-                            <input type="checkbox" id="recurring-check">
-                            <span>Make this a recurring donation</span>
-                        </label>
-                        <select class="recurring-select" id="recurring-frequency" style="display: none;">
-                            <option value="">Select frequency...</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="biweekly">Every 2 Weeks</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="quarterly">Quarterly</option>
-                            <option value="annually">Annually</option>
-                        </select>
-                    </div>
-
-                    <!-- Honeypot (hidden anti-bot field) -->
+                    <!-- Full-width bottom section -->
                     <div style="position: absolute; left: -9999px;" aria-hidden="true">
                         <input type="text" name="website" id="honeypot" tabindex="-1" autocomplete="off">
                     </div>
 
-                    <!-- Cloudflare Turnstile -->
                     <div class="cf-turnstile" data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN" data-callback="onTurnstileSuccess" data-theme="dark"></div>
 
-                    <!-- Submit -->
                     <button type="submit" class="donate-btn" id="donate-btn" disabled>Donate Now</button>
 
-                    <!-- Status Messages -->
+                    <!-- Error only (success uses modal) -->
                     <div class="donation-status" id="donation-status"></div>
                 </form>
             </div>
         </section>
 
-        <!-- SECTION 3: DAF Links -->
+        <!-- SECTION 3: Other Ways to Give -->
         <section class="section">
             <div class="daf-section">
                 <h3>Other Ways to Give</h3>
-                <p style="color: #aaa; margin-bottom: 15px;">You can also contribute through your Donor-Advised Fund:</p>
+
+                <!-- Zelle -->
+                <div class="zelle-toggle">
+                    <button type="button" class="zelle-btn" id="zelle-toggle-btn" onclick="document.getElementById('zelle-info').style.display = document.getElementById('zelle-info').style.display === 'none' ? 'block' : 'none'; this.classList.toggle('open');">
+                        <span class="zelle-icon">⚡</span> Zelle
+                        <span class="zelle-arrow">▸</span>
+                    </button>
+                    <div id="zelle-info" class="zelle-details" style="display: none;">
+                        <p>Send via Zelle to:</p>
+                        <div class="zelle-email" onclick="navigator.clipboard.writeText('kerensy@notzer.org'); this.querySelector('.copy-hint').textContent = 'Copied!';">
+                            <strong>kerensy@notzer.org</strong>
+                            <span class="copy-hint">Click to copy</span>
+                        </div>
+                        <p style="font-size: 0.85rem; color: #888; margin-top: 8px;">Please include your name in the Zelle memo for receipt purposes.</p>
+                    </div>
+                </div>
+
+                <!-- DAF Links -->
+                <p style="color: #aaa; margin: 20px 0 12px;">Contribute through your Donor-Advised Fund:</p>
                 <div class="daf-links">
                     <a href="https://thedonorsfund.org/donate/notzer-chesed/113049033" target="_blank" rel="noopener">The Donors Fund</a>
                     <a href="https://portal.ojcfund.org/account/recommendGrant?recurring=false&orgid=MQAAADQAAAA0AAAANwAAADUAAAA=" target="_blank" rel="noopener">OJC Fund</a>
@@ -199,7 +221,7 @@
         // CONFIGURATION
         // ============================================================
         const IFIELDS_KEY = 'ifields_gizbernotzerchesed23f3811c448846cdbe8';
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpxIaoeZewC6uMC8wrbXqytzq3FfTQXg2Yx10PGy6BJEMOM9hTg1HDUg3-C-4TkUhnnQ/exec'; // Replace after deploying Apps Script
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpxIaoeZewC6uMC8wrbXqytzq3FfTQXg2Yx10PGy6BJEMOM9hTg1HDUg3-C-4TkUhnnQ/exec';
         const CAMPAIGN_NAME = 'Keren Shlomo Yechiel';
 
         // ============================================================
@@ -211,8 +233,8 @@
             'background-color': '#333',
             'border': 'none',
             'color': '#EFEFEF',
-            'font-size': '1rem',
-            'padding': '10px',
+            'font-size': '0.95rem',
+            'padding': '8px 10px',
             'width': '100%',
             'height': '100%',
             'box-sizing': 'border-box',
@@ -223,7 +245,6 @@
         setIfieldStyle('cvv', iFieldStyle);
         enableAutoFormatting(' ');
 
-        // Validation styling
         const validStyle = { ...iFieldStyle, 'color': '#74c0fc' };
         const invalidStyle = { ...iFieldStyle, 'color': '#ff5252' };
 
@@ -254,7 +275,6 @@
             btn.addEventListener('click', function() {
                 amountBtns.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
-                
                 if (this.dataset.amount === 'custom') {
                     customWrapper.style.display = 'block';
                     customInput.focus();
@@ -276,14 +296,13 @@
         // ============================================================
         const recurringCheck = document.getElementById('recurring-check');
         const recurringSelect = document.getElementById('recurring-frequency');
-
         recurringCheck.addEventListener('change', function() {
             recurringSelect.style.display = this.checked ? 'block' : 'none';
             if (!this.checked) recurringSelect.value = '';
         });
 
         // ============================================================
-        // Turnstile Callback
+        // Turnstile
         // ============================================================
         let turnstileToken = null;
         function onTurnstileSuccess(token) {
@@ -292,62 +311,58 @@
         }
 
         // ============================================================
+        // Success Redirect
+        // ============================================================
+        function redirectToSuccess(amount, email, refNum, firstName, lastName, phone, street, city, state, zip, anonymous, frequency) {
+            var params = new URLSearchParams();
+            params.set('amount', amount);
+            params.set('campaign', CAMPAIGN_NAME);
+            if (refNum) params.set('ref', refNum);
+            if (!anonymous) params.set('donor', firstName + ' ' + lastName);
+            if (email) params.set('email', email);
+            if (phone) params.set('phone', phone);
+            var addrParts = [];
+            if (street) addrParts.push(street);
+            if (city) addrParts.push(city);
+            if (state && zip) addrParts.push(state + ' ' + zip);
+            else if (state) addrParts.push(state);
+            else if (zip) addrParts.push(zip);
+            if (addrParts.length) params.set('address', addrParts.join(', '));
+            if (frequency) params.set('recurring', frequency);
+            window.location.href = 'donation-success.html?' + params.toString();
+        }
+
+        // ============================================================
         // Form Submission
         // ============================================================
         document.getElementById('donation-form').addEventListener('submit', function(e) {
             e.preventDefault();
-
-            // Honeypot check
             if (document.getElementById('honeypot').value) return;
 
-            // Validate amount
             const amount = selectedAmount || parseFloat(customInput.value);
-            if (!amount || amount < 1) {
-                showStatus('error', 'Please select or enter a donation amount.');
-                return;
-            }
+            if (!amount || amount < 1) { showStatus('error', 'Please select or enter a donation amount.'); return; }
 
-            // Validate required fields
             const firstName = document.getElementById('donor-first-name').value.trim();
             const lastName = document.getElementById('donor-last-name').value.trim();
             const email = document.getElementById('donor-email').value.trim();
             const exp = document.getElementById('card-exp').value.trim();
 
-            if (!firstName || !lastName || !email || !exp) {
-                showStatus('error', 'Please fill in all required fields.');
-                return;
-            }
+            if (!firstName || !lastName || !email || !exp) { showStatus('error', 'Please fill in all required fields.'); return; }
+            if (!/^\d{4}$/.test(exp)) { showStatus('error', 'Expiration must be MMYY format (e.g., 1226).'); return; }
+            if (!turnstileToken) { showStatus('error', 'Please wait for security verification.'); return; }
 
-            if (!/^\d{4}$/.test(exp)) {
-                showStatus('error', 'Expiration date must be in MMYY format (e.g., 1226).');
-                return;
-            }
-
-            // Validate Turnstile
-            if (!turnstileToken) {
-                showStatus('error', 'Please wait for security verification to complete.');
-                return;
-            }
-
-            // Validate recurring
             const isRecurring = recurringCheck.checked;
             const frequency = recurringSelect.value;
-            if (isRecurring && !frequency) {
-                showStatus('error', 'Please select a recurring frequency.');
-                return;
-            }
+            if (isRecurring && !frequency) { showStatus('error', 'Please select a recurring frequency.'); return; }
 
-            // Disable button and show loading
             const btn = document.getElementById('donate-btn');
             btn.disabled = true;
             btn.classList.add('loading');
             btn.textContent = 'Processing...';
             hideStatus();
 
-            // Get iField tokens (SUTs)
             getTokens(
                 function() {
-                    // Success — tokens are in hidden fields
                     const cardToken = document.querySelector('[data-ifields-id="card-number-token"]').value;
                     const cvvToken = document.querySelector('[data-ifields-id="cvv-token"]').value;
 
@@ -371,7 +386,6 @@
                         turnstileToken: turnstileToken
                     };
 
-                    // Send to Google Apps Script backend
                     fetch(APPS_SCRIPT_URL, {
                         method: 'POST',
                         redirect: 'follow',
@@ -381,14 +395,20 @@
                     .then(res => res.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            showStatus('success', 'Thank you for your generous donation of $' + amount.toLocaleString() + '! A receipt has been sent to ' + email + '. Reference: ' + (data.refNum || ''));
-                            document.getElementById('donation-form').reset();
-                            amountBtns.forEach(b => b.classList.remove('active'));
-                            customWrapper.style.display = 'none';
-                            recurringSelect.style.display = 'none';
-                            selectedAmount = null;
+                            redirectToSuccess(
+                                amount, email, data.refNum,
+                                firstName, lastName,
+                                document.getElementById('donor-phone').value.trim(),
+                                document.getElementById('donor-street').value.trim(),
+                                document.getElementById('donor-city').value.trim(),
+                                document.getElementById('donor-state').value.trim(),
+                                document.getElementById('donor-zip').value.trim(),
+                                document.getElementById('anonymous-check').checked,
+                                isRecurring ? frequency : null
+                            );
+                            return;
                         } else if (data.status === 'declined') {
-                            showStatus('error', 'Transaction declined: ' + (data.message || 'Please check your card details and try again.'));
+                            showStatus('error', 'Declined: ' + (data.message || 'Please check your card details.'));
                         } else {
                             showStatus('error', data.message || 'An error occurred. Please try again.');
                         }
@@ -401,24 +421,22 @@
                         btn.disabled = false;
                         btn.classList.remove('loading');
                         btn.textContent = 'Donate Now';
-                        // Reset Turnstile
                         turnstileToken = null;
                         if (typeof turnstile !== 'undefined') turnstile.reset();
                     });
                 },
                 function() {
-                    // iFields token error
                     showStatus('error', 'Could not process card information. Please check your card details.');
                     btn.disabled = false;
                     btn.classList.remove('loading');
                     btn.textContent = 'Donate Now';
                 },
-                30000 // 30 second timeout
+                30000
             );
         });
 
         // ============================================================
-        // Status Display Helpers
+        // Status Helpers (errors only — success uses modal)
         // ============================================================
         function showStatus(type, message) {
             const el = document.getElementById('donation-status');
@@ -427,7 +445,6 @@
             el.style.display = 'block';
             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-
         function hideStatus() {
             const el = document.getElementById('donation-status');
             el.style.display = 'none';
