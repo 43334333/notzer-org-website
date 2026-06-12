@@ -1,0 +1,23 @@
+# ============================================
+# Notzer Chesed Website - .gitignore
+# ============================================
+
+# Google Apps Script backend (contains API key references)
+apps-script-backend/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Environment / secrets
+.env
+.env.local
+*.env
