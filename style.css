@@ -160,12 +160,90 @@ a:hover {
     .daf-links {
         grid-template-columns: 1fr;
     }
+    .story-columns {
+        grid-template-columns: 1fr;
+    }
+    .story-col-yi {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid #333;
+        padding-top: 20px;
+    }
 }
 /* --- Logo Styles --- */
 .header-logo {
-    max-height: 80px;  /* You can adjust this value */
+    max-height: 80px;
     width: auto;
     margin-bottom: 10px;
+}
+
+/* --- Bilingual Story Columns --- */
+.story-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.story-col {
+    line-height: 1.7;
+}
+
+.story-col-yi {
+    font-size: 1.05rem;
+    border-left: 2px solid #333;
+    padding-left: 25px;
+}
+
+/* --- Photo Gallery --- */
+.photo-gallery {
+    margin-top: 20px;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    padding: 10px 0;
+}
+
+.gallery-img {
+    width: 100%;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #333;
+}
+
+.gallery-img:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.lightbox-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.lightbox-overlay.active {
+    display: flex;
+}
+
+.lightbox-overlay img {
+    max-width: 90%;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
 }
 
 /* --- Donation Form --- */
@@ -331,6 +409,15 @@ a:hover {
     border: 1px solid #555;
     border-radius: 4px;
     background-color: #333;
+}
+
+/* Match CVV iframe to text input height */
+.ifield-cvv {
+    margin-bottom: 12px;
+}
+
+.ifield-cvv iframe {
+    height: 35px;
 }
 
 .recurring-section {

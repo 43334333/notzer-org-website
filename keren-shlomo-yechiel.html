@@ -22,19 +22,52 @@
     </header>
 
     <main class="container">
-        <!-- SECTION 1: Campaign Story -->
+        <!-- SECTION 1: Campaign Story (English + Yiddish) -->
         <section class="section">
             <h2 class="section-title">Keren Shlomo Yechiel</h2>
             <p style="text-align: center; font-style: italic; color: #aaa; font-size: 1.1rem; margin-top: -15px;">In loving memory of a devoted father, husband, and pillar of his community.</p>
 
-            <div style="max-width: 780px; margin: 0 auto;">
-                <p>Our community has been shaken by the sudden and tragic loss of a beloved father and husband, taken from us at the young age of 52. Without warning, an entire family has been left without their breadwinner &mdash; a man who dedicated his life to providing for his wife and children, and who was known for his generosity, warmth, and unwavering commitment to his family and community.</p>
+            <div class="story-columns">
+                <!-- English -->
+                <div class="story-col">
+                    <p>Our community has been shaken by the sudden and tragic loss of a beloved father and husband, taken from us at the young age of 52. Without warning, an entire family has been left without their breadwinner &mdash; a man who dedicated his life to providing for his wife and children, and who was known for his generosity, warmth, and unwavering commitment to his family and community.</p>
 
-                <p><strong>Keren Shlomo Yechiel</strong> has been established to provide urgent and ongoing financial support to this grieving family as they navigate life without their father and provider. The funds raised will help cover immediate living expenses, outstanding obligations, and the long-term stability that this family so desperately needs during this unimaginably difficult time.</p>
+                    <p><strong>Keren Shlomo Yechiel</strong> has been established to provide urgent and ongoing financial support to this grieving family as they navigate life without their father and provider. The funds raised will help cover immediate living expenses, outstanding obligations, and the long-term stability that this family so desperately needs during this unimaginably difficult time.</p>
 
-                <p>The Talmud teaches us: <em>&ldquo;Kol Yisrael areivim zeh bazeh&rdquo;</em> &mdash; all of Israel is responsible for one another. Now is the time to come together and fulfill this sacred obligation. Every contribution, no matter the size, sends a powerful message to this family: <strong>you are not alone.</strong></p>
+                    <p>The Talmud teaches us: <em>&ldquo;Kol Yisrael areivim zeh bazeh&rdquo;</em> &mdash; all of Israel is responsible for one another. Now is the time to come together and fulfill this sacred obligation. Every contribution, no matter the size, sends a powerful message to this family: <strong>you are not alone.</strong></p>
 
-                <p>Your generosity can transform grief into hope and ensure that this family&rsquo;s future remains secure. Please give generously &mdash; the merit of your tzedakah in this time of need is immeasurable.</p>
+                    <p>Your generosity can transform grief into hope and ensure that this family&rsquo;s future remains secure. Please give generously &mdash; the merit of your tzedakah in this time of need is immeasurable.</p>
+                </div>
+
+                <!-- Yiddish -->
+                <div class="story-col story-col-yi" dir="rtl" lang="yi">
+                    <p>אונזער קהילה איז דערשיטערט געווארן דורך דעם פּלוצעמדיקן און טראגישן אבדן פון א באליבטן טאטע און מאן, אוועקגענומען ביי דעם יונגן עלטער פון 52 יאר. אן קיין שום ווארענונג, איז א גאנצע משפּחה פארבליבן אן זייער פארזארגער &mdash; א מאן וואס האט זיין לעבן געווידמעט צום פארזארגן זיין ווייב און קינדער, און וואס איז באוואוסט געווען פאר זיין נדיבות, ווארעמקייט, און שטענדיקע איבערגעגעבנקייט צו זיין משפּחה און קהילה.</p>
+
+                    <p><strong>קרן שלמה יחיאל</strong> איז געגרינדעט געווארן צו געבן דרינגענדע און אנגאָענדע פינאנציעלע הילף פאר דער טרויערנדער משפּחה, בעת זיי נאוויגירן דאס לעבן אן זייער טאטע און פארזארגער. די פאנדס וואס ווערן אויפגעהויבן וועלן העלפן באדעקן דרינגענדע לעבנס-הוצאות, אויסשטייענדע באפליכטונגען, און דעם לאנגפריסטיקן סטאביליטעט וואס די משפּחה דארף אזוי דרינגענד.</p>
+
+                    <p>חז"ל לערנען אונז: <em>&bdquo;כל ישראל ערבים זה בזה&ldquo;</em> &mdash; אלע אידן זענען פאראנטווארטלעך איינער פארן אנדערן. יעצט איז דער צייט צוזאמענצוקומען און מקיים זיין דעם הייליקן חיוב. יעדער ביישטייערונג, קיין ענין ווי גרויס, שיקט א שטארקע באטשאפט צו דער משפּחה: <strong>איר זענט נישט אליין.</strong></p>
+
+                    <p>אייער נדיבות קען פארוואנדלען טרויער אין האפענונג און פארזיכערן אז דער משפּחה&rsquo;ס צוקונפט בלייבט באשיצט. ביטע געבט נדיב &mdash; דער זכות פון אייער צדקה אין דער צייט פון נויט איז אוממעסטבאר.</p>
+                </div>
+            </div>
+
+            <!-- Photo Gallery Toggle (board decision pending) -->
+            <div class="gallery-toggle" style="text-align: center; margin-top: 25px;">
+                <button type="button" class="zelle-btn" id="gallery-toggle-btn" style="max-width: 280px; margin: 0 auto; justify-content: center;" onclick="var g=document.getElementById('photo-gallery'); g.style.display=g.style.display==='none'?'block':'none'; this.classList.toggle('open');">
+                    📷 View Photos
+                    <span class="zelle-arrow">▸</span>
+                </button>
+                <div id="photo-gallery" class="photo-gallery" style="display: none;">
+                    <div class="gallery-grid" id="gallery-grid">
+                        <img src="ShlomoYechiel.png" alt="Shlomo Yechiel" class="gallery-img" onclick="openLightbox(this.src)">
+                        <!-- Additional images from .pics/ folder will be loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lightbox -->
+            <div class="lightbox-overlay" id="lightbox" onclick="this.classList.remove('active')">
+                <img id="lightbox-img" src="" alt="">
             </div>
         </section>
 
@@ -90,6 +123,16 @@
                                 </div>
                             </div>
 
+                            <div class="form-group">
+                                <label for="donor-display-name">Display Name</label>
+                                <input type="text" id="donor-display-name" name="displayName" placeholder="Name to show on donor wall">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="donor-memo">Memo</label>
+                                <input type="text" id="donor-memo" name="memo" placeholder="In memory of... / In honor of...">
+                            </div>
+
                             <label class="toggle-label">
                                 <input type="checkbox" id="anonymous-check">
                                 <span>Make my donation anonymous</span>
@@ -133,7 +176,7 @@
                                     <label for="card-exp">Exp (MMYY)</label>
                                     <input type="text" id="card-exp" name="xExp" placeholder="MMYY" maxlength="4" required>
                                 </div>
-                                <div class="ifield-container" style="flex: 1;">
+                                <div class="ifield-container ifield-cvv" style="flex: 1;">
                                     <label>CVV</label>
                                     <iframe id="cvv-iframe" data-ifields-id="cvv" data-ifields-placeholder="CVV" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm"></iframe>
                                     <input data-ifields-id="cvv-token" name="xCVV" type="hidden">
@@ -178,10 +221,11 @@
         <section class="section">
             <div class="daf-section">
                 <h3>Other Ways to Give</h3>
+                <p class="daf-required-note" id="daf-required-note" style="display: none; color: #ff5252; font-size: 0.85rem; margin-bottom: 10px;">Please fill in your First Name, Last Name, and Email above before using these options.</p>
 
                 <!-- Zelle -->
                 <div class="zelle-toggle">
-                    <button type="button" class="zelle-btn" id="zelle-toggle-btn" onclick="document.getElementById('zelle-info').style.display = document.getElementById('zelle-info').style.display === 'none' ? 'block' : 'none'; this.classList.toggle('open');">
+                    <button type="button" class="zelle-btn" id="zelle-toggle-btn" onclick="if(!validateDafFields()) return; document.getElementById('zelle-info').style.display = document.getElementById('zelle-info').style.display === 'none' ? 'block' : 'none'; this.classList.toggle('open');">
                         <span class="zelle-icon">⚡</span> Zelle
                         <span class="zelle-arrow">▸</span>
                     </button>
@@ -198,10 +242,10 @@
                 <!-- DAF Links -->
                 <p style="color: #aaa; margin: 20px 0 12px;">Contribute through your Donor-Advised Fund:</p>
                 <div class="daf-links">
-                    <a href="https://thedonorsfund.org/donate/notzer-chesed/113049033" target="_blank" rel="noopener">The Donors Fund</a>
-                    <a href="https://portal.ojcfund.org/account/recommendGrant?recurring=false&orgid=MQAAADQAAAA0AAAANwAAADUAAAA=" target="_blank" rel="noopener">OJC Fund</a>
-                    <a href="https://org.pledgercharitable.org/ChargeCard?ein=113049033&camp=kerenshlomoyechiel" target="_blank" rel="noopener">Pledger Charitable</a>
-                    <a href="https://matbia.org/d/00124211329" target="_blank" rel="noopener">Matbia</a>
+                    <a href="https://thedonorsfund.org/donate/notzer-chesed/113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="The Donors Fund">The Donors Fund</a>
+                    <a href="https://portal.ojcfund.org/account/recommendGrant?recurring=false&orgid=MQAAADQAAAA0AAAANwAAADUAAAA=" target="_blank" rel="noopener" class="daf-link" data-link-name="OJC Fund">OJC Fund</a>
+                    <a href="https://org.pledgercharitable.org/ChargeCard?ein=113049033&camp=kerenshlomoyechiel" target="_blank" rel="noopener" class="daf-link" data-link-name="Pledger Charitable">Pledger Charitable</a>
+                    <a href="https://matbia.org/d/00124211329" target="_blank" rel="noopener" class="daf-link" data-link-name="Matbia">Matbia</a>
                 </div>
             </div>
         </section>
@@ -379,6 +423,8 @@
                         city: document.getElementById('donor-city').value.trim(),
                         state: document.getElementById('donor-state').value.trim(),
                         zip: document.getElementById('donor-zip').value.trim(),
+                        displayName: document.getElementById('donor-display-name').value.trim(),
+                        memo: document.getElementById('donor-memo').value.trim(),
                         anonymous: document.getElementById('anonymous-check').checked,
                         isRecurring: isRecurring,
                         frequency: frequency,
@@ -450,6 +496,72 @@
             el.style.display = 'none';
             el.className = 'donation-status';
         }
+
+        // ============================================================
+        // DAF/Zelle Link Gating & Logging
+        // ============================================================
+        function validateDafFields() {
+            var fn = document.getElementById('donor-first-name').value.trim();
+            var ln = document.getElementById('donor-last-name').value.trim();
+            var em = document.getElementById('donor-email').value.trim();
+            var note = document.getElementById('daf-required-note');
+            if (!fn || !ln || !em) {
+                note.style.display = 'block';
+                document.getElementById('donor-first-name').focus();
+                return false;
+            }
+            note.style.display = 'none';
+            return true;
+        }
+
+        document.querySelectorAll('.daf-link').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                if (!validateDafFields()) {
+                    e.preventDefault();
+                    return;
+                }
+                // Log the click to Google Sheet via Apps Script
+                var linkName = this.getAttribute('data-link-name') || this.href;
+                fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'logLinkClick',
+                        firstName: document.getElementById('donor-first-name').value.trim(),
+                        lastName: document.getElementById('donor-last-name').value.trim(),
+                        email: document.getElementById('donor-email').value.trim(),
+                        linkClicked: linkName,
+                        campaign: CAMPAIGN_NAME
+                    })
+                }).catch(function() {}); // fire-and-forget
+            });
+        });
+
+        // ============================================================
+        // Photo Gallery
+        // ============================================================
+        function openLightbox(src) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox').classList.add('active');
+        }
+
+        // Load additional images from .pics/ folder
+        (function loadGalleryImages() {
+            var picsDir = '.pics/';
+            var knownImages = ['recommendation1.png', 'recommendation2.png', 'recommendation3.png'];
+            var grid = document.getElementById('gallery-grid');
+            knownImages.forEach(function(filename) {
+                var img = new Image();
+                img.onload = function() {
+                    img.className = 'gallery-img';
+                    img.alt = filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+                    img.onclick = function() { openLightbox(img.src); };
+                    grid.appendChild(img);
+                };
+                img.src = picsDir + filename;
+            });
+        })();
     </script>
 
     <!-- Google tag (gtag.js) -->
