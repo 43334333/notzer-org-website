@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Wall — Keren Shlomo Yechiel</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================
+           RESET & BASE
+           ============================================================ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #121212;
+            color: #EFEFEF;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Subtle background texture */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 0%, rgba(77, 171, 247, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(77, 171, 247, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ============================================================
+           HEADER
+           ============================================================ */
+        .header {
+            text-align: center;
+            padding: 40px 0 32px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .header-logo {
+            height: 56px;
+            width: auto;
+            margin-bottom: 16px;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+
+        .header-logo:hover { opacity: 1; }
+
+        .campaign-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #fff;
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, #ffffff 0%, #4dabf7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .campaign-subtitle {
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.45);
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* ============================================================
+           LIVE INDICATOR
+           ============================================================ */
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 6px 16px;
+            background: rgba(77, 171, 247, 0.08);
+            border: 1px solid rgba(77, 171, 247, 0.15);
+            border-radius: 100px;
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4dabf7;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(77, 171, 247, 0.4); }
+            50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(77, 171, 247, 0); }
+        }
+
+        /* ============================================================
+           STAT CARDS
+           ============================================================ */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 32px 0 28px;
+        }
+
+        .stat-card {
+            position: relative;
+            padding: 28px 20px 24px;
+            border-radius: 16px;
+            text-align: center;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(77, 171, 247, 0.2);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+
+        .stat-card:nth-child(1)::before {
+            background: linear-gradient(90deg, #4dabf7, #74c0fc);
+        }
+        .stat-card:nth-child(2)::before {
+            background: linear-gradient(90deg, #69db7c, #38d9a9);
+        }
+        .stat-card:nth-child(3)::before {
+            background: linear-gradient(90deg, #da77f2, #b197fc);
+        }
+
+        .stat-emoji {
+            font-size: 1.6rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .stat-value {
+            font-size: 2.4rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: #fff;
+            line-height: 1.1;
+            margin-bottom: 6px;
+        }
+
+        .stat-card:nth-child(1) .stat-value { color: #74c0fc; }
+        .stat-card:nth-child(2) .stat-value { color: #69db7c; }
+        .stat-card:nth-child(3) .stat-value { color: #da77f2; }
+
+        .stat-label {
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        /* ============================================================
+           PROGRESS BAR (optional, shown when goalAmount is set)
+           ============================================================ */
+        .progress-section {
+            margin-bottom: 28px;
+            display: none;
+        }
+
+        .progress-section.visible { display: block; }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 10px;
+        }
+
+        .progress-label {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+            font-weight: 500;
+        }
+
+        .progress-pct {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #4dabf7;
+        }
+
+        .progress-track {
+            height: 10px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 100px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4dabf7, #74c0fc);
+            border-radius: 100px;
+            transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+            min-width: 0%;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* ============================================================
+           SORT CONTROLS
+           ============================================================ */
+        .controls-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .donor-count-label {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.45);
+            font-weight: 500;
+        }
+
+        .sort-pills {
+            display: flex;
+            gap: 4px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 100px;
+            padding: 4px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .sort-pill {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.45);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 100px;
+            transition: all 0.25s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .sort-pill:hover {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .sort-pill.active {
+            background: #4dabf7;
+            color: #121212;
+            box-shadow: 0 2px 12px rgba(77, 171, 247, 0.3);
+        }
+
+        /* ============================================================
+           DONOR CARDS GRID
+           ============================================================ */
+        .donors-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .donor-card {
+            position: relative;
+            padding: 24px 20px 20px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            opacity: 0;
+            transform: translateY(16px);
+            animation: cardFadeIn 0.5s ease forwards;
+        }
+
+        .donor-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(77, 171, 247, 0.15);
+            border-color: rgba(77, 171, 247, 0.2);
+        }
+
+        @keyframes cardFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .donor-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+            line-height: 1.3;
+            word-wrap: break-word;
+        }
+
+        .donor-name.anonymous {
+            font-family: 'Heebo', sans-serif;
+            direction: rtl;
+            color: rgba(255,255,255,0.6);
+            font-style: italic;
+        }
+
+        .donor-amount {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #4dabf7;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .donor-memo {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.45);
+            font-style: italic;
+            line-height: 1.5;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+
+        .donor-date {
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.25);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Rank badge for top 3 donors */
+        .donor-card[data-rank="1"]::after,
+        .donor-card[data-rank="2"]::after,
+        .donor-card[data-rank="3"]::after {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+        .donor-card[data-rank="1"]::after { content: '🥇'; }
+        .donor-card[data-rank="2"]::after { content: '🥈'; }
+        .donor-card[data-rank="3"]::after { content: '🥉'; }
+
+        /* ============================================================
+           LOADING STATE
+           ============================================================ */
+        .loading-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            gap: 20px;
+        }
+
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(255,255,255,0.08);
+            border-top-color: #4dabf7;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.35);
+            font-weight: 500;
+        }
+
+        /* ============================================================
+           ACCESS DENIED
+           ============================================================ */
+        .access-denied {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 20px;
+            text-align: center;
+        }
+
+        .access-denied-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            opacity: 0.7;
+        }
+
+        .access-denied h2 {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .access-denied p {
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.4);
+            max-width: 400px;
+        }
+
+        /* ============================================================
+           EMPTY STATE
+           ============================================================ */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+        }
+
+        /* ============================================================
+           FOOTER
+           ============================================================ */
+        .footer {
+            text-align: center;
+            padding: 32px 20px 40px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .footer-text {
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.25);
+            line-height: 1.8;
+        }
+
+        .footer-text .refresh-time {
+            color: rgba(255,255,255,0.35);
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 1024px) {
+            .donors-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .donors-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stats-row {
+                gap: 10px;
+            }
+
+            .stat-value {
+                font-size: 1.8rem;
+            }
+
+            .stat-label {
+                font-size: 0.7rem;
+            }
+
+            .campaign-title {
+                font-size: 1.6rem;
+            }
+
+            .controls-bar {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 540px) {
+            .donors-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 20px 16px;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                text-align: left;
+            }
+
+            .stat-emoji {
+                font-size: 1.4rem;
+                margin-bottom: 0;
+            }
+
+            .stat-card-text {
+                flex: 1;
+            }
+
+            .stat-value {
+                font-size: 1.6rem;
+                margin-bottom: 2px;
+            }
+
+            .page-wrapper {
+                padding: 0 16px;
+            }
+
+            .header {
+                padding: 28px 0 24px;
+            }
+        }
+
+        /* ============================================================
+           TRANSITION FOR SMOOTH DATA UPDATES
+           ============================================================ */
+        .fade-update {
+            animation: fadeUpdate 0.4s ease;
+        }
+
+        @keyframes fadeUpdate {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121212;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 100px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+
+    <!-- ============================================================
+         HEADER
+         ============================================================ -->
+    <header class="header">
+        <img src="../../NC_Logo_03.png" alt="Notzer Chesed" class="header-logo">
+        <h1 class="campaign-title">Keren Shlomo Yechiel — Donor Wall</h1>
+        <p class="campaign-subtitle">Internal Dashboard</p>
+        <div class="live-indicator">
+            <span class="live-dot"></span>
+            <span>Live Data</span>
+        </div>
+    </header>
+
+    <!-- ============================================================
+         STATS ROW
+         ============================================================ -->
+    <div class="stats-row" id="stats-row">
+        <div class="stat-card">
+            <span class="stat-emoji">💰</span>
+            <div class="stat-card-text">
+                <div class="stat-value" id="stat-total">—</div>
+                <div class="stat-label">Total Raised</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-emoji">👥</span>
+            <div class="stat-card-text">
+                <div class="stat-value" id="stat-donors">—</div>
+                <div class="stat-label">Total Donors</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-emoji">📊</span>
+            <div class="stat-card-text">
+                <div class="stat-value" id="stat-avg">—</div>
+                <div class="stat-label">Average Donation</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         PROGRESS BAR (optional)
+         ============================================================ -->
+    <div class="progress-section" id="progress-section">
+        <div class="progress-header">
+            <span class="progress-label">Campaign Progress</span>
+            <span class="progress-pct" id="progress-pct">0%</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         SORT CONTROLS
+         ============================================================ -->
+    <div class="controls-bar" id="controls-bar" style="display: none;">
+        <div class="donor-count-label" id="donor-count-label"></div>
+        <div class="sort-pills">
+            <button class="sort-pill active" data-sort="amount" onclick="setSort('amount')">Sort by Amount</button>
+            <button class="sort-pill" data-sort="date" onclick="setSort('date')">Sort by Date</button>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         MAIN CONTENT AREA
+         ============================================================ -->
+    <div id="main-content">
+        <!-- Loading state -->
+        <div class="loading-screen" id="loading-screen">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading donor data…</div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         DONOR GRID (hidden until loaded)
+         ============================================================ -->
+    <div class="donors-grid" id="donors-grid" style="display: none;"></div>
+
+    <!-- ============================================================
+         FOOTER
+         ============================================================ -->
+    <footer class="footer">
+        <div class="footer-text">
+            This page is not publicly listed. Data refreshes automatically.<br>
+            Last updated: <span class="refresh-time" id="last-refresh">—</span>
+        </div>
+    </footer>
+
+</div>
+
+<script>
+// ============================================================
+// CONFIGURATION
+// ============================================================
+const CONFIG = {
+    campaignName: 'Keren Shlomo Yechiel',
+    campaignCode: 'ksy',
+    appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzpxIaoeZewC6uMC8wrbXqytzq3FfTQXg2Yx10PGy6BJEMOM9hTg1HDUg3-C-4TkUhnnQ/exec',
+    key: new URLSearchParams(window.location.search).get('key'),
+    refreshInterval: 30000,
+    goalAmount: null  // set to a number to show progress bar, null to hide
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let currentDonors = [];
+let currentTotals = {};
+let currentSort = 'amount';
+let isFirstLoad = true;
+
+// ============================================================
+// FORMAT HELPERS
+// ============================================================
+function formatCurrency(amount) {
+    if (amount == null || isNaN(amount)) return '$0';
+    return '$' + Number(amount).toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
+}
+
+function formatDate(timestamp) {
+    if (!timestamp) return '';
+    const d = new Date(timestamp);
+    if (isNaN(d.getTime())) return timestamp;
+    return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+}
+
+function formatRefreshTime() {
+    return new Date().toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+
+// ============================================================
+// DATA FETCHING
+// ============================================================
+async function fetchDonors() {
+    const url = `${CONFIG.appsScriptUrl}?action=getDonors&campaign=${CONFIG.campaignCode}&key=${CONFIG.key}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return data;
+}
+
+async function loadData() {
+    try {
+        const data = await fetchDonors();
+
+        // Check for errors (invalid key, etc.)
+        if (data.error) {
+            showAccessDenied(data.error);
+            return;
+        }
+
+        currentTotals = data.totals || {};
+        currentDonors = data.donors || [];
+
+        updateStats();
+        updateProgress();
+        sortAndRender();
+
+        // Update refresh timestamp
+        document.getElementById('last-refresh').textContent = formatRefreshTime();
+
+        if (isFirstLoad) {
+            isFirstLoad = false;
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('controls-bar').style.display = 'flex';
+            document.getElementById('donors-grid').style.display = 'grid';
+        }
+
+    } catch (err) {
+        console.error('Failed to fetch donor data:', err);
+        if (isFirstLoad) {
+            showAccessDenied('Unable to load data. Please check the URL and try again.');
+        }
+    }
+}
+
+// ============================================================
+// UPDATE UI
+// ============================================================
+function updateStats() {
+    const totalEl = document.getElementById('stat-total');
+    const donorsEl = document.getElementById('stat-donors');
+    const avgEl = document.getElementById('stat-avg');
+
+    const newTotal = formatCurrency(currentTotals.totalRaised);
+    const newDonors = (currentTotals.donorCount || 0).toLocaleString();
+    const newAvg = formatCurrency(currentTotals.avgDonation);
+
+    if (totalEl.textContent !== newTotal) {
+        totalEl.textContent = newTotal;
+        if (!isFirstLoad) totalEl.classList.add('fade-update');
+    }
+    if (donorsEl.textContent !== newDonors) {
+        donorsEl.textContent = newDonors;
+        if (!isFirstLoad) donorsEl.classList.add('fade-update');
+    }
+    if (avgEl.textContent !== newAvg) {
+        avgEl.textContent = newAvg;
+        if (!isFirstLoad) avgEl.classList.add('fade-update');
+    }
+
+    // Remove animation class after it completes
+    setTimeout(() => {
+        totalEl.classList.remove('fade-update');
+        donorsEl.classList.remove('fade-update');
+        avgEl.classList.remove('fade-update');
+    }, 500);
+
+    // Update donor count label
+    const countLabel = document.getElementById('donor-count-label');
+    countLabel.textContent = `${currentDonors.length} confirmed donor${currentDonors.length !== 1 ? 's' : ''}`;
+}
+
+function updateProgress() {
+    const section = document.getElementById('progress-section');
+    if (!CONFIG.goalAmount || !currentTotals.totalRaised) {
+        section.classList.remove('visible');
+        return;
+    }
+
+    section.classList.add('visible');
+    const pct = Math.min(100, (currentTotals.totalRaised / CONFIG.goalAmount) * 100);
+    document.getElementById('progress-pct').textContent = Math.round(pct) + '%';
+    document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+// ============================================================
+// SORTING
+// ============================================================
+function setSort(sortBy) {
+    currentSort = sortBy;
+
+    // Update pill buttons
+    document.querySelectorAll('.sort-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.dataset.sort === sortBy);
+    });
+
+    sortAndRender();
+}
+
+function sortAndRender() {
+    const sorted = [...currentDonors];
+
+    if (currentSort === 'amount') {
+        sorted.sort((a, b) => (b.amount || 0) - (a.amount || 0));
+    } else {
+        sorted.sort((a, b) => {
+            const dateA = new Date(a.timestamp || 0);
+            const dateB = new Date(b.timestamp || 0);
+            return dateB - dateA;
+        });
+    }
+
+    renderDonors(sorted);
+}
+
+// ============================================================
+// RENDER DONOR CARDS
+// ============================================================
+function renderDonors(donors) {
+    const grid = document.getElementById('donors-grid');
+
+    if (!donors || donors.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <div class="empty-state-icon">🕊️</div>
+                <h3>No donations yet</h3>
+                <p>Donations will appear here as they are confirmed.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Assign ranks based on amount (for badges)
+    const ranked = [...donors].sort((a, b) => (b.amount || 0) - (a.amount || 0));
+    const rankMap = new Map();
+    ranked.forEach((d, i) => {
+        if (i < 3) rankMap.set(d, i + 1);
+    });
+
+    const fragment = document.createDocumentFragment();
+
+    donors.forEach((donor, index) => {
+        const card = document.createElement('div');
+        card.className = 'donor-card';
+        card.style.animationDelay = `${Math.min(index * 60, 800)}ms`;
+
+        const rank = rankMap.get(donor);
+        if (rank && currentSort === 'amount') {
+            card.setAttribute('data-rank', rank);
+        }
+
+        const isAnonymous = donor.anonymous;
+        const displayName = isAnonymous ? 'בעילום שם' : (donor.displayName || 'Anonymous');
+
+        let html = '';
+        html += `<div class="donor-name${isAnonymous ? ' anonymous' : ''}">${escapeHTML(displayName)}</div>`;
+        html += `<div class="donor-amount">${formatCurrency(donor.amount)}</div>`;
+
+        if (donor.memo && donor.memo.trim()) {
+            html += `<div class="donor-memo">"${escapeHTML(donor.memo)}"</div>`;
+        }
+
+        html += `<div class="donor-date">${formatDate(donor.timestamp)}</div>`;
+
+        card.innerHTML = html;
+        fragment.appendChild(card);
+    });
+
+    grid.innerHTML = '';
+    grid.appendChild(fragment);
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ============================================================
+// ACCESS DENIED / ERROR STATE
+// ============================================================
+function showAccessDenied(message) {
+    const main = document.getElementById('main-content');
+    main.innerHTML = `
+        <div class="access-denied">
+            <div class="access-denied-icon">🔒</div>
+            <h2>Access Denied</h2>
+            <p>${escapeHTML(message || 'This page requires a valid access key. Please check the URL you were given.')}</p>
+        </div>
+    `;
+    document.getElementById('stats-row').style.display = 'none';
+    document.getElementById('controls-bar').style.display = 'none';
+    document.getElementById('donors-grid').style.display = 'none';
+    document.getElementById('progress-section').style.display = 'none';
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+(function init() {
+    // Check for key
+    if (!CONFIG.key) {
+        document.getElementById('loading-screen').style.display = 'none';
+        showAccessDenied('No access key provided. Please use the link you were given.');
+        return;
+    }
+
+    // Initial load
+    loadData();
+
+    // Auto-refresh
+    setInterval(loadData, CONFIG.refreshInterval);
+})();
+</script>
+
+</body>
+</html>

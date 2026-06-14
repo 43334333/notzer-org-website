@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Admin Entry — Keren Shlomo Yechiel</title>
+    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── Reset & Base ──────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #121212;
+            color: #EFEFEF;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ── Utility ───────────────────────────────────── */
+        .accent { color: #4dabf7; }
+        .req { color: #ff5252; font-weight: 400; }
+
+        /* ── Access Denied ─────────────────────────────── */
+        .access-denied {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 2rem;
+        }
+        .access-denied .lock-icon {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            background: rgba(255, 82, 82, 0.12);
+            border: 2px solid rgba(255, 82, 82, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .access-denied h1 { font-size: 1.5rem; margin-bottom: .5rem; color: #ff5252; }
+        .access-denied p { color: #888; max-width: 360px; font-size: 0.95rem; }
+
+        /* ── Page Wrapper ──────────────────────────────── */
+        .page-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1.25rem 4rem;
+        }
+
+        /* ── Header ────────────────────────────────────── */
+        .page-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .page-header img {
+            height: 48px;
+            width: auto;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+        .page-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.35rem;
+        }
+        .page-header .subtitle {
+            font-size: 0.95rem;
+            color: #888;
+            font-weight: 400;
+        }
+
+        /* ── Card (Glassmorphism) ──────────────────────── */
+        .form-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* ── Two-Column Grid ───────────────────────────── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 2rem;
+        }
+        @media (max-width: 640px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ── Column Headings ───────────────────────────── */
+        .col-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #4dabf7;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(77, 171, 247, 0.15);
+        }
+
+        /* ── Form Groups ───────────────────────────────── */
+        .field {
+            margin-bottom: 1.1rem;
+        }
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #aaa;
+            margin-bottom: 0.35rem;
+        }
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            padding: 0.65rem 0.8rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #EFEFEF;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            outline: none;
+        }
+        .field input:hover,
+        .field select:hover,
+        .field textarea:hover {
+            border-color: rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.055);
+        }
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.12);
+            background: rgba(255,255,255,0.06);
+        }
+        .field input::placeholder,
+        .field textarea::placeholder {
+            color: #555;
+        }
+        .field textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .field select {
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.8rem center;
+            padding-right: 2.2rem;
+        }
+        .field select option {
+            background: #1e1e1e;
+            color: #EFEFEF;
+        }
+
+        /* ── Amount Wrapper ────────────────────────────── */
+        .amount-wrapper {
+            position: relative;
+        }
+        .amount-wrapper .currency {
+            position: absolute;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-weight: 600;
+            font-size: 0.95rem;
+            pointer-events: none;
+        }
+        .amount-wrapper input {
+            padding-left: 1.6rem;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* ── Full-Width Section ────────────────────────── */
+        .full-width {
+            grid-column: 1 / -1;
+            margin-top: 0.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* ── Toggle Switch ─────────────────────────────── */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem 1rem;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+        }
+        .toggle-row.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .switch {
+            position: relative;
+            width: 42px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 24px;
+            transition: background 0.25s;
+        }
+        .slider::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #888;
+            border-radius: 50%;
+            transition: transform 0.25s, background 0.25s;
+        }
+        .switch input:checked + .slider {
+            background: rgba(77, 171, 247, 0.25);
+        }
+        .switch input:checked + .slider::before {
+            transform: translateX(18px);
+            background: #4dabf7;
+        }
+        .toggle-text {
+            font-size: 0.85rem;
+            color: #bbb;
+            line-height: 1.4;
+        }
+        .toggle-text strong {
+            display: block;
+            color: #ddd;
+            font-weight: 500;
+            font-size: 0.88rem;
+        }
+        .toggle-note {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.35rem;
+            padding-left: calc(42px + 0.8rem);
+        }
+
+        /* ── Submit Button ─────────────────────────────── */
+        .submit-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            width: 100%;
+            padding: 0.9rem 1.5rem;
+            margin-top: 1.5rem;
+            background: linear-gradient(135deg, #4dabf7, #339af0);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.25s, opacity 0.2s;
+            letter-spacing: 0.01em;
+            position: relative;
+        }
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(77, 171, 247, 0.3);
+        }
+        .submit-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .submit-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Spinner */
+        .spinner {
+            display: none;
+            width: 20px; height: 20px;
+            border: 2.5px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        .submit-btn.loading .spinner { display: block; }
+        .submit-btn.loading .btn-label { display: none; }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ── Error Alert ───────────────────────────────── */
+        .error-alert {
+            display: none;
+            padding: 0.8rem 1rem;
+            background: rgba(255, 82, 82, 0.08);
+            border: 1px solid rgba(255, 82, 82, 0.25);
+            border-radius: 10px;
+            color: #ff6b6b;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            line-height: 1.5;
+        }
+        .error-alert.visible { display: flex; gap: 0.6rem; align-items: flex-start; }
+        .error-alert .err-icon { flex-shrink: 0; font-size: 1rem; margin-top: 1px; }
+
+        /* ── Success Card ──────────────────────────────── */
+        .success-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            animation: fadeIn 0.25s ease;
+        }
+        .success-overlay.visible { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .success-card {
+            background: #1a1a1a;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            animation: slideUp 0.35s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .checkmark-circle {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            background: rgba(81, 207, 102, 0.1);
+            border: 2px solid rgba(81, 207, 102, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.25rem;
+            animation: popIn 0.4s ease 0.15s both;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .checkmark-circle svg {
+            width: 30px; height: 30px;
+        }
+        .checkmark-circle svg path {
+            stroke: #51cf66;
+            stroke-width: 3;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 40;
+            stroke-dashoffset: 40;
+            animation: drawCheck 0.4s ease 0.4s forwards;
+        }
+        @keyframes drawCheck {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .success-card h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+        .success-summary {
+            font-size: 0.85rem;
+            color: #999;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+        .success-summary strong {
+            color: #ccc;
+        }
+
+        .success-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        .success-actions button,
+        .success-actions a {
+            flex: 1;
+            padding: 0.7rem 1rem;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #ccc;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.18);
+            color: #fff;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4dabf7, #339af0);
+            border: none;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 4px 16px rgba(77, 171, 247, 0.3);
+        }
+
+        /* ── Field Validation ──────────────────────────── */
+        .field.invalid input,
+        .field.invalid select {
+            border-color: rgba(255, 82, 82, 0.5);
+            box-shadow: 0 0 0 3px rgba(255, 82, 82, 0.08);
+        }
+
+        /* ── Responsive ────────────────────────────────── */
+        @media (max-width: 640px) {
+            .page-wrapper { padding: 1.25rem 1rem 3rem; }
+            .form-card { padding: 1.25rem; border-radius: 12px; }
+            .page-header h1 { font-size: 1.3rem; }
+            .success-actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ Access Denied Screen ═══ -->
+<div class="access-denied" id="accessDenied" style="display:none;">
+    <div class="lock-icon">🔒</div>
+    <h1>Access Denied</h1>
+    <p>This page requires an authorization key. Please use the link provided by your administrator.</p>
+</div>
+
+<!-- ═══ Main App ═══ -->
+<div class="page-wrapper" id="appMain" style="display:none;">
+
+    <!-- Header -->
+    <header class="page-header">
+        <img src="../../NC_Logo_03.png" alt="Notzer Chesed">
+        <h1>Admin — Manual Donation Entry</h1>
+        <p class="subtitle">Keren Shlomo Yechiel Campaign</p>
+    </header>
+
+    <!-- Form Card -->
+    <div class="form-card">
+        <form id="donationForm" novalidate autocomplete="off">
+            <div class="form-grid">
+
+                <!-- ── Left Column ── -->
+                <div class="form-col">
+                    <div class="col-label">Donor Information</div>
+
+                    <div class="field">
+                        <label for="firstName">First Name <span class="req">*</span></label>
+                        <input type="text" id="firstName" name="firstName" placeholder="John" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="lastName">Last Name <span class="req">*</span></label>
+                        <input type="text" id="lastName" name="lastName" placeholder="Doe" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="john@example.com">
+                    </div>
+
+                    <div class="field">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567">
+                    </div>
+                </div>
+
+                <!-- ── Right Column ── -->
+                <div class="form-col">
+                    <div class="col-label">Donation Details</div>
+
+                    <div class="field">
+                        <label for="amount">Amount <span class="req">*</span></label>
+                        <div class="amount-wrapper">
+                            <span class="currency">$</span>
+                            <input type="number" id="amount" name="amount" min="0.01" step="0.01" placeholder="0.00" required>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="displayName">Display Name</label>
+                        <input type="text" id="displayName" name="displayName" placeholder="Name for donor wall (optional)">
+                    </div>
+
+                    <div class="field">
+                        <label for="method">Donation Method <span class="req">*</span></label>
+                        <select id="method" name="method" required>
+                            <option value="" disabled selected>Select method…</option>
+                            <option value="Check">Check</option>
+                            <option value="Zelle">Zelle</option>
+                            <option value="DAF - The Donors Fund">DAF — The Donors Fund</option>
+                            <option value="DAF - OJCF">DAF — OJCF</option>
+                            <option value="DAF - Pledger">DAF — Pledger</option>
+                            <option value="DAF - Matbia">DAF — Matbia</option>
+                            <option value="PayPal">PayPal</option>
+                            <option value="Wire Transfer">Wire Transfer</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="donationDate">Donation Date</label>
+                        <input type="date" id="donationDate" name="donationDate">
+                    </div>
+
+                    <div class="field">
+                        <label for="memo">Memo</label>
+                        <textarea id="memo" name="memo" placeholder="Optional notes…"></textarea>
+                    </div>
+                </div>
+
+                <!-- ── Full Width: Receipt Toggle ── -->
+                <div class="full-width">
+                    <div class="toggle-row disabled" id="receiptToggleRow">
+                        <label class="switch">
+                            <input type="checkbox" id="sendReceipt">
+                            <span class="slider"></span>
+                        </label>
+                        <div class="toggle-text">
+                            <strong>Send receipt email to donor</strong>
+                            Receipt will be sent to the email address above
+                        </div>
+                    </div>
+                    <p class="toggle-note" id="receiptNote">Enter an email address above to enable this option.</p>
+
+                    <!-- Submit -->
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span class="btn-label">Log Donation</span>
+                        <span class="spinner"></span>
+                    </button>
+
+                    <!-- Error -->
+                    <div class="error-alert" id="errorAlert">
+                        <span class="err-icon">⚠</span>
+                        <span id="errorMessage">An error occurred.</span>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ═══ Success Overlay ═══ -->
+<div class="success-overlay" id="successOverlay">
+    <div class="success-card">
+        <div class="checkmark-circle">
+            <svg viewBox="0 0 32 32">
+                <path d="M8 17l6 6 10-14"/>
+            </svg>
+        </div>
+        <h2>Donation logged successfully!</h2>
+        <div class="success-summary" id="successSummary"></div>
+        <div class="success-actions">
+            <button type="button" class="btn-secondary" id="addAnotherBtn">Add Another</button>
+            <a class="btn-primary" id="viewWallBtn" href="#">View Donor Wall</a>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ─── Config ──────────────────────────────────────────── */
+const CONFIG = {
+    campaignName: 'Keren Shlomo Yechiel',
+    campaignCode: 'ksy',
+    appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzpxIaoeZewC6uMC8wrbXqytzq3FfTQXg2Yx10PGy6BJEMOM9hTg1HDUg3-C-4TkUhnnQ/exec',
+    key: new URLSearchParams(window.location.search).get('key'),
+};
+
+/* ─── DOM Refs ────────────────────────────────────────── */
+const $ = (s) => document.querySelector(s);
+const accessDenied  = $('#accessDenied');
+const appMain       = $('#appMain');
+const form          = $('#donationForm');
+const submitBtn     = $('#submitBtn');
+const errorAlert    = $('#errorAlert');
+const errorMessage  = $('#errorMessage');
+const successOverlay = $('#successOverlay');
+const successSummary = $('#successSummary');
+const addAnotherBtn = $('#addAnotherBtn');
+const viewWallBtn   = $('#viewWallBtn');
+const emailInput    = $('#email');
+const receiptToggle = $('#sendReceipt');
+const receiptRow    = $('#receiptToggleRow');
+const receiptNote   = $('#receiptNote');
+const dateInput     = $('#donationDate');
+
+/* ─── Key Gate ────────────────────────────────────────── */
+if (!CONFIG.key) {
+    accessDenied.style.display = 'flex';
+} else {
+    appMain.style.display = 'block';
+    viewWallBtn.href = `../../wall/ksy/?key=${encodeURIComponent(CONFIG.key)}`;
+    init();
+}
+
+function init() {
+    // Set today's date
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+    // Email ↔ receipt toggle
+    emailInput.addEventListener('input', () => {
+        const hasEmail = emailInput.value.trim().length > 0;
+        receiptRow.classList.toggle('disabled', !hasEmail);
+        if (!hasEmail) {
+            receiptToggle.checked = false;
+            receiptNote.textContent = 'Enter an email address above to enable this option.';
+        } else {
+            receiptNote.textContent = `Receipt will be sent to ${emailInput.value.trim()}`;
+        }
+    });
+
+    // Form submit
+    form.addEventListener('submit', handleSubmit);
+    addAnotherBtn.addEventListener('click', resetForm);
+}
+
+/* ─── Submit ──────────────────────────────────────────── */
+async function handleSubmit(e) {
+    e.preventDefault();
+    hideError();
+
+    // Validate
+    const required = ['firstName', 'lastName', 'amount', 'method'];
+    let valid = true;
+
+    required.forEach(name => {
+        const field = form.querySelector(`[name="${name}"]`);
+        const wrapper = field.closest('.field');
+        const val = field.value.trim();
+        if (!val || (name === 'amount' && (isNaN(val) || Number(val) <= 0))) {
+            wrapper.classList.add('invalid');
+            valid = false;
+        } else {
+            wrapper.classList.remove('invalid');
+        }
+    });
+
+    if (!valid) {
+        showError('Please fill in all required fields.');
+        return;
+    }
+
+    // Gather data
+    const formData = {
+        firstName:    form.firstName.value.trim(),
+        lastName:     form.lastName.value.trim(),
+        email:        form.email.value.trim(),
+        phone:        form.phone.value.trim(),
+        amount:       parseFloat(form.amount.value),
+        displayName:  form.displayName.value.trim(),
+        memo:         form.memo.value.trim(),
+        method:       form.method.value,
+        donationDate: form.donationDate.value,
+        sendReceipt:  receiptToggle.checked && form.email.value.trim().length > 0,
+    };
+
+    // Submit
+    setLoading(true);
+
+    try {
+        const result = await submitDonation(formData);
+
+        if (result.success || result.status === 'success') {
+            showSuccess(formData);
+        } else {
+            showError(result.message || result.error || 'Submission failed. Please try again.');
+        }
+    } catch (err) {
+        showError('Network error — could not reach the server. Please check your connection and try again.');
+    } finally {
+        setLoading(false);
+    }
+}
+
+/* ─── API Call ────────────────────────────────────────── */
+async function submitDonation(formData) {
+    const payload = {
+        action:       'addManualDonation',
+        key:          CONFIG.key,
+        campaign:     CONFIG.campaignCode,
+        firstName:    formData.firstName,
+        lastName:     formData.lastName,
+        email:        formData.email || '',
+        phone:        formData.phone || '',
+        amount:       formData.amount,
+        displayName:  formData.displayName || '',
+        memo:         formData.memo || '',
+        method:       formData.method,
+        donationDate: formData.donationDate,
+        sendReceipt:  formData.sendReceipt,
+    };
+
+    const response = await fetch(CONFIG.appsScriptUrl, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+    return await response.json();
+}
+
+/* ─── UI Helpers ──────────────────────────────────────── */
+function setLoading(on) {
+    submitBtn.disabled = on;
+    submitBtn.classList.toggle('loading', on);
+}
+
+function showError(msg) {
+    errorMessage.textContent = msg;
+    errorAlert.classList.add('visible');
+}
+
+function hideError() {
+    errorAlert.classList.remove('visible');
+}
+
+function showSuccess(data) {
+    const amt = Number(data.amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    successSummary.innerHTML = `
+        <strong>${data.firstName} ${data.lastName}</strong><br>
+        Amount: <strong>${amt}</strong><br>
+        Method: <strong>${data.method}</strong>
+    `;
+    successOverlay.classList.add('visible');
+}
+
+function resetForm() {
+    form.reset();
+    successOverlay.classList.remove('visible');
+    hideError();
+
+    // Re-set today's date
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+    // Reset receipt toggle
+    receiptRow.classList.add('disabled');
+    receiptToggle.checked = false;
+    receiptNote.textContent = 'Enter an email address above to enable this option.';
+
+    // Clear validation
+    form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+}
+
+/* ─── Clear validation on input ───────────────────────── */
+document.querySelectorAll('.field input, .field select').forEach(el => {
+    el.addEventListener('input', () => {
+        el.closest('.field').classList.remove('invalid');
+    });
+});
+</script>
+
+</body>
+</html>
