@@ -147,17 +147,13 @@
                             <h4 class="col-heading">Donation Amount</h4>
 
                             <div class="donation-amounts" id="amount-grid">
-                                <button type="button" class="amount-btn" data-amount="100">$100</button>
-                                <button type="button" class="amount-btn" data-amount="180">$180</button>
-                                <button type="button" class="amount-btn" data-amount="360">$360</button>
-                                <button type="button" class="amount-btn" data-amount="500">$500</button>
-                                <button type="button" class="amount-btn" data-amount="720">$720</button>
-                                <button type="button" class="amount-btn" data-amount="1000">$1,000</button>
                                 <button type="button" class="amount-btn" data-amount="1800">$1,800</button>
                                 <button type="button" class="amount-btn" data-amount="3600">$3,600</button>
                                 <button type="button" class="amount-btn" data-amount="5000">$5,000</button>
                                 <button type="button" class="amount-btn" data-amount="7200">$7,200</button>
                                 <button type="button" class="amount-btn" data-amount="10000">$10,000</button>
+                                <button type="button" class="amount-btn" data-amount="18000">$18,000</button>
+                                <button type="button" class="amount-btn" data-amount="36000">$36,000</button>
                                 <button type="button" class="amount-btn" data-amount="custom" id="custom-amount-btn">Other</button>
                             </div>
 
@@ -193,14 +189,25 @@
                                     <input type="checkbox" id="recurring-check">
                                     <span>Make this a recurring donation</span>
                                 </label>
-                                <select class="recurring-select" id="recurring-frequency" style="display: none;">
-                                    <option value="">Select frequency...</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="biweekly">Every 2 Weeks</option>
-                                    <option value="monthly">Monthly</option>
-                                    <option value="quarterly">Quarterly</option>
-                                    <option value="annually">Annually</option>
-                                </select>
+                                <div id="recurring-options" style="display: none;">
+                                    <select class="recurring-select" id="recurring-frequency" style="display: block;">
+                                        <option value="">Select frequency...</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="biweekly">Every 2 Weeks</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="quarterly">Quarterly</option>
+                                        <option value="annually">Annually</option>
+                                    </select>
+                                    <div class="form-group" style="margin-top: 10px;">
+                                        <label for="recurring-count">Number of payments <span style="color: #888; font-weight: normal;">(blank = ongoing)</span></label>
+                                        <input type="number" id="recurring-count" min="2" max="999" placeholder="e.g. 12">
+                                    </div>
+                                    <label class="toggle-label">
+                                        <input type="checkbox" id="installment-check">
+                                        <span>Split total into installments</span>
+                                    </label>
+                                    <p id="installment-summary" style="display: none; font-size: 0.85rem; color: #4dabf7; margin: 4px 0 0; line-height: 1.4;"></p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -249,10 +256,30 @@
                     <a href="https://portal.ojcfund.org/account/recommendGrant?recurring=false&orgid=MQAAADQAAAA0AAAANwAAADUAAAA=" target="_blank" rel="noopener" class="daf-link" data-link-name="OJC Fund">OJC Fund</a>
                     <a href="https://org.pledgercharitable.org/ChargeCard?ein=113049033&camp=kerenshlomoyechiel" target="_blank" rel="noopener" class="daf-link" data-link-name="Pledger Charitable">Pledger Charitable</a>
                     <a href="https://matbia.org/d/00124211329" target="_blank" rel="noopener" class="daf-link" data-link-name="Matbia">Matbia</a>
+                    <a href="https://www.paypal.com/us/fundraiser/charity/3380976" target="_blank" rel="noopener" class="daf-link" data-link-name="PayPal">PayPal</a>
                 </div>
             </div>
         </section>
     </main>
+
+    <!-- DAF Confirmation Modal -->
+    <div class="modal-overlay" id="daf-confirm-modal">
+        <div class="modal-content">
+            <div class="modal-icon">📋</div>
+            <h3>Before You Go...</h3>
+            <p>After completing your donation through <strong id="daf-confirm-platform"></strong>, please send us a screenshot of your confirmation for our records and your tax-deductible receipt.</p>
+            <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 5px;">Send to:</p>
+            <div class="zelle-email" style="margin: 0 auto 10px; display: inline-flex;" onclick="navigator.clipboard.writeText('office+ksy@notzer.org'); this.querySelector('.copy-hint').textContent = 'Copied!';">
+                <strong>office+ksy@notzer.org</strong>
+                <span class="copy-hint">Click to copy</span>
+            </div>
+            <p style="margin-bottom: 0;"><a id="daf-mailto-link" href="#" style="font-size: 0.85rem; color: #4dabf7;">or click here to open your email client →</a></p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="button" class="modal-close-btn" style="flex: 1; background: #333; color: #EFEFEF;" onclick="closeDafConfirm()">Cancel</button>
+                <button type="button" class="modal-close-btn" style="flex: 1;" id="daf-confirm-proceed">Continue →</button>
+            </div>
+        </div>
+    </div>
 
     <footer class="footer">
         <p>&copy; 2024 Notzer Chesed. All Rights Reserved.</p>
@@ -331,22 +358,54 @@
                     customInput.value = '';
                     selectedAmount = parseFloat(this.dataset.amount);
                 }
+                updateInstallmentSummary();
             });
         });
 
         customInput.addEventListener('input', function() {
             selectedAmount = parseFloat(this.value) || null;
+            updateInstallmentSummary();
         });
 
         // ============================================================
-        // Recurring Toggle
+        // Recurring Toggle & Installment Logic
         // ============================================================
         const recurringCheck = document.getElementById('recurring-check');
         const recurringSelect = document.getElementById('recurring-frequency');
         recurringCheck.addEventListener('change', function() {
-            recurringSelect.style.display = this.checked ? 'block' : 'none';
-            if (!this.checked) recurringSelect.value = '';
+            document.getElementById('recurring-options').style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) {
+                recurringSelect.value = '';
+                document.getElementById('recurring-count').value = '';
+                document.getElementById('installment-check').checked = false;
+                document.getElementById('installment-summary').style.display = 'none';
+            }
+            updateInstallmentSummary();
         });
+
+        function updateInstallmentSummary() {
+            var amt = selectedAmount || parseFloat(customInput.value);
+            var count = parseInt(document.getElementById('recurring-count').value) || 0;
+            var freq = document.getElementById('recurring-frequency').value;
+            var isInst = document.getElementById('installment-check').checked;
+            var summary = document.getElementById('installment-summary');
+            var freqLabels = { weekly: 'weekly', biweekly: 'bi-weekly', monthly: 'monthly', quarterly: 'quarterly', annually: 'annual' };
+
+            if (!recurringCheck.checked || !amt || count < 2 || !freq) { summary.style.display = 'none'; return; }
+
+            if (isInst) {
+                var perPayment = (amt / count).toFixed(2);
+                summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' each';
+            } else {
+                var total = (amt * count).toFixed(2);
+                summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+            }
+            summary.style.display = 'block';
+        }
+
+        recurringSelect.addEventListener('change', updateInstallmentSummary);
+        document.getElementById('recurring-count').addEventListener('input', updateInstallmentSummary);
+        document.getElementById('installment-check').addEventListener('change', updateInstallmentSummary);
 
         // ============================================================
         // Turnstile
@@ -402,6 +461,13 @@
             const frequency = recurringSelect.value;
             if (isRecurring && !frequency) { showStatus('error', 'Please select a recurring frequency.'); return; }
 
+            const totalPayments = isRecurring ? (parseInt(document.getElementById('recurring-count').value) || 0) : 0;
+            const isInstallment = isRecurring && document.getElementById('installment-check').checked;
+            if (isInstallment && totalPayments < 2) { showStatus('error', 'Please enter the number of installment payments (at least 2).'); return; }
+
+            // For installments: each charge = total amount ÷ number of payments
+            const chargeAmount = (isInstallment && totalPayments >= 2) ? Math.round((amount / totalPayments) * 100) / 100 : amount;
+
             const btn = document.getElementById('donate-btn');
             btn.disabled = true;
             btn.classList.add('loading');
@@ -414,7 +480,7 @@
                     const cvvToken = document.querySelector('[data-ifields-id="cvv-token"]').value;
 
                     const payload = {
-                        amount: amount,
+                        amount: chargeAmount,
                         cardToken: cardToken,
                         cvvToken: cvvToken,
                         exp: exp,
@@ -431,6 +497,9 @@
                         anonymous: document.getElementById('anonymous-check').checked,
                         isRecurring: isRecurring,
                         frequency: frequency,
+                        totalPayments: totalPayments,
+                        isInstallment: isInstallment,
+                        totalPledgeAmount: isInstallment ? amount : 0,
                         campaign: CAMPAIGN_NAME,
                         turnstileToken: turnstileToken
                     };
@@ -445,7 +514,7 @@
                     .then(data => {
                         if (data.status === 'success') {
                             redirectToSuccess(
-                                amount, email, data.refNum,
+                                chargeAmount, email, data.refNum,
                                 firstName, lastName,
                                 document.getElementById('donor-phone').value.trim(),
                                 document.getElementById('donor-street').value.trim(),
@@ -517,14 +586,37 @@
             return true;
         }
 
+        var pendingDafLink = null;
+        var pendingDafName = null;
+
         document.querySelectorAll('.daf-link').forEach(function(link) {
             link.addEventListener('click', function(e) {
-                if (!validateDafFields()) {
-                    e.preventDefault();
-                    return;
-                }
-                // Log the click to Google Sheet via Apps Script
-                var linkName = this.getAttribute('data-link-name') || this.href;
+                e.preventDefault();
+                if (!validateDafFields()) return;
+
+                pendingDafLink = this.href;
+                pendingDafName = this.getAttribute('data-link-name') || 'the platform';
+                document.getElementById('daf-confirm-platform').textContent = pendingDafName;
+
+                // Build mailto link with donor info pre-filled
+                var dn = document.getElementById('donor-first-name').value.trim() + ' ' + document.getElementById('donor-last-name').value.trim();
+                var de = document.getElementById('donor-email').value.trim();
+                var body = 'Donor: ' + dn + '\nEmail: ' + de + '\nPlatform: ' + pendingDafName + '\n\nPlease find attached my donation confirmation screenshot.';
+                document.getElementById('daf-mailto-link').href = 'mailto:office+ksy@notzer.org?subject=' + encodeURIComponent('DAF Confirmation - Keren Shlomo Yechiel - ' + dn) + '&body=' + encodeURIComponent(body);
+
+                document.getElementById('daf-confirm-modal').classList.add('active');
+            });
+        });
+
+        function closeDafConfirm() {
+            document.getElementById('daf-confirm-modal').classList.remove('active');
+            pendingDafLink = null;
+            pendingDafName = null;
+        }
+
+        document.getElementById('daf-confirm-proceed').addEventListener('click', function() {
+            if (pendingDafLink) {
+                // Log the click to Google Sheet
                 fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
                     redirect: 'follow',
@@ -534,11 +626,14 @@
                         firstName: document.getElementById('donor-first-name').value.trim(),
                         lastName: document.getElementById('donor-last-name').value.trim(),
                         email: document.getElementById('donor-email').value.trim(),
-                        linkClicked: linkName,
+                        linkClicked: pendingDafName,
                         campaign: CAMPAIGN_NAME
                     })
-                }).catch(function() {}); // fire-and-forget
-            });
+                }).catch(function() {});
+
+                window.open(pendingDafLink, '_blank');
+            }
+            closeDafConfirm();
         });
 
         // ============================================================
