@@ -6,6 +6,7 @@
     <title>Keren Shlomo Yechiel | Notzer Chesed</title>
     <meta name="description" content="Support Keren Shlomo Yechiel — raising urgent funds for a family who lost their breadwinner suddenly at the young age of 52.">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="NC_Logo_03.png">
 </head>
 <body>
 
@@ -241,7 +242,7 @@
                     </button>
                     <div id="zelle-info" class="zelle-details" style="display: none;">
                         <p>Send via Zelle to:</p>
-                        <div class="zelle-email" onclick="navigator.clipboard.writeText('kerensy@notzer.org'); this.querySelector('.copy-hint').textContent = 'Copied!';">
+                        <div class="zelle-email" onclick="navigator.clipboard.writeText('kerensy@notzer.org'); this.querySelector('.copy-hint').textContent = 'Copied!'; logZelleClick();">
                             <strong>kerensy@notzer.org</strong>
                             <span class="copy-hint">Click to copy</span>
                         </div>
@@ -584,6 +585,22 @@
             }
             note.style.display = 'none';
             return true;
+        }
+
+        function logZelleClick() {
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    action: 'logLinkClick',
+                    firstName: document.getElementById('donor-first-name').value.trim(),
+                    lastName: document.getElementById('donor-last-name').value.trim(),
+                    email: document.getElementById('donor-email').value.trim(),
+                    linkClicked: 'Zelle (copied email)',
+                    campaign: CAMPAIGN_NAME
+                })
+            }).catch(function() {});
         }
 
         var pendingDafLink = null;
