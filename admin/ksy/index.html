@@ -565,8 +565,19 @@
                     </div>
                 </div>
 
-                <!-- ── Full Width: Receipt Toggle ── -->
+                <!-- ── Full Width: Toggles ── -->
                 <div class="full-width">
+                    <div class="toggle-row" id="anonymousToggleRow">
+                        <label class="switch">
+                            <input type="checkbox" id="anonymousDonor">
+                            <span class="slider"></span>
+                        </label>
+                        <div class="toggle-text">
+                            <strong>Anonymous donation</strong>
+                            Donor name will appear as "בעילום שם" on the donor wall
+                        </div>
+                    </div>
+                    <div style="height:0.5rem;"></div>
                     <div class="toggle-row disabled" id="receiptToggleRow">
                         <label class="switch">
                             <input type="checkbox" id="sendReceipt">
@@ -637,6 +648,7 @@ const viewWallBtn   = $('#viewWallBtn');
 const emailInput    = $('#email');
 const receiptToggle = $('#sendReceipt');
 const receiptRow    = $('#receiptToggleRow');
+const anonymousToggle = $('#anonymousDonor');
 const receiptNote   = $('#receiptNote');
 const dateInput     = $('#donationDate');
 
@@ -712,6 +724,7 @@ async function handleSubmit(e) {
         method:       form.method.value,
         donationDate: form.donationDate.value,
         sendReceipt:  receiptToggle.checked && form.email.value.trim().length > 0,
+        anonymous:    anonymousToggle.checked,
     };
 
     // Submit
@@ -748,6 +761,7 @@ async function submitDonation(formData) {
         method:       formData.method,
         donationDate: formData.donationDate,
         sendReceipt:  formData.sendReceipt,
+        anonymous:    formData.anonymous,
     };
 
     const response = await fetch(CONFIG.appsScriptUrl, {
@@ -794,9 +808,10 @@ function resetForm() {
     const dd = String(today.getDate()).padStart(2, '0');
     dateInput.value = `${yyyy}-${mm}-${dd}`;
 
-    // Reset receipt toggle
+    // Reset toggles
     receiptRow.classList.add('disabled');
     receiptToggle.checked = false;
+    anonymousToggle.checked = false;
     receiptNote.textContent = 'Enter an email address above to enable this option.';
 
     // Clear validation

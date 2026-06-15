@@ -755,8 +755,9 @@ async function loadData() {
         const data = await fetchDonors();
 
         // Check for errors (invalid key, etc.)
-        if (data.error) {
-            showAccessDenied(data.error);
+        console.log('API response:', data);
+        if (data.status === 'error') {
+            showAccessDenied(data.message || 'Access denied.');
             return;
         }
 
