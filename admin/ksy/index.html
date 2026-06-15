@@ -518,6 +518,27 @@
                         <label for="phone">Phone</label>
                         <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567">
                     </div>
+
+                    <div class="field">
+                        <label for="street">Street Address</label>
+                        <input type="text" id="street" name="street" placeholder="123 Main St">
+                    </div>
+
+                    <div class="field">
+                        <label for="city">City</label>
+                        <input type="text" id="city" name="city" placeholder="Brooklyn">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                        <div class="field">
+                            <label for="state">State</label>
+                            <input type="text" id="state" name="state" placeholder="NY" maxlength="2" style="text-transform:uppercase;">
+                        </div>
+                        <div class="field">
+                            <label for="zip">Zip</label>
+                            <input type="text" id="zip" name="zip" placeholder="11230" maxlength="10">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- ── Right Column ── -->
@@ -718,6 +739,10 @@ async function handleSubmit(e) {
         lastName:     form.lastName.value.trim(),
         email:        form.email.value.trim(),
         phone:        form.phone.value.trim(),
+        street:       form.street.value.trim(),
+        city:         form.city.value.trim(),
+        state:        form.state.value.trim().toUpperCase(),
+        zip:          form.zip.value.trim(),
         amount:       parseFloat(form.amount.value),
         displayName:  form.displayName.value.trim(),
         memo:         form.memo.value.trim(),
@@ -755,6 +780,10 @@ async function submitDonation(formData) {
         lastName:     formData.lastName,
         email:        formData.email || '',
         phone:        formData.phone || '',
+        street:       formData.street || '',
+        city:         formData.city || '',
+        state:        formData.state || '',
+        zip:          formData.zip || '',
         amount:       formData.amount,
         displayName:  formData.displayName || '',
         memo:         formData.memo || '',
