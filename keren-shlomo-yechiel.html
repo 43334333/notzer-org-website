@@ -141,6 +141,15 @@
                                 <input type="checkbox" id="anonymous-check">
                                 <span>Make my donation anonymous</span>
                             </label>
+
+                            <!-- Team selector -->
+                            <div class="form-group" style="position:relative; margin-top: 8px;">
+                                <label for="team-search">Team (optional)</label>
+                                <div id="teamTagWrapper" style="display:flex; flex-wrap:wrap; gap:4px; padding:8px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.12); border-radius:8px; min-height:40px; cursor:text; transition:border-color 0.2s;">
+                                    <input type="text" id="team-search" autocomplete="off" placeholder="Type to find your team..." style="border:none; background:transparent; color:#EFEFEF; font-family:inherit; font-size:0.9rem; outline:none; flex:1; min-width:80px;">
+                                </div>
+                                <div id="teamDropdown" style="position:absolute; top:100%; left:0; right:0; background:#1e1e1e; border:1px solid rgba(255,255,255,0.12); border-radius:8px; max-height:140px; overflow-y:auto; z-index:50; margin-top:4px; display:none;"></div>
+                            </div>
                         </div>
 
                         <!-- RIGHT COLUMN: Amount & Payment -->
@@ -502,6 +511,7 @@
                         isInstallment: isInstallment,
                         totalPledgeAmount: isInstallment ? amount : 0,
                         campaign: CAMPAIGN_NAME,
+                        teams: (window.selectedTeamIds || []).join(','),
                         turnstileToken: turnstileToken
                     };
 
@@ -676,6 +686,95 @@
                 };
                 img.src = picsDir + filename;
             });
+        // ============================================================
+        // TEAM SELECTOR
+        // ============================================================
+        (function initTeamSelector() {
+            window.selectedTeamIds = [];
+            let allTeams = [];
+            const wrapper = document.getElementById('teamTagWrapper');
+            const search = document.getElementById('team-search');
+            const dropdown = document.getElementById('teamDropdown');
+            if (!wrapper || !search || !dropdown) return;
+
+            // Load teams
+            fetch(APPS_SCRIPT_URL + '?action=getTeams')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success' && data.teams) {
+                        allTeams = data.teams;
+                    }
+                })
+                .catch(() => {});
+
+            // Filter dropdown on input
+            search.addEventListener('input', () => {
+                const q = search.value.trim().toLowerCase();
+                const filtered = allTeams.filter(t =>
+                    !window.selectedTeamIds.includes(t.id) &&
+                    (t.name.toLowerCase().includes(q) || t.id.toLowerCase().includes(q))
+                );
+                if (filtered.length === 0 || (!q && filtered.length === allTeams.length)) {
+                    dropdown.style.display = q ? 'block' : 'none';
+                    dropdown.innerHTML = q ? '<div style="padding:8px 12px;font-size:0.85rem;color:#666;font-style:italic;">No teams found</div>' : '';
+                    return;
+                }
+                dropdown.style.display = 'block';
+                dropdown.innerHTML = filtered.map(t =>
+                    `<div style="padding:8px 12px;font-size:0.85rem;color:#ccc;cursor:pointer;transition:background 0.15s;" 
+                          onmouseenter="this.style.background='rgba(77,171,247,0.1)';this.style.color='#fff'" 
+                          onmouseleave="this.style.background='';this.style.color='#ccc'"
+                          data-id="${t.id}" data-name="${t.name}">${t.name}</div>`
+                ).join('');
+            });
+
+            // Show dropdown on focus
+            search.addEventListener('focus', () => {
+                if (search.value.trim()) search.dispatchEvent(new Event('input'));
+            });
+
+            // Select team from dropdown
+            dropdown.addEventListener('click', (e) => {
+                const item = e.target.closest('[data-id]');
+                if (!item) return;
+                addTeam(item.dataset.id, item.dataset.name);
+            });
+
+            // Close on click outside
+            document.addEventListener('click', (e) => {
+                if (!wrapper.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            function addTeam(id, name) {
+                if (window.selectedTeamIds.includes(id)) return;
+                window.selectedTeamIds.push(id);
+                renderTags();
+                search.value = '';
+                dropdown.style.display = 'none';
+            }
+
+            function removeTeam(id) {
+                window.selectedTeamIds = window.selectedTeamIds.filter(t => t !== id);
+                renderTags();
+            }
+            window.removeTeamMain = removeTeam;
+
+            function renderTags() {
+                // Remove existing chips
+                wrapper.querySelectorAll('.team-chip').forEach(el => el.remove());
+                window.selectedTeamIds.forEach(id => {
+                    const team = allTeams.find(t => t.id === id);
+                    const chip = document.createElement('span');
+                    chip.className = 'team-chip';
+                    chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(77,171,247,0.15);border:1px solid rgba(77,171,247,0.3);border-radius:6px;font-size:0.8rem;color:#8cc4f7;white-space:nowrap;';
+                    chip.innerHTML = `${team ? team.name : id} <span onclick="removeTeamMain('${id}')" style="cursor:pointer;color:#ff6b6b;font-size:0.85rem;opacity:0.7;">×</span>`;
+                    wrapper.insertBefore(chip, search);
+                });
+            }
+        })();
+
         })();
     </script>
 

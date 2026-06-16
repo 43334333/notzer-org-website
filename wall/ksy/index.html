@@ -374,6 +374,26 @@
             text-transform: uppercase;
         }
 
+        .donor-teams {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .team-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 100px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            background: rgba(77, 171, 247, 0.12);
+            color: #74c0fc;
+            border: 1px solid rgba(77, 171, 247, 0.2);
+        }
+
         /* Rank badge for top 3 donors */
         .donor-card[data-rank="1"]::after,
         .donor-card[data-rank="2"]::after,
@@ -591,6 +611,154 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255,255,255,0.2);
         }
+
+        /* ============================================================
+           TEAM FILTER PILLS
+           ============================================================ */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.4);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-right: 4px;
+        }
+
+        .filter-pill {
+            padding: 6px 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.5);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 100px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-pill:hover {
+            border-color: rgba(77, 171, 247, 0.3);
+            color: rgba(255,255,255,0.8);
+        }
+
+        .filter-pill.active {
+            background: rgba(77, 171, 247, 0.15);
+            border-color: rgba(77, 171, 247, 0.4);
+            color: #74c0fc;
+        }
+
+        /* ============================================================
+           VIEW TOGGLE (Donors / Teams)
+           ============================================================ */
+        .view-toggle {
+            display: flex;
+            gap: 4px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 100px;
+            padding: 4px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .view-toggle-btn {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.45);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 100px;
+            transition: all 0.25s ease;
+        }
+
+        .view-toggle-btn:hover {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .view-toggle-btn.active {
+            background: #4dabf7;
+            color: #121212;
+            box-shadow: 0 2px 12px rgba(77, 171, 247, 0.3);
+        }
+
+        /* ============================================================
+           TEAM CARDS (teams view)
+           ============================================================ */
+        .team-card {
+            position: relative;
+            padding: 24px 20px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            opacity: 0;
+            transform: translateY(16px);
+            animation: cardFadeIn 0.5s ease forwards;
+        }
+
+        .team-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(77, 171, 247, 0.15);
+            border-color: rgba(77, 171, 247, 0.2);
+        }
+
+        .team-card-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .team-card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .team-stat {
+            text-align: center;
+            padding: 12px 8px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .team-stat-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #4dabf7;
+            letter-spacing: -0.5px;
+        }
+
+        .team-stat-label {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .team-card-bar {
+            height: 3px;
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            border-radius: 14px 14px 0 0;
+            background: linear-gradient(90deg, #4dabf7, #74c0fc);
+        }
     </style>
 </head>
 <body>
@@ -651,13 +819,28 @@
     </div>
 
     <!-- ============================================================
-         SORT CONTROLS
+         TEAM FILTER BAR (hidden until teams loaded)
+         ============================================================ -->
+    <div class="filter-bar" id="filter-bar" style="display: none;">
+        <span class="filter-label">Teams:</span>
+        <button class="filter-pill active" data-team="" onclick="setTeamFilter('')">All</button>
+        <!-- Team pills injected by JS -->
+    </div>
+
+    <!-- ============================================================
+         SORT & VIEW CONTROLS
          ============================================================ -->
     <div class="controls-bar" id="controls-bar" style="display: none;">
         <div class="donor-count-label" id="donor-count-label"></div>
-        <div class="sort-pills">
-            <button class="sort-pill active" data-sort="amount" onclick="setSort('amount')">Sort by Amount</button>
-            <button class="sort-pill" data-sort="date" onclick="setSort('date')">Sort by Date</button>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <div class="view-toggle">
+                <button class="view-toggle-btn active" data-view="donors" onclick="setView('donors')">👥 Donors</button>
+                <button class="view-toggle-btn" data-view="teams" onclick="setView('teams')">🏆 Teams</button>
+            </div>
+            <div class="sort-pills" id="sort-pills">
+                <button class="sort-pill active" data-sort="amount" onclick="setSort('amount')">Sort by Amount</button>
+                <button class="sort-pill" data-sort="date" onclick="setSort('date')">Sort by Date</button>
+            </div>
         </div>
     </div>
 
@@ -707,7 +890,11 @@ const CONFIG = {
 // ============================================================
 let currentDonors = [];
 let currentTotals = {};
+let currentTeamTotals = {};
+let allTeams = [];  // from Teams sheet
 let currentSort = 'amount';
+let currentView = 'donors'; // 'donors' or 'teams'
+let currentTeamFilter = new URLSearchParams(window.location.search).get('team') || '';
 let isFirstLoad = true;
 
 // ============================================================
@@ -740,14 +927,34 @@ function formatRefreshTime() {
     });
 }
 
+function getTeamName(teamId) {
+    const team = allTeams.find(t => t.id.toLowerCase() === teamId.toLowerCase());
+    return team ? team.name : teamId;
+}
+
 // ============================================================
 // DATA FETCHING
 // ============================================================
 async function fetchDonors() {
-    const url = `${CONFIG.appsScriptUrl}?action=getDonors&campaign=${CONFIG.campaignCode}&key=${CONFIG.key}`;
+    let url = `${CONFIG.appsScriptUrl}?action=getDonors&campaign=${CONFIG.campaignCode}&key=${CONFIG.key}`;
+    // Note: team filtering is done client-side to keep teamTotals accurate across all donors
     const response = await fetch(url);
     const data = await response.json();
     return data;
+}
+
+async function fetchTeams() {
+    try {
+        const url = `${CONFIG.appsScriptUrl}?action=getTeams&key=${CONFIG.key}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.status === 'success' && data.teams && data.teams.length > 0) {
+            allTeams = data.teams;
+            renderTeamFilterPills();
+        }
+    } catch (err) {
+        console.log('Could not load teams:', err);
+    }
 }
 
 async function loadData() {
@@ -755,7 +962,6 @@ async function loadData() {
         const data = await fetchDonors();
 
         // Check for errors (invalid key, etc.)
-        console.log('API response:', data);
         if (data.status === 'error') {
             showAccessDenied(data.message || 'Access denied.');
             return;
@@ -763,10 +969,11 @@ async function loadData() {
 
         currentTotals = data.totals || {};
         currentDonors = data.donors || [];
+        currentTeamTotals = data.teamTotals || {};
 
         updateStats();
         updateProgress();
-        sortAndRender();
+        renderCurrentView();
 
         // Update refresh timestamp
         document.getElementById('last-refresh').textContent = formatRefreshTime();
@@ -776,6 +983,11 @@ async function loadData() {
             document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('controls-bar').style.display = 'flex';
             document.getElementById('donors-grid').style.display = 'grid';
+
+            // Apply URL team filter if present
+            if (currentTeamFilter) {
+                setTeamFilter(currentTeamFilter);
+            }
         }
 
     } catch (err) {
@@ -784,6 +996,81 @@ async function loadData() {
             showAccessDenied('Unable to load data. Please check the URL and try again.');
         }
     }
+}
+
+// ============================================================
+// TEAM FILTER
+// ============================================================
+function renderTeamFilterPills() {
+    const bar = document.getElementById('filter-bar');
+    if (!allTeams.length) return;
+
+    // Remove old team pills (keep the "All" button)
+    const existing = bar.querySelectorAll('.filter-pill[data-team]:not([data-team=""])');
+    existing.forEach(el => el.remove());
+
+    allTeams.forEach(team => {
+        const pill = document.createElement('button');
+        pill.className = 'filter-pill' + (currentTeamFilter === team.id ? ' active' : '');
+        pill.dataset.team = team.id;
+        pill.textContent = team.name;
+        pill.onclick = () => setTeamFilter(team.id);
+        bar.appendChild(pill);
+    });
+
+    // Update "All" pill state
+    const allPill = bar.querySelector('[data-team=""]');
+    if (allPill) allPill.classList.toggle('active', !currentTeamFilter);
+
+    bar.style.display = 'flex';
+}
+
+function setTeamFilter(teamId) {
+    currentTeamFilter = teamId;
+
+    // Update pill states
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.dataset.team === teamId);
+    });
+
+    renderCurrentView();
+
+    // Update donor count label
+    updateDonorCountLabel();
+}
+
+function getFilteredDonors() {
+    if (!currentTeamFilter) return currentDonors;
+    return currentDonors.filter(d => {
+        if (!d.teams) return false;
+        const teamList = d.teams.split(',').map(t => t.trim().toLowerCase());
+        return teamList.includes(currentTeamFilter.toLowerCase());
+    });
+}
+
+// ============================================================
+// VIEW TOGGLE
+// ============================================================
+function setView(view) {
+    currentView = view;
+
+    document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+    });
+
+    // Show/hide sort pills (only relevant in donors view)
+    document.getElementById('sort-pills').style.display = view === 'donors' ? 'flex' : 'none';
+
+    renderCurrentView();
+}
+
+function renderCurrentView() {
+    if (currentView === 'teams') {
+        renderTeamCards();
+    } else {
+        sortAndRender();
+    }
+    updateDonorCountLabel();
 }
 
 // ============================================================
@@ -817,10 +1104,18 @@ function updateStats() {
         donorsEl.classList.remove('fade-update');
         avgEl.classList.remove('fade-update');
     }, 500);
+}
 
-    // Update donor count label
+function updateDonorCountLabel() {
     const countLabel = document.getElementById('donor-count-label');
-    countLabel.textContent = `${currentDonors.length} confirmed donor${currentDonors.length !== 1 ? 's' : ''}`;
+    if (currentView === 'teams') {
+        const teamCount = Object.keys(currentTeamTotals).length;
+        countLabel.textContent = `${teamCount} team${teamCount !== 1 ? 's' : ''}`;
+    } else {
+        const filtered = getFilteredDonors();
+        const suffix = currentTeamFilter ? ` in ${getTeamName(currentTeamFilter)}` : '';
+        countLabel.textContent = `${filtered.length} confirmed donor${filtered.length !== 1 ? 's' : ''}${suffix}`;
+    }
 }
 
 function updateProgress() {
@@ -851,7 +1146,8 @@ function setSort(sortBy) {
 }
 
 function sortAndRender() {
-    const sorted = [...currentDonors];
+    const filtered = getFilteredDonors();
+    const sorted = [...filtered];
 
     if (currentSort === 'amount') {
         sorted.sort((a, b) => (b.amount || 0) - (a.amount || 0));
@@ -915,7 +1211,80 @@ function renderDonors(donors) {
 
         html += `<div class="donor-date">${formatDate(donor.timestamp)}</div>`;
 
+        // Team badges
+        if (donor.teams && donor.teams.trim()) {
+            const teamIds = donor.teams.split(',').map(t => t.trim()).filter(Boolean);
+            if (teamIds.length > 0) {
+                html += '<div class="donor-teams">';
+                teamIds.forEach(tid => {
+                    html += `<span class="team-badge">${escapeHTML(getTeamName(tid))}</span>`;
+                });
+                html += '</div>';
+            }
+        }
+
         card.innerHTML = html;
+        fragment.appendChild(card);
+    });
+
+    grid.innerHTML = '';
+    grid.appendChild(fragment);
+}
+
+// ============================================================
+// RENDER TEAM CARDS (teams view)
+// ============================================================
+function renderTeamCards() {
+    const grid = document.getElementById('donors-grid');
+
+    if (!currentTeamTotals || Object.keys(currentTeamTotals).length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <div class="empty-state-icon">🏆</div>
+                <h3>No teams yet</h3>
+                <p>Teams will appear here when donors are assigned to them.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Sort teams by amount (highest first)
+    const teamEntries = Object.entries(currentTeamTotals)
+        .sort((a, b) => b[1].amount - a[1].amount);
+
+    const fragment = document.createDocumentFragment();
+
+    teamEntries.forEach(([teamId, data], index) => {
+        const card = document.createElement('div');
+        card.className = 'team-card';
+        card.style.animationDelay = `${Math.min(index * 80, 600)}ms`;
+        card.style.cursor = 'pointer';
+        card.onclick = () => {
+            setView('donors');
+            setTeamFilter(teamId);
+        };
+
+        const teamName = getTeamName(teamId);
+        const avgPerDonor = data.count > 0 ? Math.round(data.amount / data.count) : 0;
+
+        card.innerHTML = `
+            <div class="team-card-bar"></div>
+            <div class="team-card-name">${escapeHTML(teamName)}</div>
+            <div class="team-card-stats">
+                <div class="team-stat">
+                    <div class="team-stat-value">${formatCurrency(data.amount)}</div>
+                    <div class="team-stat-label">Total Raised</div>
+                </div>
+                <div class="team-stat">
+                    <div class="team-stat-value">${data.count}</div>
+                    <div class="team-stat-label">Donors</div>
+                </div>
+            </div>
+            <div style="text-align:center; font-size:0.75rem; color:rgba(255,255,255,0.3);">
+                Avg: ${formatCurrency(avgPerDonor)} per donor
+            </div>
+        `;
+
         fragment.appendChild(card);
     });
 
@@ -946,6 +1315,7 @@ function showAccessDenied(message) {
     document.getElementById('controls-bar').style.display = 'none';
     document.getElementById('donors-grid').style.display = 'none';
     document.getElementById('progress-section').style.display = 'none';
+    document.getElementById('filter-bar').style.display = 'none';
 }
 
 // ============================================================
@@ -958,6 +1328,9 @@ function showAccessDenied(message) {
         showAccessDenied('No access key provided. Please use the link you were given.');
         return;
     }
+
+    // Fetch teams list (for filter pills + team name lookups)
+    fetchTeams();
 
     // Initial load
     loadData();

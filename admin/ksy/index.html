@@ -462,6 +462,88 @@
             box-shadow: 0 0 0 3px rgba(255, 82, 82, 0.08);
         }
 
+        /* ── Tag Input ─────────────────────────────────── */
+        .tag-input-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            padding: 0.5rem 0.6rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            min-height: 42px;
+            cursor: text;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .tag-input-wrapper:focus-within {
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.12);
+        }
+        .tag-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(77, 171, 247, 0.15);
+            border: 1px solid rgba(77, 171, 247, 0.3);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            color: #8cc4f7;
+            white-space: nowrap;
+        }
+        .tag-chip .remove-tag {
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #ff6b6b;
+            opacity: 0.7;
+            transition: opacity 0.15s;
+            line-height: 1;
+        }
+        .tag-chip .remove-tag:hover { opacity: 1; }
+        .tag-search {
+            border: none;
+            background: transparent;
+            color: #EFEFEF;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            flex: 1;
+            min-width: 80px;
+        }
+        .tag-search::placeholder { color: #555; }
+        .tag-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1e1e1e;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            max-height: 160px;
+            overflow-y: auto;
+            z-index: 50;
+            margin-top: 4px;
+            display: none;
+        }
+        .tag-dropdown.visible { display: block; }
+        .tag-dropdown-item {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            color: #ccc;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .tag-dropdown-item:hover {
+            background: rgba(77, 171, 247, 0.1);
+            color: #fff;
+        }
+        .tag-dropdown-empty {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            color: #666;
+            font-style: italic;
+        }
+
         /* ── Responsive ────────────────────────────────── */
         @media (max-width: 640px) {
             .page-wrapper { padding: 1.25rem 1rem 3rem; }
@@ -584,6 +666,14 @@
                         <label for="memo">Memo</label>
                         <textarea id="memo" name="memo" placeholder="Optional notes…"></textarea>
                     </div>
+
+                    <div class="field" style="position:relative;">
+                        <label>Teams</label>
+                        <div class="tag-input-wrapper" id="teamTagWrapper">
+                            <input type="text" class="tag-search" id="teamSearch" placeholder="Type to search teams..." autocomplete="off">
+                        </div>
+                        <div class="tag-dropdown" id="teamDropdown"></div>
+                    </div>
                 </div>
 
                 <!-- ── Full Width: Toggles ── -->
@@ -705,6 +795,12 @@ function init() {
     // Form submit
     form.addEventListener('submit', handleSubmit);
     addAnotherBtn.addEventListener('click', resetForm);
+
+    // Teams tag input
+    window.allTeams = [];
+    window.selectedTeams = [];
+    loadTeams();
+    initTeamTagInput();
 }
 
 /* ─── Submit ──────────────────────────────────────────── */
@@ -750,6 +846,7 @@ async function handleSubmit(e) {
         donationDate: form.donationDate.value,
         sendReceipt:  receiptToggle.checked && form.email.value.trim().length > 0,
         anonymous:    anonymousToggle.checked,
+        teams:        window.selectedTeams.join(','),
     };
 
     // Submit
@@ -791,6 +888,7 @@ async function submitDonation(formData) {
         donationDate: formData.donationDate,
         sendReceipt:  formData.sendReceipt,
         anonymous:    formData.anonymous,
+        teams:        formData.teams || '',
     };
 
     const response = await fetch(CONFIG.appsScriptUrl, {
@@ -845,6 +943,10 @@ function resetForm() {
 
     // Clear validation
     form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+
+    // Clear teams
+    window.selectedTeams = [];
+    renderTeamTags();
 }
 
 /* ─── Clear validation on input ───────────────────────── */
@@ -853,6 +955,105 @@ document.querySelectorAll('.field input, .field select').forEach(el => {
         el.closest('.field').classList.remove('invalid');
     });
 });
+
+/* ─── Teams Tag Input ─────────────────────────────────── */
+async function loadTeams() {
+    try {
+        const res = await fetch(`${CONFIG.appsScriptUrl}?action=getTeams&key=${CONFIG.key}`);
+        const data = await res.json();
+        if (data.status === 'success' && Array.isArray(data.teams)) {
+            window.allTeams = data.teams;
+        }
+    } catch (err) {
+        console.warn('Could not load teams:', err);
+    }
+}
+
+function initTeamTagInput() {
+    const searchInput = document.getElementById('teamSearch');
+    const dropdown = document.getElementById('teamDropdown');
+    const wrapper = document.getElementById('teamTagWrapper');
+
+    // Focus the input when clicking the wrapper
+    wrapper.addEventListener('click', () => searchInput.focus());
+
+    // Filter on typing
+    searchInput.addEventListener('input', () => {
+        filterTeams(searchInput.value.trim());
+    });
+
+    // Show dropdown on focus
+    searchInput.addEventListener('focus', () => {
+        filterTeams(searchInput.value.trim());
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('visible');
+        }
+    });
+}
+
+function filterTeams(query) {
+    const dropdown = document.getElementById('teamDropdown');
+    const lowerQ = query.toLowerCase();
+    const available = window.allTeams.filter(t =>
+        !window.selectedTeams.includes(t.id) &&
+        (lowerQ === '' || t.name.toLowerCase().includes(lowerQ))
+    );
+
+    if (available.length === 0) {
+        dropdown.innerHTML = '<div class="tag-dropdown-empty">No teams found</div>';
+    } else {
+        dropdown.innerHTML = available.map(t =>
+            `<div class="tag-dropdown-item" data-id="${t.id}" data-name="${t.name}">${t.name}</div>`
+        ).join('');
+
+        dropdown.querySelectorAll('.tag-dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+                addTeam(item.dataset.id, item.dataset.name);
+                document.getElementById('teamSearch').value = '';
+                dropdown.classList.remove('visible');
+            });
+        });
+    }
+
+    dropdown.classList.add('visible');
+}
+
+function addTeam(id, name) {
+    if (window.selectedTeams.includes(id)) return;
+    window.selectedTeams.push(id);
+    renderTeamTags();
+}
+
+function removeTeam(id) {
+    window.selectedTeams = window.selectedTeams.filter(t => t !== id);
+    renderTeamTags();
+}
+
+function renderTeamTags() {
+    const wrapper = document.getElementById('teamTagWrapper');
+    const searchInput = document.getElementById('teamSearch');
+
+    // Remove existing chips
+    wrapper.querySelectorAll('.tag-chip').forEach(chip => chip.remove());
+
+    // Add chips before the input
+    window.selectedTeams.forEach(id => {
+        const team = window.allTeams.find(t => t.id === id);
+        if (!team) return;
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.innerHTML = `${team.name}<span class="remove-tag" data-id="${id}">&times;</span>`;
+        chip.querySelector('.remove-tag').addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeTeam(id);
+        });
+        wrapper.insertBefore(chip, searchInput);
+    });
+}
 </script>
 
 </body>
