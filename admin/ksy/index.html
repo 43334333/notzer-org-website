@@ -658,6 +658,51 @@
                     </div>
 
                     <div class="field">
+                        <label for="paymentStatus">Payment Status <span class="req">*</span></label>
+                        <select id="paymentStatus" name="paymentStatus" required>
+                            <option value="" disabled selected>Select status…</option>
+                            <option value="Processed">Processed — Payment received</option>
+                            <option value="Pledged">Pledged — Commitment only</option>
+                            <option value="Scheduled">Scheduled — Recurring/installment</option>
+                            <option value="Split">Split — Partial payment now</option>
+                        </select>
+                    </div>
+
+                    <div class="field" id="splitFields" style="display:none;">
+                        <label for="amountPaidNow">Amount Paid Now <span class="req">*</span></label>
+                        <div class="amount-wrapper">
+                            <span class="currency">$</span>
+                            <input type="number" id="amountPaidNow" name="amountPaidNow" min="0.01" step="0.01" placeholder="0.00">
+                        </div>
+                        <p style="font-size:0.75rem; color:#777; margin-top:4px;">The "Amount" field above is the total pledge. Enter the partial payment received now.</p>
+                    </div>
+
+                    <div id="scheduledFields" style="display:none;">
+                        <div class="field">
+                            <label for="frequency">Frequency <span class="req">*</span></label>
+                            <select id="frequency" name="frequency">
+                                <option value="" disabled selected>Select frequency…</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="biweekly">Bi-weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                                <option value="annually">Annually</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="totalPayments">Total Payments</label>
+                            <input type="number" id="totalPayments" name="totalPayments" min="2" placeholder="e.g. 12 (leave blank for ongoing)">
+                        </div>
+                        <div class="field">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                <input type="checkbox" id="isInstallment" style="width:auto;">
+                                <span>This is an installment (total amount is split across payments)</span>
+                            </label>
+                        </div>
+                    </div>
+
+
+                    <div class="field">
                         <label for="donationDate">Donation Date</label>
                         <input type="date" id="donationDate" name="donationDate">
                     </div>
@@ -796,6 +841,27 @@ function init() {
     form.addEventListener('submit', handleSubmit);
     addAnotherBtn.addEventListener('click', resetForm);
 
+    // Status-dependent field visibility
+    const statusSelect = document.getElementById('paymentStatus');
+    const splitFields = document.getElementById('splitFields');
+    const scheduledFields = document.getElementById('scheduledFields');
+    const methodField = document.getElementById('method');
+
+    statusSelect.addEventListener('change', function() {
+        const val = this.value;
+        splitFields.style.display = val === 'Split' ? 'block' : 'none';
+        scheduledFields.style.display = val === 'Scheduled' ? 'block' : 'none';
+
+        // For Pledged, method isn't required (no payment)
+        if (val === 'Pledged') {
+            methodField.removeAttribute('required');
+            methodField.closest('.field').style.opacity = '0.5';
+        } else {
+            methodField.setAttribute('required', '');
+            methodField.closest('.field').style.opacity = '1';
+        }
+    });
+
     // Teams tag input
     window.allTeams = [];
     window.selectedTeams = [];
@@ -809,7 +875,7 @@ async function handleSubmit(e) {
     hideError();
 
     // Validate
-    const required = ['firstName', 'lastName', 'amount', 'method'];
+    const required = ['firstName', 'lastName', 'amount', 'method', 'paymentStatus'];
     let valid = true;
 
     required.forEach(name => {
@@ -847,6 +913,11 @@ async function handleSubmit(e) {
         sendReceipt:  receiptToggle.checked && form.email.value.trim().length > 0,
         anonymous:    anonymousToggle.checked,
         teams:        window.selectedTeams.join(','),
+        paymentStatus: form.paymentStatus.value,
+        amountPaidNow: form.paymentStatus.value === 'Split' ? parseFloat(document.getElementById('amountPaidNow').value) || 0 : 0,
+        frequency: form.paymentStatus.value === 'Scheduled' ? (document.getElementById('frequency').value || '') : '',
+        totalPayments: form.paymentStatus.value === 'Scheduled' ? (parseInt(document.getElementById('totalPayments').value) || 0) : 0,
+        isInstallment: form.paymentStatus.value === 'Scheduled' ? document.getElementById('isInstallment').checked : false,
     };
 
     // Submit
@@ -889,6 +960,11 @@ async function submitDonation(formData) {
         sendReceipt:  formData.sendReceipt,
         anonymous:    formData.anonymous,
         teams:        formData.teams || '',
+        paymentStatus: formData.paymentStatus,
+        amountPaidNow: formData.amountPaidNow,
+        frequency: formData.frequency || '',
+        totalPayments: formData.totalPayments || 0,
+        isInstallment: formData.isInstallment || false,
     };
 
     const response = await fetch(CONFIG.appsScriptUrl, {
@@ -943,6 +1019,16 @@ function resetForm() {
 
     // Clear validation
     form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+
+    // Reset payment status fields
+    document.getElementById('paymentStatus').selectedIndex = 0;
+    document.getElementById('splitFields').style.display = 'none';
+    document.getElementById('scheduledFields').style.display = 'none';
+    document.getElementById('amountPaidNow').value = '';
+    document.getElementById('frequency').selectedIndex = 0;
+    document.getElementById('totalPayments').value = '';
+    document.getElementById('isInstallment').checked = false;
+    document.getElementById('method').closest('.field').style.opacity = '1';
 
     // Clear teams
     window.selectedTeams = [];
