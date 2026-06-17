@@ -1100,6 +1100,11 @@ function updateStats() {
         const filtered = getFilteredDonors();
         displayRaised = filtered.reduce((sum, d) => sum + (d.amount || 0), 0);
         displayDonors = filtered.length;
+        console.log('[updateStats] Team filter active:', currentTeamFilter,
+            '| Filtered donors:', displayDonors,
+            '| Filtered raised:', displayRaised,
+            '| Global raised:', currentTotals.totalRaised,
+            '| Sample donor teams:', currentDonors.slice(0,3).map(d => d.teams));
     }
 
     const newTotal = formatCurrency(displayRaised);
