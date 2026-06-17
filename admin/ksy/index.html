@@ -959,6 +959,8 @@ async function submitDonation(formData) {
         donationDate: formData.donationDate,
         sendReceipt:  formData.sendReceipt,
         anonymous:    formData.anonymous,
+        campaignCode: CONFIG.campaignCode,
+        campaignName: CONFIG.campaignName,
         teams:        formData.teams || '',
         paymentStatus: formData.paymentStatus,
         amountPaidNow: formData.amountPaidNow,

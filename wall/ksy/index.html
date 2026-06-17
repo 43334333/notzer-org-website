@@ -1092,8 +1092,18 @@ function updateStats() {
     const totalEl = document.getElementById('stat-total');
     const donorsEl = document.getElementById('stat-donors');
 
-    const newTotal = formatCurrency(currentTotals.totalRaised);
-    const newDonors = (currentTotals.donorCount || 0).toLocaleString();
+    // When filtered by team, recalculate totals from filtered donors
+    let displayRaised = currentTotals.totalRaised || 0;
+    let displayDonors = currentTotals.donorCount || 0;
+
+    if (currentTeamFilter) {
+        const filtered = getFilteredDonors();
+        displayRaised = filtered.reduce((sum, d) => sum + (d.amount || 0), 0);
+        displayDonors = filtered.length;
+    }
+
+    const newTotal = formatCurrency(displayRaised);
+    const newDonors = displayDonors.toLocaleString();
 
     if (totalEl.textContent !== newTotal) {
         totalEl.textContent = newTotal;
@@ -1111,7 +1121,6 @@ function updateStats() {
     }, 500);
 
     // Update goal progress card
-    const goalRaised = currentTotals.totalRaised || 0;
     let activeGoal = campaignGoal;
 
     // If filtered by team, use team-specific goal
@@ -1128,13 +1137,13 @@ function updateStats() {
     const goalPctEl = document.getElementById('goal-pct');
 
     if (activeGoal > 0) {
-        goalRaisedEl.textContent = formatCurrency(goalRaised);
+        goalRaisedEl.textContent = formatCurrency(displayRaised);
         goalTargetEl.textContent = 'of ' + formatCurrency(activeGoal);
-        const pct = Math.min(100, (goalRaised / activeGoal) * 100);
+        const pct = Math.min(100, (displayRaised / activeGoal) * 100);
         goalFillEl.style.width = pct + '%';
         goalPctEl.textContent = Math.round(pct) + '%';
     } else {
-        goalRaisedEl.textContent = formatCurrency(goalRaised);
+        goalRaisedEl.textContent = formatCurrency(displayRaised);
         goalTargetEl.textContent = '';
         goalFillEl.style.width = '0%';
         goalPctEl.textContent = 'No goal set';
