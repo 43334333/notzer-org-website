@@ -1,0 +1,2080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{CAMPAIGN_NAME}} | Notzer Chesed</title>
+    <meta name="description" content="{{CAMPAIGN_DESCRIPTION}}">
+    <link rel="icon" type="image/png" href="/NC_Logo_03.png">
+    <style>
+        /* ============================================================
+           CSS VARIABLES — Driven by CAMPAIGN_CONFIG
+           ============================================================ */
+        :root {
+            --accent: #4dabf7;
+            --accent-light: #74c0fc;
+            --accent-dark: #339af0;
+            --bg-body: #121212;
+            --bg-card: #1F1F1F;
+            --bg-input: #333;
+            --bg-input-hover: #3a3a3a;
+            --border-color: #333;
+            --border-light: #555;
+            --text-primary: #EFEFEF;
+            --text-secondary: #ccc;
+            --text-muted: #aaa;
+            --text-faint: #888;
+            --error-color: #ff5252;
+            --success-color: #51cf66;
+        }
+
+        /* ============================================================
+           RESET & BASE
+           ============================================================ */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1, h2, h3 { color: #FFFFFF; line-height: 1.2; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ============================================================
+           HEADER & NAVIGATION
+           ============================================================ */
+        .header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            text-align: center;
+        }
+        .header .container { display: flex; flex-direction: column; align-items: center; }
+        .header .org-name { font-size: 2rem; font-weight: bold; color: #FFFFFF; margin: 0; }
+        .nav { margin-top: 1rem; }
+        .nav a { color: var(--text-primary); margin: 0 15px; font-size: 1.1rem; font-weight: 500; }
+        .nav a:hover { color: var(--accent); text-decoration: none; }
+
+        /* ============================================================
+           HERO SECTION
+           ============================================================ */
+        .hero-section {
+            position: relative;
+            padding: 50px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.85));
+            overflow: hidden;
+        }
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.25;
+            z-index: 0;
+        }
+        .hero-content { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; }
+        .hero-title-he {
+            font-size: 2.4rem;
+            margin: 0 0 5px;
+            color: #FFFFFF;
+            direction: rtl;
+        }
+        .hero-title {
+            font-size: 2.2rem;
+            margin: 0 0 10px;
+            color: #FFFFFF;
+        }
+        .hero-subtitle {
+            font-size: 1.1rem;
+            font-style: italic;
+            color: var(--text-muted);
+            margin: 0 0 5px;
+            direction: rtl;
+        }
+        .hero-description {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-top: 15px;
+            line-height: 1.7;
+        }
+
+        /* Goal progress bar */
+        .goal-section { margin-top: 25px; }
+        .goal-bar-container {
+            background: rgba(255,255,255,0.08);
+            border-radius: 20px;
+            height: 24px;
+            overflow: hidden;
+            max-width: 500px;
+            margin: 10px auto;
+            position: relative;
+        }
+        .goal-bar-fill {
+            height: 100%;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            transition: width 1s ease;
+            min-width: 0;
+        }
+        .goal-text { font-size: 0.9rem; color: var(--text-muted); margin-top: 8px; }
+
+        /* ============================================================
+           SECTIONS
+           ============================================================ */
+        .section {
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .section-title {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+        }
+
+        /* ============================================================
+           STORY COLUMNS
+           ============================================================ */
+        .story-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .story-col { line-height: 1.7; }
+        .story-col-yi {
+            font-size: 0.85rem;
+            border-left: 2px solid var(--border-color);
+            padding-left: 25px;
+        }
+
+        /* ============================================================
+           PHOTO GALLERY
+           ============================================================ */
+        .photo-gallery { margin-top: 20px; }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            padding: 10px 0;
+        }
+        .gallery-img {
+            width: 100%;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid var(--border-color);
+        }
+        .gallery-img:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .lightbox-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .lightbox-overlay.active { display: flex; }
+        .lightbox-overlay img {
+            max-width: 90%;
+            max-height: 90vh;
+            border-radius: 8px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+
+        /* ============================================================
+           DONATION FORM
+           ============================================================ */
+        .donation-form {
+            max-width: 860px;
+            margin: 20px auto;
+            padding: 25px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        .donation-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        .donation-col { min-width: 0; }
+        .col-heading {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            margin: 0 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .req { color: var(--error-color); }
+
+        /* ============================================================
+           AMOUNT BUTTONS
+           ============================================================ */
+        .donation-amounts {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+        .amount-btn {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 8px 4px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .amount-btn:hover {
+            border-color: var(--accent);
+            background-color: var(--bg-input);
+        }
+        .amount-btn.active {
+            background-color: var(--accent);
+            color: var(--bg-body);
+            border-color: var(--accent);
+        }
+
+        /* Custom Amount */
+        .custom-amount-wrapper {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .custom-amount-wrapper input {
+            width: 100%;
+            height: 38px;
+            padding: 8px 8px 8px 22px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+        .custom-amount-wrapper .currency-symbol {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        /* ============================================================
+           FORM INPUTS
+           ============================================================ */
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+        .form-row .form-group { flex: 1; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            height: 38px;
+            padding: 8px 10px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+
+        /* ============================================================
+           TOGGLE / CHECKBOX
+           ============================================================ */
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin: 12px 0;
+        }
+        .toggle-label input[type="checkbox"] {
+            accent-color: var(--accent);
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ============================================================
+           PAYMENT FIELDS (iFields & USAePay)
+           ============================================================ */
+        .ifield-container { margin-bottom: 12px; }
+        .ifield-container label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .ifield-container iframe {
+            width: 100%;
+            height: 38px;
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            background-color: var(--bg-input);
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .ifield-cvv { margin-bottom: 12px; }
+
+        .hosted-field-container {
+            width: 100%;
+            height: 38px;
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            background-color: var(--bg-input);
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .payment-error-label {
+            color: var(--error-color);
+            font-size: 0.85rem;
+            display: block;
+            min-height: 1.2em;
+        }
+
+        .gateway-indicator {
+            font-size: 0.75rem;
+            color: var(--text-faint);
+            text-align: right;
+            margin-top: 4px;
+        }
+        .gateway-indicator .gw-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* ============================================================
+           RECURRING SECTION
+           ============================================================ */
+        .recurring-section {
+            background-color: #252525;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+        .recurring-select {
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            display: none;
+            font-family: inherit;
+        }
+
+        /* ============================================================
+           DONATE BUTTON
+           ============================================================ */
+        .donate-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .donate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(77, 171, 247, 0.4);
+        }
+        .donate-btn:active { transform: translateY(0); }
+        .donate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .donate-btn.loading {
+            position: relative;
+            color: transparent;
+        }
+        .donate-btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            top: 50%;
+            left: 50%;
+            margin: -11px 0 0 -11px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================================
+           STATUS MESSAGES
+           ============================================================ */
+        .donation-status {
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .donation-status.error {
+            display: block;
+            background-color: rgba(255, 82, 82, 0.15);
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+        }
+        .donation-status.info {
+            display: block;
+            background-color: rgba(77, 171, 247, 0.12);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        .donation-status.success {
+            display: block;
+            background-color: rgba(81, 207, 102, 0.12);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+
+        /* ============================================================
+           MODAL OVERLAYS (success, declined, DAF confirm)
+           ============================================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: #fff;
+            font-size: 28px;
+            line-height: 60px;
+            margin: 0 auto 20px;
+            font-weight: bold;
+        }
+        .modal-icon.error-icon {
+            background: linear-gradient(135deg, var(--error-color), #d32f2f);
+        }
+        .modal-content h3 { font-size: 1.5rem; margin: 0 0 10px; }
+        .modal-content p { color: var(--text-secondary); line-height: 1.5; }
+        .modal-close-btn {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: var(--accent);
+            color: var(--bg-body);
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .modal-close-btn:hover { background: var(--accent-light); }
+
+        /* ============================================================
+           ZELLE / DAF SECTION
+           ============================================================ */
+        .daf-section {
+            margin-top: 30px;
+            padding: 25px;
+            background-color: #1a1a1a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        .daf-section h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.3rem; }
+        .zelle-toggle { margin-bottom: 15px; }
+        .zelle-btn {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .zelle-btn:hover {
+            border-color: #6d28d9;
+            background: #2a2a2a;
+        }
+        .zelle-btn .zelle-icon { font-size: 1.2rem; }
+        .zelle-btn .zelle-arrow { margin-left: auto; transition: transform 0.2s; }
+        .zelle-btn.open .zelle-arrow { transform: rotate(90deg); }
+        .zelle-details {
+            padding: 15px;
+            background: #252525;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            margin-top: -1px;
+        }
+        .zelle-details p { margin: 0 0 8px; color: var(--text-secondary); font-size: 0.9rem; }
+        .zelle-email {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-light);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .zelle-email:hover {
+            border-color: #6d28d9;
+            background: var(--bg-input-hover);
+        }
+        .zelle-email strong { color: var(--text-primary); font-size: 1rem; }
+        .zelle-email .copy-hint { font-size: 0.8rem; color: var(--text-faint); }
+
+        .daf-links {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .daf-links a {
+            display: block;
+            padding: 10px 14px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--accent);
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .daf-links a:hover {
+            border-color: var(--accent);
+            background-color: #2a2a2a;
+            text-decoration: none;
+        }
+
+        /* ============================================================
+           TURNSTILE
+           ============================================================ */
+        .cf-turnstile { margin-bottom: 12px; }
+
+        /* ============================================================
+           FOOTER
+           ============================================================ */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* ============================================================
+           DONOR WALL LINK CARD
+           ============================================================ */
+        .wall-link-card {
+            text-align: center;
+            padding: 20px;
+            margin: 15px auto 0;
+            max-width: 400px;
+        }
+        .wall-link-card a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--accent);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .wall-link-card a:hover {
+            border-color: var(--accent);
+            background: rgba(77,171,247,0.06);
+            text-decoration: none;
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 768px) {
+            .nav { display: flex; flex-direction: column; align-items: center; }
+            .nav a { margin: 8px 0; }
+            .section-title { font-size: 1.8rem; }
+            .donation-columns { grid-template-columns: 1fr; }
+            .donation-amounts { grid-template-columns: repeat(4, 1fr); }
+            .form-row { flex-direction: column; gap: 0; }
+            .daf-links { grid-template-columns: 1fr; }
+            .story-columns { grid-template-columns: 1fr; }
+            .story-col-yi {
+                border-left: none;
+                padding-left: 0;
+                border-top: 1px solid var(--border-color);
+                padding-top: 20px;
+            }
+            .hero-title-he { font-size: 1.8rem; }
+            .hero-title { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 480px) {
+            .donation-amounts { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+         HEADER
+         ============================================================ -->
+    <header class="header">
+        <div class="container">
+            <p class="org-name">Notzer Chesed</p>
+            <nav class="nav">
+                <a href="/index.html">Home</a>
+                <a href="/about.html">About Us</a>
+                <a href="/campaigns.html">Campaigns</a>
+                <a href="/contact.html">Contact Us</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- ============================================================
+             SECTION 1: Hero / Campaign Story
+             ============================================================ -->
+        <section class="section" id="story-section">
+            <!-- Hero area -->
+            <h2 class="section-title" id="campaign-title-he"></h2>
+            <h2 class="section-title" id="campaign-title-en"></h2>
+            <p id="campaign-subtitle" style="text-align: center; font-style: italic; color: #aaa; font-size: 1.1rem; margin-top: -15px;"></p>
+
+            <!-- Goal progress (shown if goalAmount is set) -->
+            <div class="goal-section" id="goal-section" style="display: none;">
+                <div class="goal-bar-container">
+                    <div class="goal-bar-fill" id="goal-bar-fill" style="width: 0%;"></div>
+                </div>
+                <p class="goal-text" id="goal-text" style="text-align: center;"></p>
+            </div>
+
+            <!-- Campaign story (customize per campaign) -->
+            <div class="story-columns" id="story-columns">
+                <!-- English story column -->
+                <div class="story-col" id="story-en">
+                    <p id="story-description"></p>
+                    <!-- ═══════════════════════════════════════════
+                         CUSTOMIZE: Replace or expand story content
+                         per campaign. The config description is used
+                         as a fallback if this section is not customized.
+                         ═══════════════════════════════════════════ -->
+                </div>
+
+                <!-- Hebrew/Yiddish story column (optional) -->
+                <div class="story-col story-col-yi" dir="rtl" lang="yi" id="story-he">
+                    <!-- ═══════════════════════════════════════════
+                         CUSTOMIZE: Add Hebrew/Yiddish story content
+                         here per campaign. Leave empty if not needed.
+                         ═══════════════════════════════════════════ -->
+                </div>
+            </div>
+
+            <!-- Photo Gallery Toggle -->
+            <div class="gallery-toggle" id="gallery-section" style="text-align: center; margin-top: 25px;">
+                <button type="button" class="zelle-btn" id="gallery-toggle-btn" style="max-width: 280px; margin: 0 auto; justify-content: center;">
+                    📷 View Photos
+                    <span class="zelle-arrow">▸</span>
+                </button>
+                <div id="photo-gallery" class="photo-gallery" style="display: none;">
+                    <div class="gallery-grid" id="gallery-grid">
+                        <!-- Gallery images loaded dynamically from .pics/ folder -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lightbox -->
+            <div class="lightbox-overlay" id="lightbox" onclick="this.classList.remove('active')">
+                <img id="lightbox-img" src="" alt="">
+            </div>
+        </section>
+
+        <!-- ============================================================
+             SECTION 2: Donation Form
+             ============================================================ -->
+        <section class="section">
+            <h3 style="text-align: center; font-size: 1.6rem; margin-bottom: 25px;">Make a Donation</h3>
+
+            <div class="donation-form">
+                <form id="donation-form">
+                    <div class="donation-columns">
+                        <!-- LEFT COLUMN: Personal Info -->
+                        <div class="donation-col">
+                            <h4 class="col-heading">Your Information</h4>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="donor-first-name">First Name <span class="req">*</span></label>
+                                    <input type="text" id="donor-first-name" name="firstName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="donor-last-name">Last Name <span class="req">*</span></label>
+                                    <input type="text" id="donor-last-name" name="lastName" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="donor-email">Email <span class="req">*</span></label>
+                                <input type="email" id="donor-email" name="email" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="donor-phone">Phone</label>
+                                <input type="tel" id="donor-phone" name="phone">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="donor-street">Address</label>
+                                <input type="text" id="donor-street" name="street" placeholder="Street Address">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="donor-city">City</label>
+                                    <input type="text" id="donor-city" name="city">
+                                </div>
+                                <div class="form-group" style="max-width: 80px;">
+                                    <label for="donor-state">State</label>
+                                    <input type="text" id="donor-state" name="state" maxlength="2" placeholder="NY">
+                                </div>
+                                <div class="form-group" style="max-width: 110px;">
+                                    <label for="donor-zip">ZIP</label>
+                                    <input type="text" id="donor-zip" name="zip" maxlength="10">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="donor-display-name">Display Name</label>
+                                <input type="text" id="donor-display-name" name="displayName" placeholder="Name to show on donor wall">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="donor-memo">Memo</label>
+                                <input type="text" id="donor-memo" name="memo" placeholder="In memory of... / In honor of...">
+                            </div>
+
+                            <label class="toggle-label">
+                                <input type="checkbox" id="anonymous-check">
+                                <span>Make my donation anonymous</span>
+                            </label>
+
+                            <!-- Team selector -->
+                            <div class="form-group" style="position:relative; margin-top: 8px;">
+                                <label for="team-search">Team (optional)</label>
+                                <div id="teamTagWrapper" style="display:flex; flex-wrap:wrap; gap:4px; padding:8px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.12); border-radius:8px; min-height:40px; cursor:text; transition:border-color 0.2s;">
+                                    <input type="text" id="team-search" autocomplete="off" placeholder="Type to find your team..." style="border:none; background:transparent; color:#EFEFEF; font-family:inherit; font-size:0.9rem; outline:none; flex:1; min-width:80px;">
+                                </div>
+                                <div id="teamDropdown" style="position:absolute; top:100%; left:0; right:0; background:#1e1e1e; border:1px solid rgba(255,255,255,0.12); border-radius:8px; max-height:140px; overflow-y:auto; z-index:50; margin-top:4px; display:none;"></div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT COLUMN: Amount & Payment -->
+                        <div class="donation-col">
+                            <h4 class="col-heading">Donation Amount</h4>
+
+                            <div class="donation-amounts" id="amount-grid">
+                                <!-- Amount buttons are generated dynamically from CAMPAIGN_CONFIG.presetAmounts -->
+                            </div>
+
+                            <div class="custom-amount-wrapper" id="custom-amount-wrapper" style="display: none;">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" id="custom-amount" placeholder="Enter amount" min="1" step="0.01">
+                            </div>
+
+                            <h4 class="col-heading" style="margin-top: 20px;">Payment Details</h4>
+
+                            <!-- ════════════════════════════════════════
+                                 Cardknox iFields (Primary or Fallback)
+                                 ════════════════════════════════════════ -->
+                            <div id="cardknox-fields">
+                                <div class="ifield-container">
+                                    <label>Card Number</label>
+                                    <iframe id="card-number-iframe" data-ifields-id="card-number" data-ifields-placeholder="Card Number" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
+                                    <input data-ifields-id="card-number-token" name="xCardNum" type="hidden">
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="card-exp">Exp (MMYY)</label>
+                                        <input type="text" id="card-exp" name="xExp" placeholder="MMYY" maxlength="4" required>
+                                    </div>
+                                    <div class="ifield-container ifield-cvv" style="flex: 1;">
+                                        <label>CVV</label>
+                                        <iframe id="cvv-iframe" data-ifields-id="cvv" data-ifields-placeholder="CVV" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
+                                        <input data-ifields-id="cvv-token" name="xCVV" type="hidden">
+                                    </div>
+                                </div>
+
+                                <label data-ifields-id="card-data-error" class="payment-error-label"></label>
+                            </div>
+
+                            <!-- ════════════════════════════════════════
+                                 USAePay PaymentJS (Primary or Fallback)
+                                 ════════════════════════════════════════ -->
+                            <div id="usaepay-fields" style="display: none;">
+                                <div class="form-group">
+                                    <label>Card Number</label>
+                                    <div id="usaepay-card-number" class="hosted-field-container"></div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Expiration</label>
+                                        <div id="usaepay-exp" class="hosted-field-container"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>CVV</label>
+                                        <div id="usaepay-cvv" class="hosted-field-container"></div>
+                                    </div>
+                                </div>
+
+                                <label id="usaepay-error" class="payment-error-label"></label>
+                            </div>
+
+                            <!-- Gateway indicator -->
+                            <div class="gateway-indicator" id="gateway-indicator">
+                                <span class="gw-badge" id="gateway-badge"></span>
+                            </div>
+
+                            <!-- Recurring section -->
+                            <div class="recurring-section" id="recurring-section" style="display: block;">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="recurring-check">
+                                    <span>Make this a recurring donation</span>
+                                </label>
+                                <div id="recurring-options" style="display: none;">
+                                    <select class="recurring-select" id="recurring-frequency" style="display: block;">
+                                        <option value="">Select frequency...</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="biweekly">Every 2 Weeks</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="quarterly">Quarterly</option>
+                                        <option value="annually">Annually</option>
+                                    </select>
+                                    <div class="form-group" style="margin-top: 10px;">
+                                        <label for="recurring-count">Number of payments <span style="color: #888; font-weight: normal;">(blank = ongoing)</span></label>
+                                        <input type="number" id="recurring-count" min="2" max="999" placeholder="e.g. 12">
+                                    </div>
+                                    <label class="toggle-label">
+                                        <input type="checkbox" id="installment-check">
+                                        <span>Split total into installments</span>
+                                    </label>
+                                    <p id="installment-summary" style="display: none; font-size: 0.85rem; color: #4dabf7; margin: 4px 0 0; line-height: 1.4;"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Full-width bottom section -->
+
+                    <!-- Honeypot -->
+                    <div style="position: absolute; left: -9999px;" aria-hidden="true">
+                        <input type="text" name="website" id="honeypot" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <!-- Cloudflare Turnstile -->
+                    <div class="cf-turnstile" id="turnstile-widget" data-callback="onTurnstileSuccess" data-theme="dark"></div>
+
+                    <button type="submit" class="donate-btn" id="donate-btn" disabled>Donate Now</button>
+
+                    <!-- Error / info status -->
+                    <div class="donation-status" id="donation-status"></div>
+                </form>
+            </div>
+
+            <!-- Donor Wall Link -->
+            <div class="wall-link-card" id="wall-link-card" style="display: none;">
+                <a id="wall-link" href="#">🏛️ View the Donor Wall →</a>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             SECTION 3: Other Ways to Give
+             ============================================================ -->
+        <section class="section" id="other-ways-section">
+            <div class="daf-section">
+                <h3>Other Ways to Give</h3>
+                <p class="daf-required-note" id="daf-required-note" style="display: none; color: #ff5252; font-size: 0.85rem; margin-bottom: 10px;">Please fill in your First Name, Last Name, and Email above before using these options.</p>
+
+                <!-- Zelle -->
+                <div class="zelle-toggle">
+                    <button type="button" class="zelle-btn" id="zelle-toggle-btn">
+                        <span class="zelle-icon">⚡</span> Zelle
+                        <span class="zelle-arrow">▸</span>
+                    </button>
+                    <div id="zelle-info" class="zelle-details" style="display: none;">
+                        <p>Send via Zelle to:</p>
+                        <div class="zelle-email" id="zelle-email-box">
+                            <strong id="zelle-email-display"></strong>
+                            <span class="copy-hint">Click to copy</span>
+                        </div>
+                        <p style="font-size: 0.85rem; color: #888; margin-top: 8px;">Please include your name and email address in the Zelle memo for receipt purposes.</p>
+                    </div>
+                </div>
+
+                <!-- DAF Links -->
+                <p style="color: #aaa; margin: 20px 0 12px;">Contribute through your Donor-Advised Fund:</p>
+                <div class="daf-links">
+                    <a href="https://thedonorsfund.org/donate/notzer-chesed/113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="The Donors Fund">The Donors Fund</a>
+                    <a href="https://portal.ojcfund.org/account/recommendGrant?recurring=false&orgid=MQAAADQAAAA0AAAANwAAADUAAAA=" target="_blank" rel="noopener" class="daf-link" data-link-name="OJC Fund">OJC Fund</a>
+                    <a href="https://org.pledgercharitable.org/ChargeCard?ein=113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="Pledger Charitable">Pledger Charitable</a>
+                    <a href="https://matbia.org/d/00124211329" target="_blank" rel="noopener" class="daf-link" data-link-name="Matbia">Matbia</a>
+                    <a href="https://www.paypal.com/us/fundraiser/charity/3380976" target="_blank" rel="noopener" class="daf-link" data-link-name="PayPal">PayPal</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ============================================================
+         DAF Confirmation Modal
+         ============================================================ -->
+    <div class="modal-overlay" id="daf-confirm-modal">
+        <div class="modal-content">
+            <div class="modal-icon">📋</div>
+            <h3>Before You Go...</h3>
+            <p>After completing your donation through <strong id="daf-confirm-platform"></strong>, please send us a screenshot of your confirmation for our records and your tax-deductible receipt.</p>
+            <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 5px;">Send to:</p>
+            <div class="zelle-email" style="margin: 0 auto 10px; display: inline-flex;" id="daf-confirm-email-box">
+                <strong id="daf-confirm-email-display"></strong>
+                <span class="copy-hint">Click to copy</span>
+            </div>
+            <p style="margin-bottom: 0;"><a id="daf-mailto-link" href="#" style="font-size: 0.85rem; color: #4dabf7;">or click here to open your email client →</a></p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="button" class="modal-close-btn" style="flex: 1; background: #333; color: #EFEFEF;" onclick="closeDafConfirm()">Cancel</button>
+                <button type="button" class="modal-close-btn" style="flex: 1;" id="daf-confirm-proceed">Continue →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         Declined Overlay Modal
+         ============================================================ -->
+    <div class="modal-overlay" id="declined-modal">
+        <div class="modal-content">
+            <div class="modal-icon error-icon">✕</div>
+            <h3>Payment Declined</h3>
+            <p id="declined-message">Your card was declined. Please check your card details and try again.</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="button" class="modal-close-btn" style="flex: 1; background: #333; color: #EFEFEF;" onclick="closeDeclinedModal()">Close</button>
+                <button type="button" class="modal-close-btn" style="flex: 1;" onclick="retryDonation()">Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         FOOTER
+         ============================================================ -->
+    <footer class="footer">
+        <p>&copy; 2024 Notzer Chesed. All Rights Reserved.</p>
+    </footer>
+
+    <!-- ============================================================
+         Cloudflare Turnstile (loaded async)
+         ============================================================ -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+    <script>
+    // ════════════════════════════════════════════════════════════════
+    // CAMPAIGN CONFIGURATION — THE ONLY THING THAT CHANGES PER CAMPAIGN
+    // ════════════════════════════════════════════════════════════════
+    const CAMPAIGN_CONFIG = {
+        id: '{{CAMPAIGN_ID}}',
+        name: '{{CAMPAIGN_NAME}}',
+        nameHebrew: '{{CAMPAIGN_NAME_HE}}',
+        subtitle: '{{CAMPAIGN_SUBTITLE}}',
+        description: '{{CAMPAIGN_DESCRIPTION}}',
+        heroImage: '{{HERO_IMAGE_URL}}',
+        colorAccent: '{{ACCENT_COLOR}}',
+        colorAccentLight: '{{ACCENT_LIGHT}}',
+        colorAccentDark: '{{ACCENT_DARK}}',
+        presetAmounts: [18, 36, 72, 180, 360, 500],
+        recurringEnabled: true,
+        primaryGateway: '{{PRIMARY_GATEWAY}}',
+        cardknox: { ifieldsKey: '{{CARDKNOX_IFIELDS_KEY}}' },
+        usaepay: { publicKey: '{{USAEPAY_PUBLIC_KEY}}' },
+        appsScriptUrl: '{{APPS_SCRIPT_URL}}',
+        wallEnabled: true,
+        wallUrl: '/wall/{{CAMPAIGN_ID}}/',
+        goalAmount: null,
+        showStory: true,
+        showPhotoGallery: true,
+        showOtherWaysToGive: true,
+        zelleEmail: '{{ZELLE_EMAIL}}',
+        dafConfirmEmail: '{{DAF_CONFIRM_EMAIL}}',
+        turnstileSiteKey: '{{TURNSTILE_SITE_KEY}}',
+    };
+
+    // ════════════════════════════════════════════════════════════════
+    // APPLY CONFIG TO PAGE
+    // ════════════════════════════════════════════════════════════════
+    (function applyConfig() {
+        // Apply accent colors via CSS custom properties
+        const root = document.documentElement;
+        if (CAMPAIGN_CONFIG.colorAccent) {
+            root.style.setProperty('--accent', CAMPAIGN_CONFIG.colorAccent);
+        }
+        if (CAMPAIGN_CONFIG.colorAccentLight) {
+            root.style.setProperty('--accent-light', CAMPAIGN_CONFIG.colorAccentLight);
+        }
+        if (CAMPAIGN_CONFIG.colorAccentDark) {
+            root.style.setProperty('--accent-dark', CAMPAIGN_CONFIG.colorAccentDark);
+        }
+
+        // Page title
+        document.title = CAMPAIGN_CONFIG.name + ' | Notzer Chesed';
+
+        // Hero content
+        var titleHe = document.getElementById('campaign-title-he');
+        if (CAMPAIGN_CONFIG.nameHebrew) {
+            titleHe.textContent = CAMPAIGN_CONFIG.nameHebrew;
+            titleHe.style.direction = 'rtl';
+        } else {
+            titleHe.style.display = 'none';
+        }
+        document.getElementById('campaign-title-en').textContent = CAMPAIGN_CONFIG.name;
+
+        var subtitleEl = document.getElementById('campaign-subtitle');
+        if (CAMPAIGN_CONFIG.subtitle) {
+            subtitleEl.textContent = CAMPAIGN_CONFIG.subtitle;
+        } else {
+            subtitleEl.style.display = 'none';
+        }
+
+        // Story section
+        if (!CAMPAIGN_CONFIG.showStory) {
+            document.getElementById('story-columns').style.display = 'none';
+        } else if (CAMPAIGN_CONFIG.description) {
+            var descEl = document.getElementById('story-description');
+            if (descEl && !descEl.textContent.trim()) {
+                descEl.textContent = CAMPAIGN_CONFIG.description;
+            }
+        }
+
+        // Photo gallery
+        if (!CAMPAIGN_CONFIG.showPhotoGallery) {
+            document.getElementById('gallery-section').style.display = 'none';
+        }
+
+        // Goal section
+        if (CAMPAIGN_CONFIG.goalAmount && CAMPAIGN_CONFIG.goalAmount > 0) {
+            document.getElementById('goal-section').style.display = 'block';
+            // Goal progress will be updated when stats are fetched
+        }
+
+        // Donor wall link
+        if (CAMPAIGN_CONFIG.wallEnabled && CAMPAIGN_CONFIG.wallUrl) {
+            var wallCard = document.getElementById('wall-link-card');
+            wallCard.style.display = 'block';
+            document.getElementById('wall-link').href = CAMPAIGN_CONFIG.wallUrl;
+        }
+
+        // Recurring toggle
+        if (!CAMPAIGN_CONFIG.recurringEnabled) {
+            document.getElementById('recurring-section').style.display = 'none';
+        }
+
+        // Other ways to give
+        if (!CAMPAIGN_CONFIG.showOtherWaysToGive) {
+            document.getElementById('other-ways-section').style.display = 'none';
+        }
+
+        // Zelle email
+        if (CAMPAIGN_CONFIG.zelleEmail) {
+            document.getElementById('zelle-email-display').textContent = CAMPAIGN_CONFIG.zelleEmail;
+        }
+
+        // DAF confirm email
+        if (CAMPAIGN_CONFIG.dafConfirmEmail) {
+            document.getElementById('daf-confirm-email-display').textContent = CAMPAIGN_CONFIG.dafConfirmEmail;
+        }
+
+        // Turnstile site key
+        var turnstileWidget = document.getElementById('turnstile-widget');
+        if (CAMPAIGN_CONFIG.turnstileSiteKey) {
+            turnstileWidget.setAttribute('data-sitekey', CAMPAIGN_CONFIG.turnstileSiteKey);
+        }
+
+        // Hero background image
+        if (CAMPAIGN_CONFIG.heroImage) {
+            var heroSection = document.querySelector('.hero-section');
+            if (heroSection) {
+                heroSection.querySelector('::before').style.backgroundImage = 'url(' + CAMPAIGN_CONFIG.heroImage + ')';
+            }
+        }
+
+        // Generate preset amount buttons
+        generateAmountButtons();
+    })();
+
+    // ════════════════════════════════════════════════════════════════
+    // GENERATE PRESET AMOUNT BUTTONS
+    // ════════════════════════════════════════════════════════════════
+    function generateAmountButtons() {
+        var grid = document.getElementById('amount-grid');
+        grid.innerHTML = '';
+        CAMPAIGN_CONFIG.presetAmounts.forEach(function(amt) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'amount-btn';
+            btn.setAttribute('data-amount', String(amt));
+            btn.textContent = '$' + Number(amt).toLocaleString('en-US');
+            grid.appendChild(btn);
+        });
+        // "Other" button
+        var otherBtn = document.createElement('button');
+        otherBtn.type = 'button';
+        otherBtn.className = 'amount-btn';
+        otherBtn.setAttribute('data-amount', 'custom');
+        otherBtn.id = 'custom-amount-btn';
+        otherBtn.textContent = 'Other';
+        grid.appendChild(otherBtn);
+
+        // Attach event listeners
+        initAmountSelection();
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // GATEWAY MANAGER — Dual-Gateway Abstraction Layer
+    // Supports Cardknox iFields and USAePay PaymentJS
+    // ════════════════════════════════════════════════════════════════
+    const GatewayManager = {
+        activeGateway: null,
+        cardknoxReady: false,
+        usaepayReady: false,
+        paymentJs: null,
+        config: null,
+        _sdkLoadPromises: {},
+
+        /**
+         * Initialize the primary gateway
+         */
+        async init(config) {
+            this.config = config;
+            this.activeGateway = config.primaryGateway || 'cardknox';
+            await this.loadGateway(this.activeGateway);
+            this.updateGatewayIndicator();
+        },
+
+        /**
+         * Load a gateway SDK dynamically
+         */
+        async loadGateway(gateway) {
+            if (gateway === 'cardknox') {
+                if (!this.cardknoxReady) {
+                    await this.loadScript('https://cdn.cardknox.com/ifields/3.4.2602.2001/ifields.min.js', 'cardknox-sdk');
+                    this.initCardknoxFields();
+                    this.cardknoxReady = true;
+                }
+            } else if (gateway === 'usaepay') {
+                if (!this.usaepayReady) {
+                    await this.loadScript('https://www.usaepay.com/js/v1/pay.js', 'usaepay-sdk');
+                    this.initUSAePayFields();
+                    this.usaepayReady = true;
+                }
+            }
+            this.showGatewayFields(gateway);
+        },
+
+        /**
+         * Dynamically load a script tag, with dedup
+         */
+        loadScript(src, id) {
+            if (this._sdkLoadPromises[id]) return this._sdkLoadPromises[id];
+
+            this._sdkLoadPromises[id] = new Promise(function(resolve, reject) {
+                // Check if already loaded
+                if (document.getElementById(id)) {
+                    resolve();
+                    return;
+                }
+                var script = document.createElement('script');
+                script.id = id;
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = function() {
+                    reject(new Error('Failed to load ' + src));
+                };
+                document.head.appendChild(script);
+            });
+
+            return this._sdkLoadPromises[id];
+        },
+
+        /**
+         * Show the appropriate payment fields for the active gateway
+         */
+        showGatewayFields(gateway) {
+            var ckFields = document.getElementById('cardknox-fields');
+            var ueFields = document.getElementById('usaepay-fields');
+            var expInput = document.getElementById('card-exp');
+
+            if (gateway === 'cardknox') {
+                ckFields.style.display = 'block';
+                ueFields.style.display = 'none';
+                // Cardknox uses its own exp field (the standard input)
+                if (expInput) expInput.required = true;
+            } else {
+                ckFields.style.display = 'none';
+                ueFields.style.display = 'block';
+                // USAePay handles exp in its own hosted field
+                if (expInput) expInput.required = false;
+            }
+        },
+
+        /**
+         * Initialize Cardknox iFields
+         */
+        initCardknoxFields() {
+            if (typeof setAccount !== 'function') return;
+
+            setAccount(this.config.cardknox.ifieldsKey, 'NotzerChesed', '1.0.0');
+
+            var fieldStyle = this.getFieldStyle();
+            setIfieldStyle('card-number', fieldStyle);
+            setIfieldStyle('cvv', fieldStyle);
+            enableAutoFormatting(' ');
+
+            var validStyle = Object.assign({}, fieldStyle, { 'color': '#74c0fc' });
+            var invalidStyle = Object.assign({}, fieldStyle, { 'color': '#ff5252' });
+
+            addIfieldKeyPressCallback(function(data) {
+                if (data.cardNumberFormattedLength > 0) {
+                    setIfieldStyle('card-number', data.cardNumberIsValid ? validStyle : invalidStyle);
+                } else {
+                    setIfieldStyle('card-number', fieldStyle);
+                }
+                if (data.lastIfieldChanged === 'cvv') {
+                    if (data.cvvLength > 0) {
+                        setIfieldStyle('cvv', data.cvvIsValid ? validStyle : invalidStyle);
+                    } else {
+                        setIfieldStyle('cvv', fieldStyle);
+                    }
+                }
+            });
+        },
+
+        /**
+         * Initialize USAePay PaymentJS hosted fields
+         */
+        initUSAePayFields() {
+            if (typeof usaepay === 'undefined' && typeof PayJS === 'undefined') return;
+
+            var PayJSClass = typeof PayJS !== 'undefined' ? PayJS : (typeof usaepay !== 'undefined' ? usaepay : null);
+            if (!PayJSClass) return;
+
+            try {
+                this.paymentJs = new PayJSClass(this.config.usaepay.publicKey);
+
+                var style = this.getFieldStyleString();
+                this.paymentJs.createPaymentCardEntry({
+                    target: '#usaepay-card-number',
+                    style: style
+                });
+            } catch (err) {
+                console.error('USAePay init error:', err);
+                document.getElementById('usaepay-error').textContent = 'Payment fields failed to load. Please try again.';
+            }
+        },
+
+        /**
+         * Get field style object for iFields
+         */
+        getFieldStyle() {
+            return {
+                'background-color': '#333',
+                'border': 'none',
+                'color': '#EFEFEF',
+                'font-size': '0.95rem',
+                'padding': '8px 10px',
+                'width': '100%',
+                'height': '100%',
+                'box-sizing': 'border-box',
+                'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                'outline': 'none'
+            };
+        },
+
+        /**
+         * Get field style as CSS string for USAePay
+         */
+        getFieldStyleString() {
+            return 'background-color: #333; border: none; color: #EFEFEF; font-size: 0.95rem; ' +
+                   'padding: 8px 10px; width: 100%; height: 100%; box-sizing: border-box; ' +
+                   'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; ' +
+                   'outline: none;';
+        },
+
+        /**
+         * Tokenize card data with the active gateway
+         * @returns {Promise<{ token: string, cvvToken?: string, exp?: string, gateway: string }>}
+         */
+        tokenize() {
+            var self = this;
+            return new Promise(function(resolve, reject) {
+                if (self.activeGateway === 'cardknox') {
+                    if (typeof getTokens !== 'function') {
+                        reject(new Error('Cardknox SDK not loaded'));
+                        return;
+                    }
+                    getTokens(
+                        function() {
+                            var cardToken = document.querySelector('[data-ifields-id="card-number-token"]').value;
+                            var cvvToken = document.querySelector('[data-ifields-id="cvv-token"]').value;
+                            var exp = document.getElementById('card-exp').value;
+                            resolve({
+                                token: cardToken,
+                                cvvToken: cvvToken,
+                                exp: exp,
+                                gateway: 'cardknox'
+                            });
+                        },
+                        function(error) {
+                            reject(error || new Error('Failed to tokenize card with Cardknox'));
+                        },
+                        30000
+                    );
+                } else if (self.activeGateway === 'usaepay') {
+                    if (!self.paymentJs) {
+                        reject(new Error('USAePay SDK not loaded'));
+                        return;
+                    }
+                    self.paymentJs.getToken(
+                        function(token) {
+                            resolve({
+                                token: token.token || token.payment_key || token,
+                                cardType: token.card_type || '',
+                                last4: token.card_last4 || '',
+                                gateway: 'usaepay'
+                            });
+                        },
+                        function(errors) {
+                            var msg = 'Payment processing error';
+                            if (errors && typeof errors === 'object') {
+                                if (Array.isArray(errors)) {
+                                    msg = errors.map(function(e) { return e.message || e; }).join(', ');
+                                } else if (errors.message) {
+                                    msg = errors.message;
+                                }
+                            }
+                            reject(new Error(msg));
+                        }
+                    );
+                } else {
+                    reject(new Error('No active gateway configured'));
+                }
+            });
+        },
+
+        /**
+         * Switch to the fallback gateway (called on primary failure)
+         */
+        async switchToFallback() {
+            var fallback = this.activeGateway === 'cardknox' ? 'usaepay' : 'cardknox';
+            this.activeGateway = fallback;
+            await this.loadGateway(fallback);
+            this.updateGatewayIndicator();
+        },
+
+        /**
+         * Get the fallback gateway name
+         */
+        getFallbackGateway() {
+            return this.activeGateway === 'cardknox' ? 'usaepay' : 'cardknox';
+        },
+
+        /**
+         * Update the visual gateway indicator
+         */
+        updateGatewayIndicator() {
+            var badge = document.getElementById('gateway-badge');
+            if (badge) {
+                var label = this.activeGateway === 'cardknox' ? '🔒 Secure Payment (Cardknox)' : '🔒 Secure Payment (USAePay)';
+                badge.textContent = label;
+            }
+        }
+    };
+
+    // ════════════════════════════════════════════════════════════════
+    // INITIALIZE GATEWAY ON PAGE LOAD
+    // ════════════════════════════════════════════════════════════════
+    (async function initGateway() {
+        try {
+            await GatewayManager.init(CAMPAIGN_CONFIG);
+        } catch (err) {
+            console.error('Gateway initialization error:', err);
+        }
+    })();
+
+    // ════════════════════════════════════════════════════════════════
+    // AMOUNT SELECTION
+    // ════════════════════════════════════════════════════════════════
+    var selectedAmount = null;
+
+    function initAmountSelection() {
+        var amountBtns = document.querySelectorAll('.amount-btn');
+        var customWrapper = document.getElementById('custom-amount-wrapper');
+        var customInput = document.getElementById('custom-amount');
+
+        amountBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                amountBtns.forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                if (this.dataset.amount === 'custom') {
+                    customWrapper.style.display = 'block';
+                    customInput.focus();
+                    selectedAmount = null;
+                } else {
+                    customWrapper.style.display = 'none';
+                    customInput.value = '';
+                    selectedAmount = parseFloat(this.dataset.amount);
+                }
+                updateInstallmentSummary();
+            });
+        });
+
+        customInput.addEventListener('input', function() {
+            selectedAmount = parseFloat(this.value) || null;
+            updateInstallmentSummary();
+        });
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // RECURRING TOGGLE & INSTALLMENT LOGIC
+    // ════════════════════════════════════════════════════════════════
+    var recurringCheck = document.getElementById('recurring-check');
+    var recurringSelect = document.getElementById('recurring-frequency');
+
+    if (recurringCheck) {
+        recurringCheck.addEventListener('change', function() {
+            document.getElementById('recurring-options').style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) {
+                recurringSelect.value = '';
+                document.getElementById('recurring-count').value = '';
+                document.getElementById('installment-check').checked = false;
+                document.getElementById('installment-summary').style.display = 'none';
+            }
+            updateInstallmentSummary();
+        });
+    }
+
+    function updateInstallmentSummary() {
+        var customInput = document.getElementById('custom-amount');
+        var amt = selectedAmount || parseFloat(customInput.value);
+        var count = parseInt(document.getElementById('recurring-count').value) || 0;
+        var freq = document.getElementById('recurring-frequency').value;
+        var isInst = document.getElementById('installment-check').checked;
+        var summary = document.getElementById('installment-summary');
+        var freqLabels = { weekly: 'weekly', biweekly: 'bi-weekly', monthly: 'monthly', quarterly: 'quarterly', annually: 'annual' };
+
+        if (!recurringCheck.checked || !amt || count < 2 || !freq) { summary.style.display = 'none'; return; }
+
+        if (isInst) {
+            var perPayment = (amt / count).toFixed(2);
+            summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' each';
+        } else {
+            var total = (amt * count).toFixed(2);
+            summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+        }
+        summary.style.display = 'block';
+    }
+
+    if (recurringSelect) {
+        recurringSelect.addEventListener('change', updateInstallmentSummary);
+    }
+    document.getElementById('recurring-count').addEventListener('input', updateInstallmentSummary);
+    document.getElementById('installment-check').addEventListener('change', updateInstallmentSummary);
+
+    // ════════════════════════════════════════════════════════════════
+    // TURNSTILE
+    // ════════════════════════════════════════════════════════════════
+    var turnstileToken = null;
+    function onTurnstileSuccess(token) {
+        turnstileToken = token;
+        document.getElementById('donate-btn').disabled = false;
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // SUCCESS REDIRECT
+    // ════════════════════════════════════════════════════════════════
+    function redirectToSuccess(amount, email, refNum, firstName, lastName, phone, street, city, state, zip, anonymous, frequency) {
+        var params = new URLSearchParams();
+        params.set('amount', amount);
+        params.set('campaign', CAMPAIGN_CONFIG.name);
+        params.set('campaignId', CAMPAIGN_CONFIG.id);
+        if (refNum) params.set('ref', refNum);
+        if (!anonymous) params.set('donor', firstName + ' ' + lastName);
+        if (email) params.set('email', email);
+        if (phone) params.set('phone', phone);
+        var addrParts = [];
+        if (street) addrParts.push(street);
+        if (city) addrParts.push(city);
+        if (state && zip) addrParts.push(state + ' ' + zip);
+        else if (state) addrParts.push(state);
+        else if (zip) addrParts.push(zip);
+        if (addrParts.length) params.set('address', addrParts.join(', '));
+        if (frequency) params.set('recurring', frequency);
+        window.location.href = '/donation-success.html?' + params.toString();
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // STATUS HELPERS
+    // ════════════════════════════════════════════════════════════════
+    function showStatus(type, message) {
+        var el = document.getElementById('donation-status');
+        el.className = 'donation-status ' + type;
+        el.textContent = message;
+        el.style.display = 'block';
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    function hideStatus() {
+        var el = document.getElementById('donation-status');
+        el.style.display = 'none';
+        el.className = 'donation-status';
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // DECLINED MODAL
+    // ════════════════════════════════════════════════════════════════
+    function showDeclinedModal(message) {
+        document.getElementById('declined-message').textContent = message || 'Your card was declined. Please check your card details and try again.';
+        document.getElementById('declined-modal').classList.add('active');
+    }
+    function closeDeclinedModal() {
+        document.getElementById('declined-modal').classList.remove('active');
+    }
+    function retryDonation() {
+        closeDeclinedModal();
+        // Scroll to payment section and reset button
+        var btn = document.getElementById('donate-btn');
+        btn.disabled = false;
+        btn.classList.remove('loading');
+        btn.textContent = 'Donate Now';
+        document.getElementById('donation-form').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // FORM SUBMISSION — With Gateway Failover
+    // ════════════════════════════════════════════════════════════════
+    document.getElementById('donation-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Honeypot check
+        if (document.getElementById('honeypot').value) return;
+
+        // Get amount
+        var customInput = document.getElementById('custom-amount');
+        var amount = selectedAmount || parseFloat(customInput.value);
+        if (!amount || amount < 1) { showStatus('error', 'Please select or enter a donation amount.'); return; }
+
+        // Get donor info
+        var firstName = document.getElementById('donor-first-name').value.trim();
+        var lastName = document.getElementById('donor-last-name').value.trim();
+        var email = document.getElementById('donor-email').value.trim();
+
+        // Validate required fields
+        if (!firstName || !lastName || !email) {
+            showStatus('error', 'Please fill in all required fields.');
+            return;
+        }
+
+        // Validate exp for Cardknox
+        if (GatewayManager.activeGateway === 'cardknox') {
+            var exp = document.getElementById('card-exp').value.trim();
+            if (!exp || !/^\d{4}$/.test(exp)) {
+                showStatus('error', 'Expiration must be MMYY format (e.g., 1226).');
+                return;
+            }
+        }
+
+        // Turnstile check
+        if (!turnstileToken) { showStatus('error', 'Please wait for security verification.'); return; }
+
+        // Recurring validation
+        var isRecurring = recurringCheck && recurringCheck.checked;
+        var frequency = recurringSelect ? recurringSelect.value : '';
+        if (isRecurring && !frequency) { showStatus('error', 'Please select a recurring frequency.'); return; }
+
+        var totalPayments = isRecurring ? (parseInt(document.getElementById('recurring-count').value) || 0) : 0;
+        var isInstallment = isRecurring && document.getElementById('installment-check').checked;
+        if (isInstallment && totalPayments < 2) { showStatus('error', 'Please enter the number of installment payments (at least 2).'); return; }
+
+        // For installments: each charge = total amount ÷ number of payments
+        var chargeAmount = (isInstallment && totalPayments >= 2) ? Math.round((amount / totalPayments) * 100) / 100 : amount;
+
+        // Disable button
+        var btn = document.getElementById('donate-btn');
+        btn.disabled = true;
+        btn.classList.add('loading');
+        btn.textContent = 'Processing...';
+        hideStatus();
+
+        // Tokenize and submit
+        processPayment(chargeAmount, amount, firstName, lastName, email, isRecurring, frequency, totalPayments, isInstallment, false);
+    });
+
+    /**
+     * Core payment processing function — handles tokenize → submit → failover
+     */
+    async function processPayment(chargeAmount, totalAmount, firstName, lastName, email, isRecurring, frequency, totalPayments, isInstallment, isRetry) {
+        var btn = document.getElementById('donate-btn');
+
+        try {
+            // Step 1: Tokenize with active gateway
+            var tokenResult = await GatewayManager.tokenize();
+
+            // Step 2: Build payload
+            var payload = {
+                amount: chargeAmount,
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                phone: document.getElementById('donor-phone').value.trim(),
+                street: document.getElementById('donor-street').value.trim(),
+                city: document.getElementById('donor-city').value.trim(),
+                state: document.getElementById('donor-state').value.trim(),
+                zip: document.getElementById('donor-zip').value.trim(),
+                displayName: document.getElementById('donor-display-name').value.trim(),
+                memo: document.getElementById('donor-memo').value.trim(),
+                anonymous: document.getElementById('anonymous-check').checked,
+                isRecurring: isRecurring,
+                frequency: frequency,
+                totalPayments: totalPayments,
+                isInstallment: isInstallment,
+                totalPledgeAmount: isInstallment ? totalAmount : 0,
+                campaign: CAMPAIGN_CONFIG.name,
+                campaignCode: CAMPAIGN_CONFIG.id,
+                teams: (window.selectedTeamIds || []).join(','),
+                turnstileToken: turnstileToken,
+                gateway: tokenResult.gateway
+            };
+
+            // Add gateway-specific token fields
+            if (tokenResult.gateway === 'cardknox') {
+                payload.cardToken = tokenResult.token;
+                payload.cvvToken = tokenResult.cvvToken;
+                payload.exp = tokenResult.exp;
+            } else if (tokenResult.gateway === 'usaepay') {
+                payload.cardToken = tokenResult.token;
+                payload.cardType = tokenResult.cardType || '';
+                payload.last4 = tokenResult.last4 || '';
+            }
+
+            // Step 3: Submit to backend
+            var response = await fetch(CAMPAIGN_CONFIG.appsScriptUrl, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+            var data = await response.json();
+
+            // Step 4: Handle response
+            if (data.status === 'success') {
+                // Success → redirect
+                redirectToSuccess(
+                    chargeAmount, email, data.refNum,
+                    firstName, lastName,
+                    document.getElementById('donor-phone').value.trim(),
+                    document.getElementById('donor-street').value.trim(),
+                    document.getElementById('donor-city').value.trim(),
+                    document.getElementById('donor-state').value.trim(),
+                    document.getElementById('donor-zip').value.trim(),
+                    document.getElementById('anonymous-check').checked,
+                    isRecurring ? frequency : null
+                );
+                return;
+            } else if (data.status === 'gateway_error' && data.canRetry && !isRetry) {
+                // Step 5: Gateway error → try failover
+                showStatus('info', 'Trying alternate payment processor...');
+                btn.textContent = 'Retrying...';
+
+                try {
+                    await GatewayManager.switchToFallback();
+
+                    // Brief pause for user feedback
+                    await new Promise(function(resolve) { setTimeout(resolve, 1000); });
+
+                    // Re-tokenize and re-submit with fallback gateway
+                    await processPayment(chargeAmount, totalAmount, firstName, lastName, email, isRecurring, frequency, totalPayments, isInstallment, true);
+                    return;
+                } catch (fallbackErr) {
+                    showStatus('error', 'Both payment processors are unavailable. Please try again later.');
+                    console.error('Fallback error:', fallbackErr);
+                }
+            } else if (data.status === 'declined') {
+                // Step 6: Card declined → show declined modal
+                showDeclinedModal(data.message || 'Your card was declined. Please check your card details and try again.');
+            } else {
+                // Other error
+                showStatus('error', data.message || 'An error occurred. Please try again.');
+            }
+        } catch (err) {
+            if (err && err.message && err.message.includes('Failed to tokenize')) {
+                showStatus('error', 'Could not process card information. Please check your card details.');
+            } else {
+                showStatus('error', 'A network error occurred. Please try again.');
+            }
+            console.error('Payment error:', err);
+        }
+
+        // Reset button state on any non-success outcome
+        btn.disabled = false;
+        btn.classList.remove('loading');
+        btn.textContent = 'Donate Now';
+        turnstileToken = null;
+        if (typeof turnstile !== 'undefined') turnstile.reset();
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // DAF/ZELLE LINK GATING & LOGGING
+    // ════════════════════════════════════════════════════════════════
+    function validateDafFields() {
+        var fn = document.getElementById('donor-first-name').value.trim();
+        var ln = document.getElementById('donor-last-name').value.trim();
+        var em = document.getElementById('donor-email').value.trim();
+        var note = document.getElementById('daf-required-note');
+        if (!fn || !ln || !em) {
+            note.style.display = 'block';
+            document.getElementById('donor-first-name').focus();
+            return false;
+        }
+        note.style.display = 'none';
+        return true;
+    }
+
+    // Zelle toggle
+    document.getElementById('zelle-toggle-btn').addEventListener('click', function() {
+        if (!validateDafFields()) return;
+        var info = document.getElementById('zelle-info');
+        info.style.display = info.style.display === 'none' ? 'block' : 'none';
+        this.classList.toggle('open');
+    });
+
+    // Zelle copy email
+    document.getElementById('zelle-email-box').addEventListener('click', function() {
+        navigator.clipboard.writeText(CAMPAIGN_CONFIG.zelleEmail);
+        this.querySelector('.copy-hint').textContent = 'Copied!';
+        logLinkClick('Zelle (copied email)');
+        var hint = this.querySelector('.copy-hint');
+        setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
+    });
+
+    // DAF confirm email copy
+    document.getElementById('daf-confirm-email-box').addEventListener('click', function() {
+        navigator.clipboard.writeText(CAMPAIGN_CONFIG.dafConfirmEmail);
+        this.querySelector('.copy-hint').textContent = 'Copied!';
+        var hint = this.querySelector('.copy-hint');
+        setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
+    });
+
+    function logLinkClick(linkName) {
+        fetch(CAMPAIGN_CONFIG.appsScriptUrl, {
+            method: 'POST',
+            redirect: 'follow',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+                action: 'logLinkClick',
+                firstName: document.getElementById('donor-first-name').value.trim(),
+                lastName: document.getElementById('donor-last-name').value.trim(),
+                email: document.getElementById('donor-email').value.trim(),
+                linkClicked: linkName,
+                campaign: CAMPAIGN_CONFIG.name
+            })
+        }).catch(function() {});
+    }
+
+    // DAF link interception with confirmation modal
+    var pendingDafLink = null;
+    var pendingDafName = null;
+
+    document.querySelectorAll('.daf-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!validateDafFields()) return;
+
+            pendingDafLink = this.href;
+            pendingDafName = this.getAttribute('data-link-name') || 'the platform';
+            document.getElementById('daf-confirm-platform').textContent = pendingDafName;
+
+            // Build mailto link with donor info pre-filled
+            var dn = document.getElementById('donor-first-name').value.trim() + ' ' + document.getElementById('donor-last-name').value.trim();
+            var de = document.getElementById('donor-email').value.trim();
+            var body = 'Donor: ' + dn + '\nEmail: ' + de + '\nPlatform: ' + pendingDafName + '\n\nPlease find attached my donation confirmation screenshot.';
+            document.getElementById('daf-mailto-link').href = 'mailto:' + CAMPAIGN_CONFIG.dafConfirmEmail +
+                '?subject=' + encodeURIComponent('DAF Confirmation - ' + CAMPAIGN_CONFIG.name + ' - ' + dn) +
+                '&body=' + encodeURIComponent(body);
+
+            document.getElementById('daf-confirm-modal').classList.add('active');
+        });
+    });
+
+    function closeDafConfirm() {
+        document.getElementById('daf-confirm-modal').classList.remove('active');
+        pendingDafLink = null;
+        pendingDafName = null;
+    }
+
+    document.getElementById('daf-confirm-proceed').addEventListener('click', function() {
+        if (pendingDafLink) {
+            // Log the click to Google Sheet
+            logLinkClick(pendingDafName);
+            window.open(pendingDafLink, '_blank');
+        }
+        closeDafConfirm();
+    });
+
+    // ════════════════════════════════════════════════════════════════
+    // PHOTO GALLERY
+    // ════════════════════════════════════════════════════════════════
+    function openLightbox(src) {
+        document.getElementById('lightbox-img').src = src;
+        document.getElementById('lightbox').classList.add('active');
+    }
+
+    // Gallery toggle
+    document.getElementById('gallery-toggle-btn').addEventListener('click', function() {
+        var g = document.getElementById('photo-gallery');
+        g.style.display = g.style.display === 'none' ? 'block' : 'none';
+        this.classList.toggle('open');
+    });
+
+    // Load gallery images from .pics/ folder
+    (function loadGalleryImages() {
+        if (!CAMPAIGN_CONFIG.showPhotoGallery) return;
+        var picsDir = '.pics/';
+        var knownImages = ['recommendation1.png', 'recommendation2.png', 'recommendation3.png'];
+        var grid = document.getElementById('gallery-grid');
+        knownImages.forEach(function(filename) {
+            var img = new Image();
+            img.onload = function() {
+                img.className = 'gallery-img';
+                img.alt = filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+                img.onclick = function() { openLightbox(img.src); };
+                grid.appendChild(img);
+            };
+            img.src = picsDir + filename;
+        });
+    })();
+
+    // ════════════════════════════════════════════════════════════════
+    // TEAM SELECTOR
+    // ════════════════════════════════════════════════════════════════
+    (function initTeamSelector() {
+        window.selectedTeamIds = [];
+        var allTeams = [];
+        var wrapper = document.getElementById('teamTagWrapper');
+        var search = document.getElementById('team-search');
+        var dropdown = document.getElementById('teamDropdown');
+        if (!wrapper || !search || !dropdown) return;
+
+        // Load teams from backend
+        fetch(CAMPAIGN_CONFIG.appsScriptUrl + '?action=getTeams')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.status === 'success' && data.teams) {
+                    allTeams = data.teams;
+                }
+            })
+            .catch(function() {});
+
+        // Filter dropdown on input
+        search.addEventListener('input', function() {
+            var q = search.value.trim().toLowerCase();
+            var filtered = allTeams.filter(function(t) {
+                return !window.selectedTeamIds.includes(t.id) &&
+                    (t.name.toLowerCase().includes(q) || t.id.toLowerCase().includes(q));
+            });
+            if (filtered.length === 0 || (!q && filtered.length === allTeams.length)) {
+                dropdown.style.display = q ? 'block' : 'none';
+                dropdown.innerHTML = q ? '<div style="padding:8px 12px;font-size:0.85rem;color:#666;font-style:italic;">No teams found</div>' : '';
+                return;
+            }
+            dropdown.style.display = 'block';
+            dropdown.innerHTML = filtered.map(function(t) {
+                return '<div style="padding:8px 12px;font-size:0.85rem;color:#ccc;cursor:pointer;transition:background 0.15s;" ' +
+                       'onmouseenter="this.style.background=\'rgba(77,171,247,0.1)\';this.style.color=\'#fff\'" ' +
+                       'onmouseleave="this.style.background=\'\';this.style.color=\'#ccc\'" ' +
+                       'data-id="' + t.id + '" data-name="' + t.name + '">' + t.name + '</div>';
+            }).join('');
+        });
+
+        // Show dropdown on focus
+        search.addEventListener('focus', function() {
+            if (search.value.trim()) search.dispatchEvent(new Event('input'));
+        });
+
+        // Select team from dropdown
+        dropdown.addEventListener('click', function(e) {
+            var item = e.target.closest('[data-id]');
+            if (!item) return;
+            addTeam(item.dataset.id, item.dataset.name);
+        });
+
+        // Close on click outside
+        document.addEventListener('click', function(e) {
+            if (!wrapper.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        function addTeam(id, name) {
+            if (window.selectedTeamIds.includes(id)) return;
+            window.selectedTeamIds.push(id);
+            renderTags();
+            search.value = '';
+            dropdown.style.display = 'none';
+        }
+
+        function removeTeam(id) {
+            window.selectedTeamIds = window.selectedTeamIds.filter(function(t) { return t !== id; });
+            renderTags();
+        }
+        window.removeTeamMain = removeTeam;
+
+        function renderTags() {
+            // Remove existing chips
+            wrapper.querySelectorAll('.team-chip').forEach(function(el) { el.remove(); });
+            window.selectedTeamIds.forEach(function(id) {
+                var team = allTeams.find(function(t) { return t.id === id; });
+                var chip = document.createElement('span');
+                chip.className = 'team-chip';
+                chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(77,171,247,0.15);border:1px solid rgba(77,171,247,0.3);border-radius:6px;font-size:0.8rem;color:#8cc4f7;white-space:nowrap;';
+                chip.innerHTML = (team ? team.name : id) + ' <span onclick="removeTeamMain(\'' + id + '\')" style="cursor:pointer;color:#ff6b6b;font-size:0.85rem;opacity:0.7;">×</span>';
+                wrapper.insertBefore(chip, search);
+            });
+        }
+    })();
+
+    // ════════════════════════════════════════════════════════════════
+    // GOAL PROGRESS (fetched from backend)
+    // ════════════════════════════════════════════════════════════════
+    (function loadGoalProgress() {
+        if (!CAMPAIGN_CONFIG.goalAmount || CAMPAIGN_CONFIG.goalAmount <= 0) return;
+
+        fetch(CAMPAIGN_CONFIG.appsScriptUrl + '?action=getStats')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data && data.totalRaised !== undefined) {
+                    var raised = parseFloat(data.totalRaised) || 0;
+                    var goal = CAMPAIGN_CONFIG.goalAmount;
+                    var pct = Math.min(Math.round((raised / goal) * 100), 100);
+
+                    document.getElementById('goal-bar-fill').style.width = pct + '%';
+                    document.getElementById('goal-text').textContent =
+                        '$' + raised.toLocaleString('en-US', {minimumFractionDigits: 0}) +
+                        ' raised of $' + goal.toLocaleString('en-US', {minimumFractionDigits: 0}) +
+                        ' goal (' + pct + '%)';
+                    document.getElementById('goal-section').style.display = 'block';
+                }
+            })
+            .catch(function() {});
+    })();
+
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-09VTELTDTM"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-09VTELTDTM');
+    </script>
+</body>
+</html>

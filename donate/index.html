@@ -1,0 +1,2073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donate | Notzer Chesed</title>
+    <meta name="description" content="Support Notzer Chesed — donate to our charitable campaigns and community programs. Your generosity makes a difference.">
+    <link rel="icon" type="image/png" href="../NC_Logo_03.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================
+           CSS RESET & BASE
+           ============================================================ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0e0e12;
+            --bg-secondary: #16161d;
+            --bg-card: #1c1c27;
+            --bg-input: rgba(255,255,255,0.04);
+            --border-primary: rgba(255,255,255,0.08);
+            --border-hover: rgba(108,99,255,0.4);
+            --text-primary: #f0f0f5;
+            --text-secondary: #a0a0b8;
+            --text-muted: #6b6b80;
+            --accent: #6c63ff;
+            --accent-light: #8b83ff;
+            --accent-dark: #524acc;
+            --accent-glow: rgba(108,99,255,0.25);
+            --success: #4ade80;
+            --error: #ff5252;
+            --warning: #fbbf24;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ============================================================
+           HEADER
+           ============================================================ */
+        .header {
+            background: rgba(22,22,29,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-primary);
+            padding: 1rem 0;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header .org-name {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .nav {
+            margin-top: 0.75rem;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 20px;
+            transition: all var(--transition);
+        }
+
+        .nav a:hover {
+            color: #fff;
+            background: rgba(108,99,255,0.1);
+        }
+
+        /* ============================================================
+           CONTAINER
+           ============================================================ */
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* ============================================================
+           HERO SECTION
+           ============================================================ */
+        .hero {
+            padding: 80px 20px 50px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            background: rgba(108,99,255,0.1);
+            border: 1px solid rgba(108,99,255,0.2);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin-bottom: 24px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 16px;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #fff 40%, var(--accent-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 580px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        .hero .ein-info {
+            margin-top: 16px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .hero .ein-info span {
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        /* ============================================================
+           SECTION
+           ============================================================ */
+        .section {
+            padding: 0 0 50px;
+        }
+
+        .section-label {
+            text-align: center;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 30px;
+            letter-spacing: -0.02em;
+        }
+
+        /* ============================================================
+           CAMPAIGN SELECTOR
+           ============================================================ */
+        .campaign-selector-section {
+            max-width: 640px;
+            margin: 0 auto 40px;
+        }
+
+        .campaign-selector-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .campaign-selector-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light), var(--accent));
+        }
+
+        .campaign-selector-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+
+        .campaign-selector-heading .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .campaign-search-wrapper {
+            position: relative;
+        }
+
+        .campaign-search-input {
+            width: 100%;
+            height: 44px;
+            padding: 10px 14px 10px 40px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color var(--transition);
+        }
+
+        .campaign-search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .campaign-search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .campaign-search-icon {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+        .campaign-list {
+            margin-top: 10px;
+            max-height: 220px;
+            overflow-y: auto;
+            border-radius: var(--radius-sm);
+        }
+
+        .campaign-list::-webkit-scrollbar { width: 4px; }
+        .campaign-list::-webkit-scrollbar-track { background: transparent; }
+        .campaign-list::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 4px; }
+
+        .campaign-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .campaign-option:hover {
+            background: rgba(108,99,255,0.06);
+        }
+
+        .campaign-option.selected {
+            background: rgba(108,99,255,0.1);
+            border-color: rgba(108,99,255,0.3);
+        }
+
+        .campaign-option-radio {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all var(--transition);
+        }
+
+        .campaign-option.selected .campaign-option-radio {
+            border-color: var(--accent);
+            background: var(--accent);
+        }
+
+        .campaign-option.selected .campaign-option-radio::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #fff;
+        }
+
+        .campaign-option-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .campaign-option-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .campaign-option-meta {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .campaign-loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .campaign-loading .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(108,99,255,0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        /* Selected campaign banner */
+        .selected-campaign-banner {
+            display: none;
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: rgba(108,99,255,0.08);
+            border: 1px solid rgba(108,99,255,0.15);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            color: var(--accent-light);
+        }
+
+        .selected-campaign-banner.visible { display: flex; align-items: center; gap: 8px; }
+
+        .selected-campaign-banner .campaign-progress {
+            flex: 1;
+        }
+
+        .progress-bar-wrapper {
+            height: 4px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 4px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* ============================================================
+           DONATION FORM
+           ============================================================ */
+        .donation-form-wrapper {
+            max-width: 860px;
+            margin: 0 auto 50px;
+        }
+
+        .donation-form-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .donation-form-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(108,99,255,0.3), transparent);
+        }
+
+        .donation-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .donation-col { min-width: 0; }
+
+        .col-heading {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            font-weight: 600;
+            margin: 0 0 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        /* ── Form Fields ── */
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        .req { color: var(--error); }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            height: 40px;
+            padding: 8px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .form-group input::placeholder { color: var(--text-muted); }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-row .form-group { flex: 1; }
+
+        /* ── Amount Buttons ── */
+        .donation-amounts {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .amount-btn {
+            background: var(--bg-input);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm);
+            padding: 10px 4px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            text-align: center;
+        }
+
+        .amount-btn:hover {
+            border-color: var(--accent);
+            background: rgba(108,99,255,0.06);
+        }
+
+        .amount-btn.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: #fff;
+            border-color: var(--accent);
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        /* ── Custom Amount ── */
+        .custom-amount-wrapper {
+            position: relative;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .custom-amount-wrapper input {
+            width: 100%;
+            height: 44px;
+            padding: 8px 12px 8px 24px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+
+        .custom-amount-wrapper input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .currency-symbol {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* ── Toggle Labels ── */
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            margin: 14px 0;
+            user-select: none;
+        }
+
+        .toggle-label input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--text-muted);
+            border-radius: 4px;
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+
+        .toggle-label input[type="checkbox"]:checked {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .toggle-label input[type="checkbox"]:checked::after {
+            content: '✓';
+            color: #fff;
+            font-size: 12px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: 700;
+        }
+
+        /* ── Recurring Section ── */
+        .recurring-section {
+            background: rgba(108,99,255,0.04);
+            border: 1px solid rgba(108,99,255,0.1);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            margin-top: 8px;
+        }
+
+        .recurring-select {
+            width: 100%;
+            height: 40px;
+            padding: 8px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            transition: border-color var(--transition);
+        }
+
+        .recurring-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        /* ── Payment Fields (Cardknox iFields) ── */
+        .ifield-container {
+            margin-bottom: 14px;
+        }
+
+        .ifield-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        .ifield-container iframe {
+            width: 100%;
+            height: 40px;
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm);
+            background: var(--bg-input);
+            overflow: hidden;
+            transition: border-color var(--transition);
+        }
+
+        .ifield-container iframe:focus-within {
+            border-color: var(--accent);
+        }
+
+        /* ── Payment Fields (USAePay) ── */
+        .hosted-field-container {
+            width: 100%;
+            height: 40px;
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm);
+            background: var(--bg-input);
+            overflow: hidden;
+            transition: border-color var(--transition);
+        }
+
+        /* ── Gateway switch indicator ── */
+        .gateway-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .gateway-indicator .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        /* ── Donate Button ── */
+        .donate-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: #fff;
+            font-family: inherit;
+            font-size: 1.05rem;
+            font-weight: 700;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .donate-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .donate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+
+        .donate-btn:hover::before {
+            left: 100%;
+        }
+
+        .donate-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .donate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .donate-btn.loading {
+            color: transparent;
+        }
+
+        .donate-btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            top: 50%;
+            left: 50%;
+            margin: -11px 0 0 -11px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* ── Status Messages ── */
+        .donation-status {
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            margin-top: 16px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .donation-status.error {
+            display: block;
+            background: rgba(255,82,82,0.1);
+            border: 1px solid rgba(255,82,82,0.3);
+            color: var(--error);
+        }
+
+        .donation-status.info {
+            display: block;
+            background: rgba(108,99,255,0.1);
+            border: 1px solid rgba(108,99,255,0.2);
+            color: var(--accent-light);
+        }
+
+        /* ── Cloudflare Turnstile ── */
+        .cf-turnstile {
+            margin-bottom: 14px;
+        }
+
+        /* ============================================================
+           CAMPAIGN CARDS SECTION
+           ============================================================ */
+        .campaign-cards-section {
+            padding-bottom: 60px;
+        }
+
+        .campaign-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .campaign-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .campaign-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        .campaign-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+
+        .campaign-card:hover::before {
+            opacity: 1;
+        }
+
+        .campaign-card-name {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .campaign-card-progress {
+            margin-bottom: 14px;
+        }
+
+        .campaign-card-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .campaign-card-stats .raised {
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        .campaign-card-bar {
+            height: 4px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .campaign-card-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        .campaign-card-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            background: rgba(108,99,255,0.1);
+            border: 1px solid rgba(108,99,255,0.2);
+            border-radius: 100px;
+            color: var(--accent-light);
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all var(--transition);
+        }
+
+        .campaign-card-link:hover {
+            background: rgba(108,99,255,0.2);
+            border-color: rgba(108,99,255,0.4);
+            text-decoration: none;
+        }
+
+        .campaign-cards-empty {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* ============================================================
+           FOOTER
+           ============================================================ */
+        .footer {
+            text-align: center;
+            padding: 24px 20px;
+            border-top: 1px solid var(--border-primary);
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        .footer a {
+            color: var(--accent-light);
+            text-decoration: none;
+        }
+
+        .footer a:hover { text-decoration: underline; }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 768px) {
+            .hero {
+                padding: 50px 20px 30px;
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .donation-columns {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .donation-amounts {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .donation-form-card {
+                padding: 20px;
+            }
+
+            .campaign-selector-card {
+                padding: 20px;
+            }
+
+            .campaign-cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav {
+                gap: 4px;
+            }
+
+            .nav a {
+                font-size: 0.82rem;
+                padding: 5px 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .donation-amounts {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ============================================================
+           ANIMATIONS
+           ============================================================ */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .animate-delay-1 { animation-delay: 0.1s; }
+        .animate-delay-2 { animation-delay: 0.2s; }
+        .animate-delay-3 { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+         HEADER
+         ============================================================ -->
+    <header class="header">
+        <div class="container">
+            <p class="org-name">Notzer Chesed</p>
+            <nav class="nav">
+                <a href="../index.html">Home</a>
+                <a href="../about.html">About Us</a>
+                <a href="../campaigns.html">Campaigns</a>
+                <a href="../contact.html">Contact Us</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- ============================================================
+             HERO SECTION
+             ============================================================ -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-badge">501(c)(3) Tax-Deductible</div>
+                <h1>Support Notzer Chesed</h1>
+                <p>Your generosity fuels charitable campaigns, strengthens religious programs, and uplifts families in need within our community. Every dollar makes a direct impact.</p>
+                <p class="ein-info">EIN: <span>11-3049033</span> &middot; All donations are tax-deductible</p>
+            </div>
+        </section>
+
+        <div class="container">
+            <!-- ============================================================
+                 CAMPAIGN SELECTOR
+                 ============================================================ -->
+            <section class="section campaign-selector-section animate-in">
+                <div class="campaign-selector-card">
+                    <div class="campaign-selector-heading">
+                        <div class="icon">🎯</div>
+                        <span>Direct my donation to:</span>
+                    </div>
+
+                    <div class="campaign-search-wrapper">
+                        <span class="campaign-search-icon">🔍</span>
+                        <input type="text" class="campaign-search-input" id="campaign-search" placeholder="Search campaigns..." autocomplete="off">
+                    </div>
+
+                    <div class="campaign-list" id="campaign-list">
+                        <div class="campaign-loading" id="campaign-loading">
+                            <span class="spinner"></span> Loading campaigns...
+                        </div>
+                    </div>
+
+                    <div class="selected-campaign-banner" id="selected-campaign-banner">
+                        <div class="campaign-progress" id="campaign-progress-info"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 DONATION FORM
+                 ============================================================ -->
+            <section class="section donation-form-wrapper animate-in animate-delay-1">
+                <div class="donation-form-card">
+                    <form id="donation-form" novalidate>
+                        <div class="donation-columns">
+                            <!-- LEFT COLUMN: Personal Info -->
+                            <div class="donation-col">
+                                <h4 class="col-heading">Your Information</h4>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="donor-first-name">First Name <span class="req">*</span></label>
+                                        <input type="text" id="donor-first-name" name="firstName" required autocomplete="given-name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="donor-last-name">Last Name <span class="req">*</span></label>
+                                        <input type="text" id="donor-last-name" name="lastName" required autocomplete="family-name">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="donor-email">Email <span class="req">*</span></label>
+                                    <input type="email" id="donor-email" name="email" required autocomplete="email">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="donor-phone">Phone</label>
+                                    <input type="tel" id="donor-phone" name="phone" autocomplete="tel">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="donor-street">Address</label>
+                                    <input type="text" id="donor-street" name="street" placeholder="Street Address" autocomplete="street-address">
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="donor-city">City</label>
+                                        <input type="text" id="donor-city" name="city" autocomplete="address-level2">
+                                    </div>
+                                    <div class="form-group" style="max-width: 80px;">
+                                        <label for="donor-state">State</label>
+                                        <input type="text" id="donor-state" name="state" maxlength="2" placeholder="NY" autocomplete="address-level1">
+                                    </div>
+                                    <div class="form-group" style="max-width: 110px;">
+                                        <label for="donor-zip">ZIP</label>
+                                        <input type="text" id="donor-zip" name="zip" maxlength="10" autocomplete="postal-code">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="donor-display-name">Display Name</label>
+                                    <input type="text" id="donor-display-name" name="displayName" placeholder="Name to show on donor wall">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="donor-memo">Memo</label>
+                                    <input type="text" id="donor-memo" name="memo" placeholder="In memory of... / In honor of...">
+                                </div>
+
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="anonymous-check">
+                                    <span>Make my donation anonymous</span>
+                                </label>
+                            </div>
+
+                            <!-- RIGHT COLUMN: Amount & Payment -->
+                            <div class="donation-col">
+                                <h4 class="col-heading">Donation Amount</h4>
+
+                                <div class="donation-amounts" id="amount-grid">
+                                    <button type="button" class="amount-btn" data-amount="18">$18</button>
+                                    <button type="button" class="amount-btn" data-amount="36">$36</button>
+                                    <button type="button" class="amount-btn" data-amount="72">$72</button>
+                                    <button type="button" class="amount-btn" data-amount="180">$180</button>
+                                    <button type="button" class="amount-btn" data-amount="360">$360</button>
+                                    <button type="button" class="amount-btn" data-amount="500">$500</button>
+                                    <button type="button" class="amount-btn" data-amount="custom" id="custom-amount-btn" style="grid-column: span 2;">Other Amount</button>
+                                </div>
+
+                                <div class="custom-amount-wrapper" id="custom-amount-wrapper">
+                                    <span class="currency-symbol">$</span>
+                                    <input type="number" id="custom-amount" placeholder="Enter amount" min="1" step="0.01">
+                                </div>
+
+                                <h4 class="col-heading" style="margin-top: 20px;">Payment Details</h4>
+
+                                <!-- Gateway indicator -->
+                                <div class="gateway-indicator" id="gateway-indicator">
+                                    <span class="dot"></span>
+                                    <span id="gateway-label">Secure payment</span>
+                                </div>
+
+                                <!-- Cardknox iFields -->
+                                <div id="cardknox-fields">
+                                    <div class="ifield-container">
+                                        <label>Card Number</label>
+                                        <iframe id="card-number-iframe" data-ifields-id="card-number" data-ifields-placeholder="Card Number" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
+                                        <input data-ifields-id="card-number-token" name="xCardNum" type="hidden">
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="card-exp">Exp (MMYY)</label>
+                                            <input type="text" id="card-exp" name="xExp" placeholder="MMYY" maxlength="4" required>
+                                        </div>
+                                        <div class="ifield-container" style="flex: 1;">
+                                            <label>CVV</label>
+                                            <iframe id="cvv-iframe" data-ifields-id="cvv" data-ifields-placeholder="CVV" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
+                                            <input data-ifields-id="cvv-token" name="xCVV" type="hidden">
+                                        </div>
+                                    </div>
+
+                                    <label data-ifields-id="card-data-error" style="color: var(--error); font-size: 0.82rem;"></label>
+                                </div>
+
+                                <!-- USAePay PaymentJS fields -->
+                                <div id="usaepay-fields" style="display: none;">
+                                    <div class="form-group">
+                                        <label>Card Number</label>
+                                        <div id="usaepay-card-number" class="hosted-field-container"></div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Expiration</label>
+                                            <div id="usaepay-exp" class="hosted-field-container"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>CVV</label>
+                                            <div id="usaepay-cvv" class="hosted-field-container"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Recurring Section -->
+                                <div class="recurring-section">
+                                    <label class="toggle-label" style="margin: 0;">
+                                        <input type="checkbox" id="recurring-check">
+                                        <span>Make this a recurring donation</span>
+                                    </label>
+                                    <div id="recurring-options" style="display: none; margin-top: 12px;">
+                                        <select class="recurring-select" id="recurring-frequency">
+                                            <option value="">Select frequency...</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="biweekly">Every 2 Weeks</option>
+                                            <option value="monthly">Monthly</option>
+                                            <option value="quarterly">Quarterly</option>
+                                            <option value="annually">Annually</option>
+                                        </select>
+                                        <div class="form-group" style="margin-top: 10px;">
+                                            <label for="recurring-count">Number of payments <span style="color: var(--text-muted); font-weight: 400;">(blank = ongoing)</span></label>
+                                            <input type="number" id="recurring-count" min="2" max="999" placeholder="e.g. 12">
+                                        </div>
+                                        <label class="toggle-label">
+                                            <input type="checkbox" id="installment-check">
+                                            <span>Split total into installments</span>
+                                        </label>
+                                        <p id="installment-summary" style="display: none; font-size: 0.82rem; color: var(--accent-light); margin: 4px 0 0; line-height: 1.4;"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Full-width bottom section -->
+                        <div style="position: absolute; left: -9999px;" aria-hidden="true">
+                            <input type="text" name="website" id="honeypot" tabindex="-1" autocomplete="off">
+                        </div>
+
+                        <div class="cf-turnstile" id="turnstile-container" data-sitekey="{{TURNSTILE_SITE_KEY}}" data-callback="onTurnstileSuccess" data-theme="dark"></div>
+
+                        <button type="submit" class="donate-btn" id="donate-btn" disabled>Donate Now</button>
+
+                        <div class="donation-status" id="donation-status"></div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 CAMPAIGN CARDS
+                 ============================================================ -->
+            <section class="section campaign-cards-section animate-in animate-delay-2">
+                <p class="section-label">Explore Our Causes</p>
+                <h2 class="section-title">Or Visit a Campaign Directly</h2>
+                <div class="campaign-cards-grid" id="campaign-cards-grid">
+                    <div class="campaign-cards-empty" id="campaign-cards-empty">
+                        <span class="spinner" style="display:inline-block;width:16px;height:16px;border:2px solid rgba(108,99,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;margin-right:8px;vertical-align:middle;"></span>
+                        Loading campaigns...
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2024 Notzer Chesed. All Rights Reserved. &middot; EIN: 11-3049033</p>
+        <p style="margin-top: 6px;"><a href="../index.html">Home</a> &middot; <a href="../about.html">About</a> &middot; <a href="../campaigns.html">Campaigns</a> &middot; <a href="../contact.html">Contact</a></p>
+    </footer>
+
+    <!-- Cardknox iFields SDK (loaded eagerly for default gateway) -->
+    <script src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifields.min.js"></script>
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+    <script>
+    // ============================================================
+    // CONFIGURATION
+    // ============================================================
+    const DONATE_CONFIG = {
+        masterScriptUrl: '{{MASTER_APPS_SCRIPT_URL}}',
+        defaultPrimaryGateway: '{{DEFAULT_PRIMARY_GATEWAY}}',
+        defaultCardknoxIfieldsKey: '{{DEFAULT_CARDKNOX_IFIELDS_KEY}}',
+        defaultUsaepayPublicKey: '{{DEFAULT_USAEPAY_PUBLIC_KEY}}',
+        turnstileSiteKey: '{{TURNSTILE_SITE_KEY}}',
+        orgName: 'Notzer Chesed',
+        orgEin: '11-3049033',
+    };
+
+    // ============================================================
+    // STATE
+    // ============================================================
+    let selectedAmount = null;
+    let turnstileToken = null;
+    let activeCampaigns = [];
+    let selectedCampaignId = 'general';
+
+    // ============================================================
+    // GATEWAY MANAGER
+    // Abstracts Cardknox iFields and USAePay PaymentJS
+    // ============================================================
+    const GatewayManager = {
+        activeGateway: null,
+        cardknoxReady: false,
+        usaepayReady: false,
+        paymentJs: null,
+        config: null,
+
+        async init(config) {
+            this.config = config;
+            const gateway = config.primaryGateway || 'cardknox';
+            this.activeGateway = gateway;
+            await this.loadGateway(gateway);
+            this.updateIndicator();
+        },
+
+        async loadGateway(gateway) {
+            if (gateway === 'cardknox') {
+                await this.initCardknox();
+            } else if (gateway === 'usaepay') {
+                await this.initUSAePay();
+            }
+            this.showGatewayFields(gateway);
+        },
+
+        async initCardknox() {
+            // ifields.min.js is loaded via <script> tag above
+            if (typeof setAccount === 'function') {
+                setAccount(this.config.cardknox.ifieldsKey, 'NotzerChesed', '1.0.0');
+                this.styleCardknoxFields();
+                this.cardknoxReady = true;
+            } else {
+                console.warn('Cardknox iFields SDK not loaded');
+            }
+        },
+
+        styleCardknoxFields() {
+            var fieldStyle = {
+                'background-color': 'rgba(255,255,255,0.04)',
+                'border': 'none',
+                'color': '#f0f0f5',
+                'font-size': '0.9rem',
+                'padding': '8px 12px',
+                'width': '100%',
+                'height': '100%',
+                'box-sizing': 'border-box',
+                'font-family': "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                'outline': 'none'
+            };
+            if (typeof setIfieldStyle === 'function') {
+                setIfieldStyle('card-number', fieldStyle);
+                setIfieldStyle('cvv', fieldStyle);
+            }
+            if (typeof enableAutoFormatting === 'function') {
+                enableAutoFormatting(' ');
+            }
+
+            // Validation color callbacks
+            var validStyle = Object.assign({}, fieldStyle, { 'color': '#8b83ff' });
+            var invalidStyle = Object.assign({}, fieldStyle, { 'color': '#ff5252' });
+
+            if (typeof addIfieldKeyPressCallback === 'function') {
+                addIfieldKeyPressCallback(function(data) {
+                    if (data.cardNumberFormattedLength > 0) {
+                        setIfieldStyle('card-number', data.cardNumberIsValid ? validStyle : invalidStyle);
+                    } else {
+                        setIfieldStyle('card-number', fieldStyle);
+                    }
+                    if (data.lastIfieldChanged === 'cvv') {
+                        if (data.cvvLength > 0) {
+                            setIfieldStyle('cvv', data.cvvIsValid ? validStyle : invalidStyle);
+                        } else {
+                            setIfieldStyle('cvv', fieldStyle);
+                        }
+                    }
+                });
+            }
+        },
+
+        async initUSAePay() {
+            if (!this.usaepayReady) {
+                await this.loadScript('https://www.usaepay.com/js/v1/pay.js');
+            }
+            if (typeof PayJS !== 'undefined') {
+                this.paymentJs = new PayJS(this.config.usaepay.publicKey);
+                var fieldStyle = {
+                    'background-color': 'rgba(255,255,255,0.04)',
+                    'border': 'none',
+                    'color': '#f0f0f5',
+                    'font-size': '0.9rem',
+                    'padding': '8px 12px',
+                    'width': '100%',
+                    'height': '100%',
+                    'box-sizing': 'border-box',
+                    'font-family': "'Inter', sans-serif",
+                    'outline': 'none'
+                };
+                this.paymentJs.enableFields({
+                    card: { selector: '#usaepay-card-number', style: fieldStyle },
+                    exp:  { selector: '#usaepay-exp', style: fieldStyle },
+                    cvv:  { selector: '#usaepay-cvv', style: fieldStyle }
+                });
+                this.usaepayReady = true;
+            }
+        },
+
+        showGatewayFields(gateway) {
+            document.getElementById('cardknox-fields').style.display =
+                gateway === 'cardknox' ? 'block' : 'none';
+            document.getElementById('usaepay-fields').style.display =
+                gateway === 'usaepay' ? 'block' : 'none';
+        },
+
+        updateIndicator() {
+            var label = document.getElementById('gateway-label');
+            if (label) {
+                label.textContent = 'Secure payment' + (this.activeGateway ? ' via ' + this.activeGateway.charAt(0).toUpperCase() + this.activeGateway.slice(1) : '');
+            }
+        },
+
+        tokenize() {
+            var self = this;
+            return new Promise(function(resolve, reject) {
+                if (self.activeGateway === 'cardknox') {
+                    if (typeof getTokens !== 'function') {
+                        reject('Cardknox iFields not initialized');
+                        return;
+                    }
+                    getTokens(
+                        function() {
+                            resolve({
+                                token: document.querySelector('[data-ifields-id="card-number-token"]').value,
+                                cvvToken: document.querySelector('[data-ifields-id="cvv-token"]').value,
+                                exp: document.getElementById('card-exp').value,
+                                gateway: 'cardknox'
+                            });
+                        },
+                        function(error) { reject(error); },
+                        30000
+                    );
+                } else if (self.activeGateway === 'usaepay') {
+                    if (!self.paymentJs) {
+                        reject('USAePay PaymentJS not initialized');
+                        return;
+                    }
+                    self.paymentJs.getToken(
+                        function(token) {
+                            resolve({
+                                token: token.token,
+                                cardType: token.card_type,
+                                last4: token.card_last4,
+                                gateway: 'usaepay'
+                            });
+                        },
+                        function(errors) { reject(errors); }
+                    );
+                } else {
+                    reject('No gateway configured');
+                }
+            });
+        },
+
+        async switchToFallback() {
+            var fallback = this.activeGateway === 'cardknox' ? 'usaepay' : 'cardknox';
+            this.activeGateway = fallback;
+            // Update config keys for fallback
+            if (fallback === 'usaepay' && this.config.usaepay) {
+                await this.initUSAePay();
+            } else if (fallback === 'cardknox' && this.config.cardknox) {
+                await this.initCardknox();
+            }
+            this.showGatewayFields(fallback);
+            this.updateIndicator();
+        },
+
+        loadScript(src) {
+            return new Promise(function(resolve, reject) {
+                // Don't load if already present
+                var existing = document.querySelector('script[src="' + src + '"]');
+                if (existing) { resolve(); return; }
+
+                var s = document.createElement('script');
+                s.src = src;
+                s.onload = resolve;
+                s.onerror = reject;
+                document.head.appendChild(s);
+            });
+        },
+
+        async reinitialize(config) {
+            this.config = config;
+            this.activeGateway = config.primaryGateway || 'cardknox';
+            this.cardknoxReady = false;
+            this.usaepayReady = false;
+            this.paymentJs = null;
+            await this.loadGateway(this.activeGateway);
+            this.updateIndicator();
+        }
+    };
+
+    // ============================================================
+    // CAMPAIGN SELECTOR (CampaignSelector class)
+    // ============================================================
+    class CampaignSelector {
+        constructor(options) {
+            this.searchInput = document.getElementById('campaign-search');
+            this.listContainer = document.getElementById('campaign-list');
+            this.loadingEl = document.getElementById('campaign-loading');
+            this.bannerEl = document.getElementById('selected-campaign-banner');
+            this.progressInfoEl = document.getElementById('campaign-progress-info');
+            this.onSelect = options.onSelect || function() {};
+            this.campaigns = [];
+            this.selectedId = 'general';
+        }
+
+        async load() {
+            try {
+                this.showLoading(true);
+                var response = await fetch(DONATE_CONFIG.masterScriptUrl + '?action=getActiveCampaigns');
+                var data = await response.json();
+
+                if (data.status === 'success' && data.campaigns) {
+                    activeCampaigns = data.campaigns;
+                } else {
+                    activeCampaigns = [];
+                }
+            } catch (err) {
+                console.warn('Could not load campaigns:', err);
+                activeCampaigns = [];
+            }
+
+            // Build full list with General option first
+            this.campaigns = [
+                { id: 'general', name: 'Where Needed Most', meta: 'General fund — allocated to highest-priority needs', goalAmount: null, raised: null, pageUrl: null },
+                ...activeCampaigns
+            ];
+
+            this.showLoading(false);
+            this.render();
+            this.bindEvents();
+        }
+
+        showLoading(show) {
+            if (this.loadingEl) {
+                this.loadingEl.style.display = show ? 'block' : 'none';
+            }
+        }
+
+        render(filter) {
+            var self = this;
+            var filtered = this.campaigns;
+            if (filter) {
+                var q = filter.toLowerCase();
+                filtered = this.campaigns.filter(function(c) {
+                    return c.name.toLowerCase().includes(q) || (c.id && c.id.toLowerCase().includes(q));
+                });
+            }
+
+            if (filtered.length === 0) {
+                this.listContainer.innerHTML = '<div class="campaign-loading">No campaigns found</div>';
+                return;
+            }
+
+            this.listContainer.innerHTML = filtered.map(function(c) {
+                var isSelected = c.id === self.selectedId;
+                var metaText = c.meta || '';
+                if (!metaText && c.goalAmount) {
+                    var pct = c.raised ? Math.round((c.raised / c.goalAmount) * 100) : 0;
+                    metaText = '$' + self.formatNum(c.raised || 0) + ' raised of $' + self.formatNum(c.goalAmount) + ' (' + pct + '%)';
+                }
+
+                return '<div class="campaign-option' + (isSelected ? ' selected' : '') + '" data-id="' + c.id + '">' +
+                    '<div class="campaign-option-radio"></div>' +
+                    '<div class="campaign-option-info">' +
+                        '<div class="campaign-option-name">' + self.escapeHtml(c.name) + '</div>' +
+                        (metaText ? '<div class="campaign-option-meta">' + self.escapeHtml(metaText) + '</div>' : '') +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        bindEvents() {
+            var self = this;
+
+            // Search
+            this.searchInput.addEventListener('input', function() {
+                self.render(this.value.trim());
+            });
+
+            // Click to select
+            this.listContainer.addEventListener('click', function(e) {
+                var option = e.target.closest('.campaign-option');
+                if (!option) return;
+                var id = option.getAttribute('data-id');
+                self.select(id);
+            });
+        }
+
+        select(campaignId) {
+            this.selectedId = campaignId;
+            selectedCampaignId = campaignId;
+            this.render(this.searchInput.value.trim());
+            this.updateBanner();
+            this.onSelect(campaignId);
+        }
+
+        updateBanner() {
+            var campaign = this.campaigns.find(function(c) { return c.id === selectedCampaignId; });
+            if (!campaign || selectedCampaignId === 'general') {
+                this.bannerEl.classList.remove('visible');
+                return;
+            }
+
+            var html = '✨ Donating to: <strong>' + this.escapeHtml(campaign.name) + '</strong>';
+            if (campaign.goalAmount && campaign.raised !== null && campaign.raised !== undefined) {
+                var pct = Math.min(100, Math.round((campaign.raised / campaign.goalAmount) * 100));
+                html += '<div style="flex:1;"></div><span style="font-size:0.78rem;color:var(--text-muted);">$' + this.formatNum(campaign.raised) + ' / $' + this.formatNum(campaign.goalAmount) + '</span>';
+                html += '<div class="progress-bar-wrapper" style="width:80px;"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div>';
+            }
+            this.progressInfoEl.innerHTML = html;
+            this.bannerEl.classList.add('visible');
+        }
+
+        getValue() { return this.selectedId; }
+
+        formatNum(n) {
+            return Number(n).toLocaleString('en-US');
+        }
+
+        escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    }
+
+    // ============================================================
+    // CAMPAIGN CARDS (bottom section)
+    // ============================================================
+    function renderCampaignCards() {
+        var grid = document.getElementById('campaign-cards-grid');
+        var empty = document.getElementById('campaign-cards-empty');
+
+        if (!activeCampaigns || activeCampaigns.length === 0) {
+            if (empty) {
+                empty.innerHTML = 'No active campaigns at this time.';
+            }
+            return;
+        }
+
+        if (empty) empty.style.display = 'none';
+
+        grid.innerHTML = activeCampaigns.map(function(c) {
+            var raised = c.raised || 0;
+            var goal = c.goalAmount || 0;
+            var pct = goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0;
+            var pageUrl = c.pageUrl || '#';
+            // Fix relative URLs
+            if (pageUrl && !pageUrl.startsWith('http') && !pageUrl.startsWith('/') && pageUrl !== '#') {
+                pageUrl = '../' + pageUrl;
+            } else if (pageUrl && pageUrl.startsWith('/')) {
+                pageUrl = '..' + pageUrl;
+            }
+
+            return '<div class="campaign-card">' +
+                '<div class="campaign-card-name">' + escapeHtml(c.name) + '</div>' +
+                (goal > 0 ?
+                    '<div class="campaign-card-progress">' +
+                        '<div class="campaign-card-stats">' +
+                            '<span class="raised">$' + formatNum(raised) + ' raised</span>' +
+                            '<span>$' + formatNum(goal) + ' goal</span>' +
+                        '</div>' +
+                        '<div class="campaign-card-bar">' +
+                            '<div class="campaign-card-bar-fill" style="width:' + pct + '%"></div>' +
+                        '</div>' +
+                    '</div>' :
+                    '<div style="margin-bottom:14px;font-size:0.82rem;color:var(--text-muted);">Open campaign</div>'
+                ) +
+                '<a href="' + pageUrl + '" class="campaign-card-link">Donate → </a>' +
+            '</div>';
+        }).join('');
+    }
+
+    function formatNum(n) {
+        return Number(n).toLocaleString('en-US');
+    }
+
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ============================================================
+    // AMOUNT SELECTION
+    // ============================================================
+    (function initAmountButtons() {
+        var btns = document.querySelectorAll('.amount-btn');
+        var customWrapper = document.getElementById('custom-amount-wrapper');
+        var customInput = document.getElementById('custom-amount');
+
+        btns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                btns.forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                if (this.dataset.amount === 'custom') {
+                    customWrapper.style.display = 'block';
+                    customInput.focus();
+                    selectedAmount = null;
+                } else {
+                    customWrapper.style.display = 'none';
+                    customInput.value = '';
+                    selectedAmount = parseFloat(this.dataset.amount);
+                }
+                updateInstallmentSummary();
+            });
+        });
+
+        customInput.addEventListener('input', function() {
+            selectedAmount = parseFloat(this.value) || null;
+            updateInstallmentSummary();
+        });
+    })();
+
+    // ============================================================
+    // RECURRING TOGGLE & INSTALLMENT LOGIC
+    // ============================================================
+    var recurringCheck = document.getElementById('recurring-check');
+    var recurringFrequency = document.getElementById('recurring-frequency');
+    var recurringCountInput = document.getElementById('recurring-count');
+    var installmentCheck = document.getElementById('installment-check');
+
+    recurringCheck.addEventListener('change', function() {
+        document.getElementById('recurring-options').style.display = this.checked ? 'block' : 'none';
+        if (!this.checked) {
+            recurringFrequency.value = '';
+            recurringCountInput.value = '';
+            installmentCheck.checked = false;
+            document.getElementById('installment-summary').style.display = 'none';
+        }
+        updateInstallmentSummary();
+    });
+
+    recurringFrequency.addEventListener('change', updateInstallmentSummary);
+    recurringCountInput.addEventListener('input', updateInstallmentSummary);
+    installmentCheck.addEventListener('change', updateInstallmentSummary);
+
+    function updateInstallmentSummary() {
+        var amt = selectedAmount || parseFloat(document.getElementById('custom-amount').value);
+        var count = parseInt(recurringCountInput.value) || 0;
+        var freq = recurringFrequency.value;
+        var isInst = installmentCheck.checked;
+        var summary = document.getElementById('installment-summary');
+        var freqLabels = { weekly: 'weekly', biweekly: 'bi-weekly', monthly: 'monthly', quarterly: 'quarterly', annually: 'annual' };
+
+        if (!recurringCheck.checked || !amt || count < 2 || !freq) {
+            summary.style.display = 'none';
+            return;
+        }
+
+        if (isInst) {
+            var perPayment = (amt / count).toFixed(2);
+            summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' each';
+        } else {
+            var total = (amt * count).toFixed(2);
+            summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+        }
+        summary.style.display = 'block';
+    }
+
+    // ============================================================
+    // TURNSTILE
+    // ============================================================
+    function onTurnstileSuccess(token) {
+        turnstileToken = token;
+        document.getElementById('donate-btn').disabled = false;
+    }
+
+    // ============================================================
+    // SUCCESS REDIRECT
+    // ============================================================
+    function redirectToSuccess(amount, email, refNum, firstName, lastName, phone, street, city, state, zip, anonymous, frequency, campaignName) {
+        var params = new URLSearchParams();
+        params.set('amount', amount);
+        params.set('campaign', campaignName || DONATE_CONFIG.orgName);
+        if (refNum) params.set('ref', refNum);
+        if (!anonymous) params.set('donor', firstName + ' ' + lastName);
+        if (email) params.set('email', email);
+        if (phone) params.set('phone', phone);
+        var addrParts = [];
+        if (street) addrParts.push(street);
+        if (city) addrParts.push(city);
+        if (state && zip) addrParts.push(state + ' ' + zip);
+        else if (state) addrParts.push(state);
+        else if (zip) addrParts.push(zip);
+        if (addrParts.length) params.set('address', addrParts.join(', '));
+        if (frequency) params.set('recurring', frequency);
+        window.location.href = '../donation-success.html?' + params.toString();
+    }
+
+    // ============================================================
+    // STATUS HELPERS
+    // ============================================================
+    function showStatus(type, message) {
+        var el = document.getElementById('donation-status');
+        el.className = 'donation-status ' + type;
+        el.textContent = message;
+        el.style.display = 'block';
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideStatus() {
+        var el = document.getElementById('donation-status');
+        el.style.display = 'none';
+        el.className = 'donation-status';
+    }
+
+    // ============================================================
+    // FORM SUBMISSION
+    // ============================================================
+    document.getElementById('donation-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (document.getElementById('honeypot').value) return;
+
+        var amount = selectedAmount || parseFloat(document.getElementById('custom-amount').value);
+        if (!amount || amount < 1) { showStatus('error', 'Please select or enter a donation amount.'); return; }
+
+        var firstName = document.getElementById('donor-first-name').value.trim();
+        var lastName = document.getElementById('donor-last-name').value.trim();
+        var email = document.getElementById('donor-email').value.trim();
+
+        if (!firstName || !lastName || !email) { showStatus('error', 'Please fill in all required fields.'); return; }
+
+        // Validate email format
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showStatus('error', 'Please enter a valid email address.'); return; }
+
+        if (!turnstileToken) { showStatus('error', 'Please wait for security verification.'); return; }
+
+        var isRecurring = recurringCheck.checked;
+        var frequency = recurringFrequency.value;
+        if (isRecurring && !frequency) { showStatus('error', 'Please select a recurring frequency.'); return; }
+
+        var totalPayments = isRecurring ? (parseInt(recurringCountInput.value) || 0) : 0;
+        var isInstallment = isRecurring && installmentCheck.checked;
+        if (isInstallment && totalPayments < 2) { showStatus('error', 'Please enter the number of installment payments (at least 2).'); return; }
+
+        // For installments: each charge = total amount ÷ number of payments
+        var chargeAmount = (isInstallment && totalPayments >= 2) ? Math.round((amount / totalPayments) * 100) / 100 : amount;
+
+        // Validate gateway-specific fields
+        if (GatewayManager.activeGateway === 'cardknox') {
+            var exp = document.getElementById('card-exp').value.trim();
+            if (!exp || !/^\d{4}$/.test(exp)) { showStatus('error', 'Expiration must be MMYY format (e.g., 1226).'); return; }
+        }
+
+        var btn = document.getElementById('donate-btn');
+        btn.disabled = true;
+        btn.classList.add('loading');
+        btn.textContent = 'Processing...';
+        hideStatus();
+
+        try {
+            // Step 1: Tokenize with the active gateway
+            var tokenData = await GatewayManager.tokenize();
+
+            // Step 2: Build payload
+            var selectedCampaign = activeCampaigns.find(function(c) { return c.id === selectedCampaignId; });
+            var campaignName = selectedCampaignId === 'general' ? 'Where Needed Most' : (selectedCampaign ? selectedCampaign.name : 'General');
+
+            var payload = {
+                action: 'processGeneralDonation',
+                amount: chargeAmount,
+                gateway: tokenData.gateway,
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                phone: document.getElementById('donor-phone').value.trim(),
+                street: document.getElementById('donor-street').value.trim(),
+                city: document.getElementById('donor-city').value.trim(),
+                state: document.getElementById('donor-state').value.trim(),
+                zip: document.getElementById('donor-zip').value.trim(),
+                displayName: document.getElementById('donor-display-name').value.trim(),
+                memo: document.getElementById('donor-memo').value.trim(),
+                anonymous: document.getElementById('anonymous-check').checked,
+                isRecurring: isRecurring,
+                frequency: frequency,
+                totalPayments: totalPayments,
+                isInstallment: isInstallment,
+                totalPledgeAmount: isInstallment ? amount : 0,
+                selectedCampaignId: selectedCampaignId,
+                campaignName: campaignName,
+                turnstileToken: turnstileToken
+            };
+
+            // Add gateway-specific token fields
+            if (tokenData.gateway === 'cardknox') {
+                payload.cardToken = tokenData.token;
+                payload.cvvToken = tokenData.cvvToken;
+                payload.exp = tokenData.exp;
+            } else if (tokenData.gateway === 'usaepay') {
+                payload.paymentToken = tokenData.token;
+                payload.cardType = tokenData.cardType;
+                payload.last4 = tokenData.last4;
+            }
+
+            // Step 3: Submit to Master Apps Script
+            var response = await fetch(DONATE_CONFIG.masterScriptUrl, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+            var data = await response.json();
+
+            if (data.status === 'success') {
+                redirectToSuccess(
+                    chargeAmount, email, data.refNum,
+                    firstName, lastName,
+                    document.getElementById('donor-phone').value.trim(),
+                    document.getElementById('donor-street').value.trim(),
+                    document.getElementById('donor-city').value.trim(),
+                    document.getElementById('donor-state').value.trim(),
+                    document.getElementById('donor-zip').value.trim(),
+                    document.getElementById('anonymous-check').checked,
+                    isRecurring ? frequency : null,
+                    campaignName
+                );
+                return;
+            } else if (data.status === 'gateway_error' && data.canRetry) {
+                // Gateway system error — try failover
+                showStatus('info', 'Payment processing issue. Trying alternate processor...');
+                await GatewayManager.switchToFallback();
+
+                // Re-tokenize with fallback gateway
+                var fallbackTokenData = await GatewayManager.tokenize();
+
+                // Update payload with fallback token
+                payload.gateway = fallbackTokenData.gateway;
+                if (fallbackTokenData.gateway === 'cardknox') {
+                    payload.cardToken = fallbackTokenData.token;
+                    payload.cvvToken = fallbackTokenData.cvvToken;
+                    payload.exp = fallbackTokenData.exp;
+                    delete payload.paymentToken;
+                } else if (fallbackTokenData.gateway === 'usaepay') {
+                    payload.paymentToken = fallbackTokenData.token;
+                    payload.cardType = fallbackTokenData.cardType;
+                    payload.last4 = fallbackTokenData.last4;
+                    delete payload.cardToken;
+                    delete payload.cvvToken;
+                    delete payload.exp;
+                }
+
+                var fallbackResponse = await fetch(DONATE_CONFIG.masterScriptUrl, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                var fallbackData = await fallbackResponse.json();
+
+                if (fallbackData.status === 'success') {
+                    redirectToSuccess(
+                        chargeAmount, email, fallbackData.refNum,
+                        firstName, lastName,
+                        document.getElementById('donor-phone').value.trim(),
+                        document.getElementById('donor-street').value.trim(),
+                        document.getElementById('donor-city').value.trim(),
+                        document.getElementById('donor-state').value.trim(),
+                        document.getElementById('donor-zip').value.trim(),
+                        document.getElementById('anonymous-check').checked,
+                        isRecurring ? frequency : null,
+                        campaignName
+                    );
+                    return;
+                } else if (fallbackData.status === 'declined') {
+                    showStatus('error', 'Declined: ' + (fallbackData.message || 'Please check your card details.'));
+                } else {
+                    showStatus('error', fallbackData.message || 'An error occurred. Please try again.');
+                }
+            } else if (data.status === 'declined') {
+                showStatus('error', 'Declined: ' + (data.message || 'Please check your card details.'));
+            } else {
+                showStatus('error', data.message || 'An error occurred. Please try again.');
+            }
+        } catch (err) {
+            console.error('Donation error:', err);
+            showStatus('error', 'Could not process your donation. Please check your card details and try again.');
+        } finally {
+            btn.disabled = false;
+            btn.classList.remove('loading');
+            btn.textContent = 'Donate Now';
+            turnstileToken = null;
+            if (typeof turnstile !== 'undefined') turnstile.reset();
+        }
+    });
+
+    // ============================================================
+    // ON CAMPAIGN SELECTION CHANGE — RELOAD GATEWAY
+    // ============================================================
+    async function onCampaignSelected(campaignId) {
+        if (campaignId === 'general') {
+            // Use org-level default gateway
+            await GatewayManager.reinitialize({
+                primaryGateway: DONATE_CONFIG.defaultPrimaryGateway,
+                cardknox: { ifieldsKey: DONATE_CONFIG.defaultCardknoxIfieldsKey },
+                usaepay: { publicKey: DONATE_CONFIG.defaultUsaepayPublicKey }
+            });
+        } else {
+            // Fetch campaign-specific gateway config
+            try {
+                var response = await fetch(DONATE_CONFIG.masterScriptUrl + '?action=getCampaignGatewayConfig&campaignId=' + encodeURIComponent(campaignId));
+                var config = await response.json();
+                if (config.status === 'success') {
+                    await GatewayManager.reinitialize({
+                        primaryGateway: config.primaryGateway || DONATE_CONFIG.defaultPrimaryGateway,
+                        cardknox: { ifieldsKey: config.cardknoxIfieldsKey || DONATE_CONFIG.defaultCardknoxIfieldsKey },
+                        usaepay: { publicKey: config.usaepayPublicKey || DONATE_CONFIG.defaultUsaepayPublicKey }
+                    });
+                } else {
+                    // Fallback to defaults
+                    await GatewayManager.reinitialize({
+                        primaryGateway: DONATE_CONFIG.defaultPrimaryGateway,
+                        cardknox: { ifieldsKey: DONATE_CONFIG.defaultCardknoxIfieldsKey },
+                        usaepay: { publicKey: DONATE_CONFIG.defaultUsaepayPublicKey }
+                    });
+                }
+            } catch (err) {
+                console.warn('Could not load campaign gateway config, using defaults:', err);
+                await GatewayManager.reinitialize({
+                    primaryGateway: DONATE_CONFIG.defaultPrimaryGateway,
+                    cardknox: { ifieldsKey: DONATE_CONFIG.defaultCardknoxIfieldsKey },
+                    usaepay: { publicKey: DONATE_CONFIG.defaultUsaepayPublicKey }
+                });
+            }
+        }
+    }
+
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+    (async function init() {
+        // 1. Initialize GatewayManager with defaults
+        await GatewayManager.init({
+            primaryGateway: DONATE_CONFIG.defaultPrimaryGateway,
+            cardknox: { ifieldsKey: DONATE_CONFIG.defaultCardknoxIfieldsKey },
+            usaepay: { publicKey: DONATE_CONFIG.defaultUsaepayPublicKey }
+        });
+
+        // 2. Load campaign selector
+        var selector = new CampaignSelector({
+            onSelect: onCampaignSelected
+        });
+        await selector.load();
+
+        // 3. Render campaign cards
+        renderCampaignCards();
+    })();
+
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-09VTELTDTM"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-09VTELTDTM');
+    </script>
+</body>
+</html>

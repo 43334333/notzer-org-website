@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Notzer Chesed</title>
+    <meta name="description" content="Secure admin login for the Notzer Chesed donation management platform.">
+    <link rel="icon" type="image/png" href="../NC_Logo_03.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════════════════════
+           LOGIN PAGE — Notzer Chesed Admin
+           Premium dark theme with glassmorphism
+           ═══════════════════════════════════════════════════════════ */
+
+        /* --- Reset & Base --- */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(25, 25, 40, 0.7);
+            --bg-input: rgba(255, 255, 255, 0.06);
+            --bg-input-focus: rgba(255, 255, 255, 0.1);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(108, 99, 255, 0.5);
+            --text-primary: #f0f0f5;
+            --text-secondary: #9a9ab0;
+            --text-muted: #6b6b80;
+            --accent: #6c63ff;
+            --accent-light: #8b83ff;
+            --accent-dark: #5548d9;
+            --accent-glow: rgba(108, 99, 255, 0.25);
+            --success: #34d399;
+            --success-glow: rgba(52, 211, 153, 0.2);
+            --error: #ff5252;
+            --error-glow: rgba(255, 82, 82, 0.15);
+            --warning: #fbbf24;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-xs: 6px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- Animated Background --- */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(108, 99, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            animation: bgDrift 20s ease-in-out infinite alternate;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes bgDrift {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-2%, 1%) rotate(1deg); }
+            100% { transform: translate(1%, -1%) rotate(-1deg); }
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent);
+            top: -10%;
+            right: -5%;
+            animation: orbFloat1 15s ease-in-out infinite;
+        }
+
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: #4f46e5;
+            bottom: -5%;
+            left: -5%;
+            animation: orbFloat2 18s ease-in-out infinite;
+        }
+
+        .orb-3 {
+            width: 200px;
+            height: 200px;
+            background: #7c3aed;
+            top: 40%;
+            left: 20%;
+            animation: orbFloat3 12s ease-in-out infinite;
+        }
+
+        @keyframes orbFloat1 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-30px, 40px); }
+        }
+        @keyframes orbFloat2 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(40px, -30px); }
+        }
+        @keyframes orbFloat3 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-20px, -25px); }
+        }
+
+        /* --- Header / Branding --- */
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+            position: relative;
+            z-index: 1;
+            animation: fadeSlideDown 0.6s ease-out;
+        }
+
+        .login-header .logo {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 32px rgba(108, 99, 255, 0.2);
+            transition: transform var(--transition);
+        }
+
+        .login-header .logo:hover {
+            transform: scale(1.05) rotate(2deg);
+        }
+
+        .login-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .login-header .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        /* --- Glass Card --- */
+        .login-card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+            margin: 0 20px;
+            background: var(--bg-card);
+            backdrop-filter: blur(24px) saturate(1.4);
+            -webkit-backdrop-filter: blur(24px) saturate(1.4);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow:
+                0 4px 6px rgba(0, 0, 0, 0.1),
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            animation: fadeSlideUp 0.6s ease-out 0.15s both;
+        }
+
+        /* Shimmer border effect */
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            border-radius: var(--radius);
+            background: linear-gradient(135deg,
+                rgba(108, 99, 255, 0.2) 0%,
+                transparent 40%,
+                transparent 60%,
+                rgba(108, 99, 255, 0.1) 100%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- Tab Navigation --- */
+        .tab-nav {
+            display: flex;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 16px 12px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            transition: color var(--transition);
+            outline: none;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-secondary);
+        }
+
+        .tab-btn.active {
+            color: var(--text-primary);
+        }
+
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 2px 2px 0 0;
+            transition: all var(--transition);
+            transform: translateX(-50%);
+        }
+
+        .tab-btn.active::after {
+            width: 60%;
+        }
+
+        .tab-btn .tab-icon {
+            display: inline-block;
+            margin-right: 6px;
+            font-size: 1rem;
+            vertical-align: -2px;
+        }
+
+        /* --- Tab Content --- */
+        .tab-content {
+            padding: 28px 28px 32px;
+            min-height: 220px;
+        }
+
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.35s ease-out;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* --- Google Sign-In Tab --- */
+        .google-section {
+            text-align: center;
+            padding: 20px 0 10px;
+        }
+
+        .google-section .info-text {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        #google-signin-btn {
+            display: flex;
+            justify-content: center;
+            min-height: 44px;
+        }
+
+        .google-section .divider {
+            display: flex;
+            align-items: center;
+            margin-top: 24px;
+            gap: 12px;
+        }
+
+        .google-section .divider::before,
+        .google-section .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-subtle);
+        }
+
+        .google-section .divider span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .switch-method-link {
+            display: inline-block;
+            margin-top: 16px;
+            font-size: 0.82rem;
+            color: var(--accent-light);
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: var(--font);
+            transition: color var(--transition);
+        }
+
+        .switch-method-link:hover {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+
+        /* --- Email OTP Tab --- */
+        .email-section {
+            padding: 12px 0 0;
+        }
+
+        /* OTP States */
+        .otp-state {
+            display: none;
+            animation: fadeSlideUp 0.35s ease-out;
+        }
+
+        .otp-state.active {
+            display: block;
+        }
+
+        /* Form Elements */
+        .form-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all var(--transition);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-input:focus {
+            background: var(--bg-input-focus);
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .form-input.error {
+            border-color: var(--error);
+            box-shadow: 0 0 0 3px var(--error-glow);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .primary-btn {
+            width: 100%;
+            padding: 13px 24px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--font);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.02em;
+        }
+
+        .primary-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px var(--accent-glow);
+        }
+
+        .primary-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .primary-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .primary-btn.loading {
+            color: transparent;
+            pointer-events: none;
+        }
+
+        .primary-btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        /* --- OTP Code Input Group --- */
+        .otp-sent-to {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .otp-sent-to .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .otp-sent-to .email {
+            font-size: 0.95rem;
+            color: var(--accent-light);
+            font-weight: 500;
+        }
+
+        .otp-digits {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .otp-digit {
+            width: 46px;
+            height: 54px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+            font-family: var(--font);
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xs);
+            color: var(--text-primary);
+            outline: none;
+            transition: all var(--transition);
+            caret-color: var(--accent);
+        }
+
+        .otp-digit:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: var(--bg-input-focus);
+        }
+
+        .otp-digit.filled {
+            border-color: var(--accent);
+            background: rgba(108, 99, 255, 0.08);
+        }
+
+        .otp-digit.error {
+            border-color: var(--error);
+            animation: digitShake 0.4s ease;
+        }
+
+        /* --- Countdown Timer --- */
+        .otp-timer {
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .timer-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .timer-value {
+            color: var(--accent-light);
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer-expired {
+            color: var(--error);
+        }
+
+        .resend-link {
+            display: inline-block;
+            margin-top: 8px;
+            background: none;
+            border: none;
+            color: var(--accent-light);
+            font-family: var(--font);
+            font-size: 0.82rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: var(--radius-xs);
+            transition: all var(--transition);
+        }
+
+        .resend-link:hover {
+            background: rgba(108, 99, 255, 0.1);
+            color: var(--accent);
+        }
+
+        .resend-link:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .back-to-email {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 12px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font);
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: var(--radius-xs);
+            transition: all var(--transition);
+        }
+
+        .back-to-email:hover {
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        /* --- Success State --- */
+        .success-state {
+            text-align: center;
+            padding: 20px 0 10px;
+        }
+
+        .success-checkmark {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .checkmark-circle {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--success), #10b981);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: checkmarkPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 32px var(--success-glow);
+        }
+
+        .checkmark-icon {
+            width: 32px;
+            height: 32px;
+            stroke: white;
+            stroke-width: 3;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 50;
+            stroke-dashoffset: 50;
+            animation: checkmarkDraw 0.4s ease-out 0.3s forwards;
+        }
+
+        .success-name {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            background: rgba(108, 99, 255, 0.15);
+            border: 1px solid rgba(108, 99, 255, 0.3);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent-light);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 16px;
+        }
+
+        .redirect-text {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .redirect-spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border-subtle);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* --- Error Display --- */
+        .auth-error {
+            display: none;
+            padding: 12px 16px;
+            background: var(--error-glow);
+            border: 1px solid rgba(255, 82, 82, 0.3);
+            border-radius: var(--radius-sm);
+            color: var(--error);
+            font-size: 0.82rem;
+            margin-bottom: 16px;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .auth-error.visible {
+            display: block;
+        }
+
+        .auth-error.shake {
+            animation: shake 0.5s ease;
+        }
+
+        /* --- Footer --- */
+        .login-footer {
+            position: relative;
+            z-index: 1;
+            margin-top: 28px;
+            text-align: center;
+            animation: fadeSlideUp 0.6s ease-out 0.3s both;
+        }
+
+        .login-footer p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .login-footer a {
+            color: var(--accent-light);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+
+        .login-footer a:hover {
+            color: var(--accent);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           Animations
+           ═══════════════════════════════════════════════════════════ */
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            15% { transform: translateX(-8px); }
+            30% { transform: translateX(6px); }
+            45% { transform: translateX(-4px); }
+            60% { transform: translateX(3px); }
+            75% { transform: translateX(-2px); }
+        }
+
+        @keyframes digitShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-5px); }
+            40% { transform: translateX(4px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(2px); }
+        }
+
+        @keyframes checkmarkPop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes checkmarkDraw {
+            to { stroke-dashoffset: 0; }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+            50% { box-shadow: 0 0 0 8px transparent; }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           Responsive
+           ═══════════════════════════════════════════════════════════ */
+
+        @media (max-width: 480px) {
+            .login-card {
+                margin: 0 16px;
+                max-width: none;
+            }
+
+            .tab-content {
+                padding: 24px 20px 28px;
+            }
+
+            .otp-digit {
+                width: 40px;
+                height: 48px;
+                font-size: 1.15rem;
+            }
+
+            .otp-digits {
+                gap: 6px;
+            }
+
+            .login-header h1 {
+                font-size: 1.4rem;
+            }
+
+            .orb { display: none; }
+        }
+
+        @media (max-width: 360px) {
+            .otp-digit {
+                width: 36px;
+                height: 44px;
+                font-size: 1rem;
+            }
+
+            .otp-digits {
+                gap: 4px;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           Utilities
+           ═══════════════════════════════════════════════════════════ */
+
+        .hidden { display: none !important; }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Orbs -->
+    <div class="orb orb-1" aria-hidden="true"></div>
+    <div class="orb orb-2" aria-hidden="true"></div>
+    <div class="orb orb-3" aria-hidden="true"></div>
+
+    <!-- Header / Branding -->
+    <header class="login-header">
+        <img src="../NC_Logo_03.png" alt="Notzer Chesed Logo" class="logo" id="login-logo">
+        <h1>Notzer Chesed</h1>
+        <p class="subtitle">Admin Portal</p>
+    </header>
+
+    <!-- Login Card -->
+    <main class="login-card" role="main" aria-label="Login form">
+
+        <!-- Tab Navigation -->
+        <nav class="tab-nav" role="tablist" aria-label="Sign in method">
+            <button class="tab-btn active"
+                    role="tab"
+                    id="tab-google"
+                    aria-selected="true"
+                    aria-controls="panel-google"
+                    tabindex="0">
+                <span class="tab-icon" aria-hidden="true">🔑</span>Google
+            </button>
+            <button class="tab-btn"
+                    role="tab"
+                    id="tab-email"
+                    aria-selected="false"
+                    aria-controls="panel-email"
+                    tabindex="-1">
+                <span class="tab-icon" aria-hidden="true">✉️</span>Email
+            </button>
+        </nav>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+
+            <!-- Error Display (shared) -->
+            <div class="auth-error" id="auth-error" role="alert" aria-live="polite"></div>
+
+            <!-- ═══ GOOGLE TAB ═══ -->
+            <div class="tab-panel active"
+                 role="tabpanel"
+                 id="panel-google"
+                 aria-labelledby="tab-google">
+
+                <div class="google-section">
+                    <p class="info-text">
+                        Sign in with your authorized Google account to access the admin dashboard.
+                    </p>
+                    <div id="google-signin-btn" aria-label="Google Sign-In button"></div>
+                    <div class="divider">
+                        <span>or</span>
+                    </div>
+                    <button class="switch-method-link" id="switch-to-email">
+                        Use email verification instead
+                    </button>
+                </div>
+            </div>
+
+            <!-- ═══ EMAIL OTP TAB ═══ -->
+            <div class="tab-panel"
+                 role="tabpanel"
+                 id="panel-email"
+                 aria-labelledby="tab-email">
+
+                <div class="email-section">
+
+                    <!-- State 1: Enter Email -->
+                    <div class="otp-state active" id="otp-email-state">
+                        <div class="form-group">
+                            <label class="form-label" for="otp-email">Email Address</label>
+                            <input type="email"
+                                   class="form-input"
+                                   id="otp-email"
+                                   placeholder="you@example.com"
+                                   autocomplete="email"
+                                   required
+                                   aria-required="true">
+                        </div>
+                        <button class="primary-btn" id="send-code-btn" type="button">
+                            Send Verification Code
+                        </button>
+                        <div style="text-align: center;">
+                            <button class="switch-method-link" id="switch-to-google" style="margin-top: 20px;">
+                                Use Google Sign-In instead
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- State 2: Enter OTP Code -->
+                    <div class="otp-state" id="otp-code-state">
+                        <div class="otp-sent-to">
+                            <p class="label">Code sent to</p>
+                            <p class="email" id="otp-target-email"></p>
+                        </div>
+
+                        <div class="otp-digits" id="otp-digit-group" role="group" aria-label="Verification code">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 1" data-index="0" autocomplete="one-time-code">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 2" data-index="1">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 3" data-index="2">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 4" data-index="3">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 5" data-index="4">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 6" data-index="5">
+                        </div>
+
+                        <button class="primary-btn" id="verify-code-btn" type="button" disabled>
+                            Verify Code
+                        </button>
+
+                        <div class="otp-timer" id="otp-timer-section">
+                            <p class="timer-text">
+                                Code expires in <span class="timer-value" id="otp-timer">10:00</span>
+                            </p>
+                            <button class="resend-link" id="resend-code-btn" disabled>
+                                Resend code
+                            </button>
+                        </div>
+
+                        <div style="text-align: center;">
+                            <button class="back-to-email" id="back-to-email-btn">
+                                ← Use a different email
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ SUCCESS STATE ═══ -->
+            <div class="tab-panel" id="panel-success">
+                <div class="success-state">
+                    <div class="success-checkmark">
+                        <div class="checkmark-circle">
+                            <svg class="checkmark-icon" viewBox="0 0 32 32">
+                                <polyline points="8 16 14 22 24 10" />
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="success-name" id="success-user-name"></p>
+                    <div class="role-badge" id="success-user-role"></div>
+                    <p class="redirect-text">
+                        <span class="redirect-spinner"></span>
+                        Redirecting to dashboard…
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="login-footer">
+        <p><a href="../index.html">Notzer Chesed</a> &copy; 2024. All rights reserved.</p>
+    </footer>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         Scripts
+         ═══════════════════════════════════════════════════════════ -->
+
+    <!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- Shared Auth Module -->
+    <script src="../js/auth.js"></script>
+
+    <!-- Login Page Logic -->
+    <script>
+    (function() {
+        'use strict';
+
+        // ── DOM References ──
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+        const authErrorEl = document.getElementById('auth-error');
+
+        // Google tab
+        const switchToEmailBtn = document.getElementById('switch-to-email');
+
+        // Email OTP tab
+        const emailInput = document.getElementById('otp-email');
+        const sendCodeBtn = document.getElementById('send-code-btn');
+        const otpTargetEmail = document.getElementById('otp-target-email');
+        const otpDigits = document.querySelectorAll('.otp-digit');
+        const verifyCodeBtn = document.getElementById('verify-code-btn');
+        const otpTimerEl = document.getElementById('otp-timer');
+        const resendCodeBtn = document.getElementById('resend-code-btn');
+        const backToEmailBtn = document.getElementById('back-to-email-btn');
+        const switchToGoogleBtn = document.getElementById('switch-to-google');
+
+        // Success state
+        const successName = document.getElementById('success-user-name');
+        const successRole = document.getElementById('success-user-role');
+
+        // OTP States
+        const otpEmailState = document.getElementById('otp-email-state');
+        const otpCodeState = document.getElementById('otp-code-state');
+
+        // ── State ──
+        let _otpEmail = '';
+        let _timerInterval = null;
+        let _timerSeconds = 600; // 10 minutes
+        let _resendCooldown = 0;
+
+        // ═══════════════════════════════════════════════════════════
+        // Initialization
+        // ═══════════════════════════════════════════════════════════
+
+        async function initLoginPage() {
+            // Check if user is already authenticated
+            try {
+                const authenticated = await initAuth();
+                if (authenticated) {
+                    showSuccessAndRedirect();
+                    return;
+                }
+            } catch (e) {
+                console.warn('Init auth check failed:', e);
+            }
+
+            // Wait for GIS to load, then render button
+            waitForGIS(function() {
+                initGoogleSignIn('google-signin-btn');
+            });
+        }
+
+        function waitForGIS(callback, attempts) {
+            attempts = attempts || 0;
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                callback();
+            } else if (attempts < 50) {
+                setTimeout(function() { waitForGIS(callback, attempts + 1); }, 200);
+            } else {
+                console.warn('Google Identity Services failed to load');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // Tab Navigation
+        // ═══════════════════════════════════════════════════════════
+
+        function switchTab(tabId) {
+            hideError();
+
+            tabBtns.forEach(function(btn) {
+                var isActive = btn.id === 'tab-' + tabId;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                btn.tabIndex = isActive ? 0 : -1;
+            });
+
+            tabPanels.forEach(function(panel) {
+                panel.classList.remove('active');
+            });
+
+            var targetPanel = document.getElementById('panel-' + tabId);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+            }
+
+            // Focus the email input when switching to email tab
+            if (tabId === 'email') {
+                setTimeout(function() { emailInput.focus(); }, 100);
+            }
+        }
+
+        tabBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var tabId = btn.id.replace('tab-', '');
+                switchTab(tabId);
+            });
+        });
+
+        // Keyboard navigation for tabs
+        tabBtns.forEach(function(btn, idx) {
+            btn.addEventListener('keydown', function(e) {
+                var tabs = Array.from(tabBtns);
+                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    var nextIdx = e.key === 'ArrowRight'
+                        ? (idx + 1) % tabs.length
+                        : (idx - 1 + tabs.length) % tabs.length;
+                    var nextTab = tabs[nextIdx];
+                    nextTab.focus();
+                    var tabId = nextTab.id.replace('tab-', '');
+                    switchTab(tabId);
+                }
+            });
+        });
+
+        // Switch method links
+        switchToEmailBtn.addEventListener('click', function() {
+            switchTab('email');
+        });
+
+        switchToGoogleBtn.addEventListener('click', function() {
+            switchTab('google');
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        // Error Handling
+        // ═══════════════════════════════════════════════════════════
+
+        function showError(message) {
+            authErrorEl.textContent = message;
+            authErrorEl.classList.add('visible');
+            authErrorEl.classList.remove('shake');
+            // Trigger reflow for re-animation
+            void authErrorEl.offsetWidth;
+            authErrorEl.classList.add('shake');
+        }
+
+        function hideError() {
+            authErrorEl.classList.remove('visible', 'shake');
+        }
+
+        // Override the auth.js showAuthError for this page
+        window.showAuthError = showError;
+
+        // ═══════════════════════════════════════════════════════════
+        // Email OTP Flow
+        // ═══════════════════════════════════════════════════════════
+
+        // --- Send Code ---
+        sendCodeBtn.addEventListener('click', async function() {
+            var email = emailInput.value.trim().toLowerCase();
+
+            if (!email || !isValidEmail(email)) {
+                emailInput.classList.add('error');
+                showError('Please enter a valid email address.');
+                return;
+            }
+
+            emailInput.classList.remove('error');
+            hideError();
+            sendCodeBtn.classList.add('loading');
+            sendCodeBtn.disabled = true;
+
+            try {
+                var result = await requestOTP(email);
+
+                if (result.status === 'success') {
+                    _otpEmail = email;
+                    showOtpCodeState(email);
+                } else {
+                    showError(result.message || 'Unable to send code. Is this email authorized?');
+                }
+            } catch (err) {
+                showError('Network error. Please check your connection and try again.');
+                console.error('OTP request error:', err);
+            } finally {
+                sendCodeBtn.classList.remove('loading');
+                sendCodeBtn.disabled = false;
+            }
+        });
+
+        // Enter key on email input
+        emailInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendCodeBtn.click();
+            }
+        });
+
+        // Clear error state on input
+        emailInput.addEventListener('input', function() {
+            emailInput.classList.remove('error');
+            hideError();
+        });
+
+        // --- OTP Code State ---
+        function showOtpCodeState(email) {
+            otpEmailState.classList.remove('active');
+            otpCodeState.classList.add('active');
+
+            // Mask the email
+            otpTargetEmail.textContent = maskEmail(email);
+
+            // Clear and focus first digit
+            otpDigits.forEach(function(d) {
+                d.value = '';
+                d.classList.remove('filled', 'error');
+            });
+            setTimeout(function() { otpDigits[0].focus(); }, 100);
+
+            // Start countdown
+            startTimer();
+
+            // Enable resend after 30 seconds
+            _resendCooldown = 30;
+            resendCodeBtn.disabled = true;
+            updateResendButton();
+        }
+
+        // --- OTP Digit Inputs ---
+        otpDigits.forEach(function(digit, idx) {
+            digit.addEventListener('input', function(e) {
+                var val = digit.value.replace(/[^0-9]/g, '');
+                digit.value = val;
+
+                if (val) {
+                    digit.classList.add('filled');
+                    // Move to next digit
+                    if (idx < 5) {
+                        otpDigits[idx + 1].focus();
+                    }
+                } else {
+                    digit.classList.remove('filled');
+                }
+
+                // Remove error state
+                digit.classList.remove('error');
+                hideError();
+
+                // Check if all digits are filled
+                updateVerifyButton();
+            });
+
+            digit.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !digit.value && idx > 0) {
+                    otpDigits[idx - 1].focus();
+                    otpDigits[idx - 1].value = '';
+                    otpDigits[idx - 1].classList.remove('filled');
+                    updateVerifyButton();
+                }
+
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!verifyCodeBtn.disabled) {
+                        verifyCodeBtn.click();
+                    }
+                }
+
+                // Arrow keys
+                if (e.key === 'ArrowLeft' && idx > 0) {
+                    e.preventDefault();
+                    otpDigits[idx - 1].focus();
+                }
+                if (e.key === 'ArrowRight' && idx < 5) {
+                    e.preventDefault();
+                    otpDigits[idx + 1].focus();
+                }
+            });
+
+            // Handle paste
+            digit.addEventListener('paste', function(e) {
+                e.preventDefault();
+                var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+                if (pasted.length > 0) {
+                    for (var i = 0; i < 6 && i < pasted.length; i++) {
+                        otpDigits[i].value = pasted[i];
+                        otpDigits[i].classList.add('filled');
+                    }
+                    var focusIdx = Math.min(pasted.length, 5);
+                    otpDigits[focusIdx].focus();
+                    updateVerifyButton();
+                }
+            });
+
+            digit.addEventListener('focus', function() {
+                digit.select();
+            });
+        });
+
+        function updateVerifyButton() {
+            var code = getOtpCode();
+            verifyCodeBtn.disabled = code.length !== 6;
+        }
+
+        function getOtpCode() {
+            return Array.from(otpDigits).map(function(d) { return d.value; }).join('');
+        }
+
+        // --- Verify Code ---
+        verifyCodeBtn.addEventListener('click', async function() {
+            var code = getOtpCode();
+            if (code.length !== 6) return;
+
+            hideError();
+            verifyCodeBtn.classList.add('loading');
+            verifyCodeBtn.disabled = true;
+
+            try {
+                var result = await submitOTP(_otpEmail, code);
+
+                if (result.status === 'success') {
+                    // submitOTP in auth.js handles persisting & calling onAuthSuccess
+                    // But we want to show the success state first
+                    stopTimer();
+                    showSuccessAndRedirect();
+                } else {
+                    showError(result.message || 'Invalid code. Please try again.');
+                    // Shake the digit fields
+                    otpDigits.forEach(function(d) {
+                        d.classList.add('error');
+                    });
+                    verifyCodeBtn.classList.remove('loading');
+                    verifyCodeBtn.disabled = false;
+                }
+            } catch (err) {
+                showError('Verification failed. Please try again.');
+                console.error('OTP verify error:', err);
+                verifyCodeBtn.classList.remove('loading');
+                verifyCodeBtn.disabled = false;
+            }
+        });
+
+        // --- Back to Email ---
+        backToEmailBtn.addEventListener('click', function() {
+            stopTimer();
+            otpCodeState.classList.remove('active');
+            otpEmailState.classList.add('active');
+            hideError();
+        });
+
+        // --- Resend Code ---
+        resendCodeBtn.addEventListener('click', async function() {
+            if (resendCodeBtn.disabled) return;
+
+            hideError();
+            resendCodeBtn.disabled = true;
+            resendCodeBtn.textContent = 'Sending...';
+
+            try {
+                var result = await requestOTP(_otpEmail);
+                if (result.status === 'success') {
+                    // Reset timer
+                    _timerSeconds = 600;
+                    _resendCooldown = 30;
+                    updateResendButton();
+
+                    // Clear digit fields
+                    otpDigits.forEach(function(d) {
+                        d.value = '';
+                        d.classList.remove('filled', 'error');
+                    });
+                    otpDigits[0].focus();
+                    updateVerifyButton();
+                } else {
+                    showError(result.message || 'Unable to resend code.');
+                    resendCodeBtn.disabled = false;
+                    resendCodeBtn.textContent = 'Resend code';
+                }
+            } catch (err) {
+                showError('Network error. Please try again.');
+                resendCodeBtn.disabled = false;
+                resendCodeBtn.textContent = 'Resend code';
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        // Timer
+        // ═══════════════════════════════════════════════════════════
+
+        function startTimer() {
+            stopTimer();
+            _timerSeconds = 600;
+            updateTimerDisplay();
+
+            _timerInterval = setInterval(function() {
+                _timerSeconds--;
+                _resendCooldown = Math.max(0, _resendCooldown - 1);
+
+                updateTimerDisplay();
+                updateResendButton();
+
+                if (_timerSeconds <= 0) {
+                    stopTimer();
+                    otpTimerEl.textContent = 'Expired';
+                    otpTimerEl.classList.add('timer-expired');
+                    showError('Code has expired. Please request a new one.');
+                    verifyCodeBtn.disabled = true;
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (_timerInterval) {
+                clearInterval(_timerInterval);
+                _timerInterval = null;
+            }
+        }
+
+        function updateTimerDisplay() {
+            var mins = Math.floor(_timerSeconds / 60);
+            var secs = _timerSeconds % 60;
+            otpTimerEl.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+            otpTimerEl.classList.toggle('timer-expired', _timerSeconds <= 60);
+        }
+
+        function updateResendButton() {
+            if (_resendCooldown > 0) {
+                resendCodeBtn.disabled = true;
+                resendCodeBtn.textContent = 'Resend code (' + _resendCooldown + 's)';
+            } else {
+                resendCodeBtn.disabled = false;
+                resendCodeBtn.textContent = 'Resend code';
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // Success State
+        // ═══════════════════════════════════════════════════════════
+
+        function showSuccessAndRedirect() {
+            stopTimer();
+            hideError();
+
+            var user = getCurrentUser();
+            var name = (user && user.name) ? user.name : 'User';
+            var role = (user && user.role) ? formatRole(user.role) : 'Authenticated';
+
+            successName.textContent = 'Welcome, ' + name;
+            successRole.textContent = role;
+
+            // Hide all panels and tabs, show success
+            tabBtns.forEach(function(btn) { btn.style.display = 'none'; });
+            document.querySelector('.tab-nav').style.borderBottom = 'none';
+            tabPanels.forEach(function(p) { p.classList.remove('active'); });
+            document.getElementById('panel-success').classList.add('active');
+
+            // Redirect after a short delay
+            setTimeout(function() {
+                var params = new URLSearchParams(window.location.search);
+                var redirect = params.get('redirect');
+                if (redirect) {
+                    window.location.href = decodeURIComponent(redirect);
+                } else {
+                    window.location.href = '/admin/';
+                }
+            }, 2000);
+        }
+
+        // Override onAuthSuccess from auth.js — we handle it in the login page
+        window.onAuthSuccess = function() {
+            showSuccessAndRedirect();
+        };
+
+        // ═══════════════════════════════════════════════════════════
+        // Utilities
+        // ═══════════════════════════════════════════════════════════
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function maskEmail(email) {
+            var parts = email.split('@');
+            if (parts[0].length <= 2) return email;
+            return parts[0][0] + '***@' + parts[1];
+        }
+
+        function formatRole(role) {
+            var map = {
+                'super_admin': 'Super Admin',
+                'campaign_manager': 'Campaign Manager',
+                'viewer': 'Viewer'
+            };
+            return map[role] || role;
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // Initialize
+        // ═══════════════════════════════════════════════════════════
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initLoginPage);
+        } else {
+            initLoginPage();
+        }
+
+    })();
+    </script>
+
+</body>
+</html>

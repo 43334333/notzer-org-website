@@ -1,0 +1,2720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Admin Console | Notzer Chesed</title>
+    <meta name="description" content="Master admin console for the Notzer Chesed multi-campaign donation management platform.">
+    <link rel="icon" type="image/png" href="../NC_Logo_03.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+/* ═══════════════════════════════════════════════════════════
+   MASTER ADMIN CONSOLE — Notzer Chesed
+   Premium dark theme with glassmorphism, responsive sidebar
+   ═══════════════════════════════════════════════════════════ */
+
+/* --- Reset & Variables --- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    --bg-dark: #0a0a0f;
+    --bg-card: rgba(25, 25, 40, 0.7);
+    --bg-input: rgba(255, 255, 255, 0.06);
+    --bg-input-hover: rgba(255, 255, 255, 0.055);
+    --bg-input-focus: rgba(255, 255, 255, 0.1);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-focus: rgba(108, 99, 255, 0.5);
+    --text-primary: #f0f0f5;
+    --text-secondary: #9a9ab0;
+    --text-muted: #6b6b80;
+    --accent: #6c63ff;
+    --accent-light: #8b83ff;
+    --accent-dark: #5548d9;
+    --accent-glow: rgba(108, 99, 255, 0.25);
+    --success: #34d399;
+    --success-glow: rgba(52, 211, 153, 0.2);
+    --error: #ff5252;
+    --error-glow: rgba(255, 82, 82, 0.15);
+    --warning: #fbbf24;
+    --warning-glow: rgba(251, 191, 36, 0.15);
+    --info: #4dabf7;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --sidebar-width: 250px;
+}
+
+body {
+    font-family: var(--font);
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* --- Animated Background --- */
+body::before {
+    content: '';
+    position: fixed;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background:
+        radial-gradient(ellipse at 20% 50%, rgba(108, 99, 255, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+    animation: bgDrift 20s ease-in-out infinite alternate;
+    z-index: 0; pointer-events: none;
+}
+@keyframes bgDrift {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-2%, 1%) rotate(1deg); }
+    100% { transform: translate(1%, -1%) rotate(-1deg); }
+}
+
+.orb { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.2; pointer-events: none; z-index: 0; }
+.orb-1 { width: 350px; height: 350px; background: var(--accent); top: -8%; right: -3%; animation: orbFloat1 15s ease-in-out infinite; }
+.orb-2 { width: 250px; height: 250px; background: #4f46e5; bottom: -3%; left: -3%; animation: orbFloat2 18s ease-in-out infinite; }
+.orb-3 { width: 180px; height: 180px; background: #7c3aed; top: 50%; left: 30%; animation: orbFloat3 12s ease-in-out infinite; }
+@keyframes orbFloat1 { 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(-30px,40px); } }
+@keyframes orbFloat2 { 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(40px,-30px); } }
+@keyframes orbFloat3 { 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(-20px,-25px); } }
+
+/* --- Layout --- */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+    width: var(--sidebar-width);
+    background: rgba(15, 15, 25, 0.9);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    transition: transform var(--transition);
+}
+
+.sidebar-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.sidebar-header img { height: 36px; width: 36px; border-radius: 8px; }
+.sidebar-header .brand { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+.sidebar-header .brand small { display: block; font-size: 0.7rem; color: var(--text-muted); font-weight: 400; }
+
+.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+.nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 20px;
+    color: var(--text-secondary);
+    font-size: 0.85rem; font-weight: 500;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all var(--transition);
+    user-select: none;
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); }
+.nav-item.active {
+    background: rgba(108, 99, 255, 0.08);
+    color: var(--accent-light);
+    border-left-color: var(--accent);
+}
+.nav-item .nav-icon { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
+.nav-item .nav-label { white-space: nowrap; }
+
+.sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+/* --- Mobile sidebar --- */
+.sidebar-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
+}
+.hamburger {
+    display: none;
+    background: none; border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 4px;
+}
+.sidebar-close {
+    display: none;
+    position: absolute; top: 16px; right: 16px;
+    background: none; border: none;
+    color: var(--text-muted); font-size: 1.3rem;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay.open { display: block; }
+    .sidebar-close { display: block; }
+    .hamburger { display: block; }
+    .main-content { margin-left: 0 !important; }
+}
+
+/* --- Header Bar --- */
+.header-bar {
+    height: 60px;
+    background: rgba(15, 15, 25, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky; top: 0;
+    z-index: 50;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-title { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.user-info { display: flex; align-items: center; gap: 10px; }
+.user-name { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+.role-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    background: rgba(108, 99, 255, 0.15);
+    border: 1px solid rgba(108, 99, 255, 0.3);
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--accent-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.signout-btn {
+    padding: 6px 14px;
+    background: rgba(255, 82, 82, 0.1);
+    border: 1px solid rgba(255, 82, 82, 0.2);
+    border-radius: var(--radius-sm);
+    color: var(--error);
+    font-family: var(--font);
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.signout-btn:hover { background: rgba(255, 82, 82, 0.2); border-color: rgba(255, 82, 82, 0.4); }
+
+/* --- Main Content --- */
+.main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+.tab-content-area {
+    flex: 1;
+    padding: 24px;
+}
+
+/* --- Tab Panels --- */
+.tab-panel { display: none; animation: fadeIn 0.35s ease-out; }
+.tab-panel.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- Section Titles --- */
+.section-title {
+    font-size: 1.3rem; font-weight: 700; color: var(--text-primary);
+    margin-bottom: 6px; letter-spacing: -0.02em;
+}
+.section-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px; }
+
+/* --- Glassmorphism Cards --- */
+.glass-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 20px 60px rgba(0,0,0,0.15);
+}
+
+/* --- Stat Cards --- */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex; align-items: center; gap: 16px;
+    transition: all var(--transition);
+}
+.stat-card:hover { border-color: rgba(108, 99, 255, 0.2); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+.stat-icon { font-size: 2rem; width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.stat-icon.purple { background: rgba(108, 99, 255, 0.12); }
+.stat-icon.green { background: rgba(52, 211, 153, 0.12); }
+.stat-icon.blue { background: rgba(77, 171, 247, 0.12); }
+.stat-icon.yellow { background: rgba(251, 191, 36, 0.12); }
+.stat-icon.red { background: rgba(255, 82, 82, 0.12); }
+.stat-value { font-size: 1.6rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+.stat-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 500; margin-top: 2px; }
+
+/* --- Data Tables --- */
+.table-wrapper { overflow-x: auto; }
+.data-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.83rem;
+}
+.data-table th {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-subtle);
+    white-space: nowrap;
+}
+.data-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+.data-table tbody tr { transition: background var(--transition); }
+.data-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.data-table tbody tr.overdue { background: rgba(255, 82, 82, 0.06); }
+
+/* --- Badges --- */
+.badge {
+    display: inline-block; padding: 3px 10px;
+    border-radius: 20px; font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+.badge-active { background: rgba(52,211,153,0.12); color: var(--success); border: 1px solid rgba(52,211,153,0.25); }
+.badge-inactive { background: rgba(107,107,128,0.12); color: var(--text-muted); border: 1px solid rgba(107,107,128,0.25); }
+.badge-draft { background: var(--warning-glow); color: var(--warning); border: 1px solid rgba(251,191,36,0.25); }
+.badge-processed { background: rgba(52,211,153,0.12); color: var(--success); border: 1px solid rgba(52,211,153,0.25); }
+.badge-pledged { background: rgba(77,171,247,0.12); color: var(--info); border: 1px solid rgba(77,171,247,0.25); }
+.badge-scheduled { background: rgba(108,99,255,0.12); color: var(--accent-light); border: 1px solid rgba(108,99,255,0.25); }
+.badge-split { background: var(--warning-glow); color: var(--warning); border: 1px solid rgba(251,191,36,0.25); }
+.badge-overdue { background: var(--error-glow); color: var(--error); border: 1px solid rgba(255,82,82,0.25); }
+.badge-paid { background: rgba(52,211,153,0.12); color: var(--success); border: 1px solid rgba(52,211,153,0.25); }
+.badge-skipped { background: rgba(107,107,128,0.12); color: var(--text-muted); border: 1px solid rgba(107,107,128,0.25); }
+.badge-cancelled { background: rgba(107,107,128,0.12); color: var(--text-muted); border: 1px solid rgba(107,107,128,0.25); }
+.badge-cleared { background: rgba(52,211,153,0.12); color: var(--success); border: 1px solid rgba(52,211,153,0.25); }
+.badge-pending { background: var(--warning-glow); color: var(--warning); border: 1px solid rgba(251,191,36,0.25); }
+.badge-auto { background: rgba(107,107,128,0.12); color: var(--text-muted); border: 1px solid rgba(107,107,128,0.25); }
+.badge-manual { background: rgba(77,171,247,0.12); color: var(--info); border: 1px solid rgba(77,171,247,0.25); }
+.badge-resend { background: var(--warning-glow); color: var(--warning); border: 1px solid rgba(251,191,36,0.25); }
+.badge-google { background: rgba(66,133,244,0.12); color: #4285f4; border: 1px solid rgba(66,133,244,0.25); }
+.badge-otp { background: rgba(108,99,255,0.12); color: var(--accent-light); border: 1px solid rgba(108,99,255,0.25); }
+.badge-super { background: rgba(255,82,82,0.12); color: var(--error); border: 1px solid rgba(255,82,82,0.25); }
+.badge-manager { background: rgba(108,99,255,0.12); color: var(--accent-light); border: 1px solid rgba(108,99,255,0.25); }
+.badge-viewer { background: rgba(107,107,128,0.12); color: var(--text-muted); border: 1px solid rgba(107,107,128,0.25); }
+
+/* --- Filter Pills --- */
+.filter-pills { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.pill {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.78rem; font-weight: 500;
+    cursor: pointer;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    transition: all var(--transition);
+}
+.pill:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.pill.active { background: rgba(108,99,255,0.15); border-color: rgba(108,99,255,0.3); color: var(--accent-light); }
+
+/* --- Filter Bar --- */
+.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filter-bar select, .filter-bar input[type="text"], .filter-bar input[type="date"] {
+    padding: 8px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 0.82rem;
+    outline: none;
+    transition: all var(--transition);
+}
+.filter-bar select:focus, .filter-bar input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.filter-bar select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+    cursor: pointer;
+}
+.filter-bar select option { background: #1e1e1e; color: var(--text-primary); }
+
+/* --- Buttons --- */
+.btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 0.82rem; font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    border: none; outline: none;
+    white-space: nowrap;
+}
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: #fff;
+}
+.btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px var(--accent-glow); }
+.btn-secondary {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+.btn-secondary:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+.btn-success { background: rgba(52,211,153,0.15); border: 1px solid rgba(52,211,153,0.3); color: var(--success); }
+.btn-success:hover { background: rgba(52,211,153,0.25); }
+.btn-danger { background: var(--error-glow); border: 1px solid rgba(255,82,82,0.3); color: var(--error); }
+.btn-danger:hover { background: rgba(255,82,82,0.25); }
+.btn-sm { padding: 5px 10px; font-size: 0.75rem; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+.btn.loading { color: transparent; pointer-events: none; position: relative; }
+.btn.loading::after {
+    content: ''; position: absolute;
+    width: 16px; height: 16px; top: 50%; left: 50%;
+    margin: -8px 0 0 -8px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- Forms --- */
+.form-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 24px;
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; }
+@media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+
+.col-label {
+    font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-light);
+    margin-bottom: 1rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(108, 99, 255, 0.15);
+}
+
+.field { margin-bottom: 1rem; }
+.field label {
+    display: block; font-size: 0.8rem; font-weight: 500;
+    color: var(--text-secondary); margin-bottom: 0.35rem;
+}
+.field input, .field select, .field textarea {
+    width: 100%; padding: 0.65rem 0.8rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font); font-size: 0.9rem;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    outline: none;
+}
+.field input:hover, .field select:hover, .field textarea:hover {
+    border-color: rgba(255,255,255,0.18);
+    background: var(--bg-input-hover);
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
+    background: var(--bg-input-focus);
+}
+.field input::placeholder, .field textarea::placeholder { color: var(--text-muted); }
+.field textarea { resize: vertical; min-height: 80px; }
+.field select {
+    cursor: pointer; appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.8rem center;
+    padding-right: 2.2rem;
+}
+.field select option { background: #1e1e1e; color: var(--text-primary); }
+.field.invalid input, .field.invalid select { border-color: rgba(255,82,82,0.5); box-shadow: 0 0 0 3px var(--error-glow); }
+.req { color: var(--error); font-weight: 400; }
+
+.amount-wrapper { position: relative; }
+.amount-wrapper .currency {
+    position: absolute; left: 0.8rem; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted); font-weight: 600; font-size: 0.95rem;
+    pointer-events: none;
+}
+.amount-wrapper input { padding-left: 1.6rem; font-weight: 600; font-size: 1rem; }
+
+.full-width { grid-column: 1 / -1; margin-top: 0.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle); }
+
+/* --- Toggle Switch --- */
+.toggle-row {
+    display: flex; align-items: center; gap: 0.8rem;
+    padding: 0.8rem 1rem;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; margin-bottom: 0.5rem;
+}
+.toggle-row.disabled { opacity: 0.4; pointer-events: none; }
+.switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 24px; transition: background 0.25s;
+}
+.slider::before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; left: 3px; bottom: 3px;
+    background: #888; border-radius: 50%;
+    transition: transform 0.25s, background 0.25s;
+}
+.switch input:checked + .slider { background: rgba(108, 99, 255, 0.25); }
+.switch input:checked + .slider::before { transform: translateX(18px); background: var(--accent); }
+.toggle-text { font-size: 0.85rem; color: #bbb; line-height: 1.4; }
+.toggle-text strong { display: block; color: #ddd; font-weight: 500; font-size: 0.88rem; }
+.toggle-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; padding-left: calc(42px + 0.8rem); }
+
+/* --- Campaign Chip Selector --- */
+.chip-selector { position: relative; }
+.chip-selector .chip-wrapper {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    padding: 0.5rem 0.6rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    min-height: 42px; cursor: text;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.chip-selector .chip-wrapper:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
+}
+.chip-tag {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(108, 99, 255, 0.15);
+    border: 1px solid rgba(108, 99, 255, 0.3);
+    border-radius: 6px; font-size: 0.78rem;
+    color: var(--accent-light); white-space: nowrap;
+}
+.chip-tag .chip-remove {
+    cursor: pointer; font-size: 0.85rem; color: var(--error);
+    opacity: 0.7; transition: opacity 0.15s; line-height: 1;
+}
+.chip-tag .chip-remove:hover { opacity: 1; }
+.chip-search {
+    border: none; background: transparent;
+    color: var(--text-primary); font-family: var(--font);
+    font-size: 0.85rem; outline: none;
+    flex: 1; min-width: 80px;
+}
+.chip-search::placeholder { color: var(--text-muted); }
+.chip-dropdown {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: #1e1e1e;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    max-height: 180px; overflow-y: auto;
+    z-index: 50; margin-top: 4px;
+    display: none;
+}
+.chip-dropdown.visible { display: block; }
+.chip-dropdown-item {
+    padding: 0.55rem 0.75rem; font-size: 0.85rem;
+    color: #ccc; cursor: pointer;
+    transition: background 0.15s;
+}
+.chip-dropdown-item:hover { background: rgba(108, 99, 255, 0.1); color: #fff; }
+.chip-dropdown-item.selected { background: rgba(108, 99, 255, 0.08); color: var(--accent-light); }
+.chip-dropdown-empty { padding: 0.55rem 0.75rem; font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
+
+/* --- Tag Input (Teams multi-select) --- */
+.tag-input-wrapper {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    padding: 0.5rem 0.6rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    min-height: 42px; cursor: text;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.tag-input-wrapper:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12); }
+
+/* --- Pagination --- */
+.pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; margin-top: 8px;
+}
+.pagination-info { font-size: 0.8rem; color: var(--text-muted); }
+.pagination-btns { display: flex; gap: 8px; }
+
+/* --- Progress Bar --- */
+.progress-bar {
+    width: 100%; height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    transition: width var(--transition);
+}
+
+/* --- Activity Feed --- */
+.activity-feed { max-height: 400px; overflow-y: auto; }
+.activity-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background var(--transition);
+}
+.activity-item:hover { background: rgba(255,255,255,0.02); }
+.activity-icon { font-size: 1.2rem; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(108,99,255,0.1); flex-shrink: 0; }
+.activity-text { flex: 1; font-size: 0.83rem; color: var(--text-secondary); line-height: 1.4; }
+.activity-text strong { color: var(--text-primary); font-weight: 600; }
+.activity-time { font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; }
+
+/* --- Quick Links --- */
+.quick-link {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text-muted); font-size: 0.85rem;
+    text-decoration: none;
+    transition: all var(--transition);
+    cursor: pointer;
+}
+.quick-link:hover { background: rgba(108,99,255,0.15); color: var(--accent-light); }
+
+/* --- Modal --- */
+.modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    justify-content: center; align-items: center;
+    padding: 1.5rem;
+    animation: fadeInFast 0.2s ease;
+}
+.modal-overlay.visible { display: flex; }
+@keyframes fadeInFast { from { opacity: 0; } to { opacity: 1; } }
+.modal-card {
+    background: #1a1a2e;
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 0;
+    max-width: 500px; width: 100%;
+    animation: slideUp 0.3s ease;
+    max-height: 90vh; overflow-y: auto;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.modal-title { font-size: 1.05rem; font-weight: 600; color: var(--text-primary); }
+.modal-close {
+    background: none; border: none;
+    color: var(--text-muted); font-size: 1.3rem;
+    cursor: pointer; padding: 4px;
+    transition: color var(--transition);
+}
+.modal-close:hover { color: var(--text-primary); }
+.modal-body { padding: 24px; }
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-subtle);
+    display: flex; gap: 10px; justify-content: flex-end;
+}
+
+/* --- Toast --- */
+.toast-container {
+    position: fixed; top: 16px; right: 16px;
+    z-index: 2000; display: flex;
+    flex-direction: column; gap: 8px;
+}
+.toast {
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 0.84rem; font-weight: 500;
+    display: flex; align-items: center; gap: 10px;
+    min-width: 280px; max-width: 420px;
+    animation: toastIn 0.35s ease;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.toast.removing { animation: toastOut 0.3s ease forwards; }
+@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+.toast-success { background: rgba(15, 50, 35, 0.95); border: 1px solid rgba(52,211,153,0.3); color: var(--success); }
+.toast-error { background: rgba(50, 15, 15, 0.95); border: 1px solid rgba(255,82,82,0.3); color: var(--error); }
+.toast-info { background: rgba(15, 30, 50, 0.95); border: 1px solid rgba(77,171,247,0.3); color: var(--info); }
+.toast-warning { background: rgba(50, 40, 10, 0.95); border: 1px solid rgba(251,191,36,0.3); color: var(--warning); }
+
+/* --- Loading Spinner --- */
+.loading-overlay {
+    display: none; position: absolute; inset: 0;
+    background: rgba(10, 10, 15, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 10;
+    justify-content: center; align-items: center;
+    border-radius: var(--radius);
+}
+.loading-overlay.visible { display: flex; }
+.loading-spinner {
+    width: 36px; height: 36px;
+    border: 3px solid rgba(108,99,255,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+/* --- Success Overlay --- */
+.success-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    justify-content: center; align-items: center;
+    padding: 1.5rem;
+}
+.success-overlay.visible { display: flex; }
+.success-card {
+    background: #1a1a2e;
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    max-width: 420px; width: 100%;
+    text-align: center;
+    animation: slideUp 0.35s ease;
+}
+.checkmark-circle {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: rgba(52, 211, 153, 0.1);
+    border: 2px solid rgba(52, 211, 153, 0.3);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.25rem;
+    animation: popIn 0.4s ease 0.15s both;
+}
+@keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.checkmark-circle svg { width: 30px; height: 30px; }
+.checkmark-circle svg path {
+    stroke: var(--success); stroke-width: 3; fill: none;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 40; stroke-dashoffset: 40;
+    animation: drawCheck 0.4s ease 0.4s forwards;
+}
+@keyframes drawCheck { to { stroke-dashoffset: 0; } }
+.success-card h2 { font-size: 1.25rem; font-weight: 600; color: #fff; margin-bottom: 1rem; }
+.success-summary { font-size: 0.85rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 1.5rem; }
+.success-summary strong { color: var(--text-secondary); }
+.success-actions { display: flex; gap: 0.75rem; }
+.success-actions button { flex: 1; padding: 0.7rem 1rem; border-radius: 10px; font-family: var(--font); font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+
+/* --- Sub-tabs --- */
+.sub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border-subtle); }
+.sub-tab {
+    padding: 10px 20px; font-size: 0.84rem; font-weight: 500;
+    color: var(--text-muted); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all var(--transition);
+}
+.sub-tab:hover { color: var(--text-secondary); }
+.sub-tab.active { color: var(--accent-light); border-bottom-color: var(--accent); }
+.sub-panel { display: none; animation: fadeIn 0.3s ease; }
+.sub-panel.active { display: block; }
+
+/* --- Date Presets --- */
+.date-presets { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.date-preset {
+    padding: 5px 12px; border-radius: 6px;
+    font-size: 0.75rem; font-weight: 500;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    cursor: pointer; transition: all var(--transition);
+}
+.date-preset:hover { background: rgba(255,255,255,0.08); }
+.date-preset.active { background: rgba(108,99,255,0.15); border-color: rgba(108,99,255,0.3); color: var(--accent-light); }
+
+/* --- Bar Chart --- */
+.bar-chart { display: flex; align-items: flex-end; gap: 12px; height: 200px; padding: 0 8px; }
+.bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.bar {
+    width: 100%; min-width: 30px; max-width: 80px;
+    border-radius: 6px 6px 0 0;
+    background: linear-gradient(to top, var(--accent-dark), var(--accent-light));
+    transition: height var(--transition);
+}
+.bar-label { font-size: 0.68rem; color: var(--text-muted); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
+.bar-value { font-size: 0.72rem; color: var(--text-secondary); font-weight: 600; }
+
+/* --- Error Alert --- */
+.error-alert {
+    display: none; padding: 0.8rem 1rem;
+    background: var(--error-glow);
+    border: 1px solid rgba(255, 82, 82, 0.25);
+    border-radius: 10px; color: #ff6b6b;
+    font-size: 0.85rem; margin-top: 1rem; line-height: 1.5;
+}
+.error-alert.visible { display: flex; gap: 0.6rem; align-items: flex-start; }
+
+/* --- Inline form toggle --- */
+.inline-form { display: none; margin-top: 16px; }
+.inline-form.visible { display: block; }
+
+/* --- Misc --- */
+.text-center { text-align: center; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-24 { margin-bottom: 24px; }
+.gap-8 { gap: 8px; }
+.flex { display: flex; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.empty-state {
+    text-align: center; padding: 48px 24px;
+    color: var(--text-muted); font-size: 0.9rem;
+}
+.empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5; }
+
+/* --- Responsive --- */
+@media (max-width: 640px) {
+    .tab-content-area { padding: 16px; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .filter-bar { flex-direction: column; }
+    .success-actions { flex-direction: column; }
+}
+
+/* --- Print --- */
+@media print {
+    .sidebar, .header-bar, .toast-container, .hamburger { display: none !important; }
+    .main-content { margin-left: 0 !important; }
+    body { background: #fff; color: #000; }
+    .glass-card, .stat-card, .form-card { background: #fff; border: 1px solid #ddd; }
+}
+    </style>
+</head>
+<body>
+
+<!-- Background Orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="app-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <button class="sidebar-close" id="sidebarClose">&times;</button>
+        <div class="sidebar-header">
+            <img src="../NC_Logo_03.png" alt="NC">
+            <div class="brand">Notzer Chesed<small>Admin Console</small></div>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav">
+            <div class="nav-item active" data-tab="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></div>
+            <div class="nav-item" data-tab="campaigns"><span class="nav-icon">🏛️</span><span class="nav-label">Campaigns</span></div>
+            <div class="nav-item" data-tab="donations"><span class="nav-icon">📝</span><span class="nav-label">Donations</span></div>
+            <div class="nav-item" data-tab="pledges"><span class="nav-icon">💳</span><span class="nav-label">Pledges</span></div>
+            <div class="nav-item" data-tab="schedule"><span class="nav-icon">📅</span><span class="nav-label">Scheduled</span></div>
+            <div class="nav-item" data-tab="receipts"><span class="nav-icon">🧾</span><span class="nav-label">Receipts</span></div>
+            <div class="nav-item" data-tab="users" id="usersNavItem" style="display:none;"><span class="nav-icon">👥</span><span class="nav-label">Users</span></div>
+            <div class="nav-item" data-tab="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></div>
+        </nav>
+        <div class="sidebar-footer">© 2026 Notzer Chesed Inc.</div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+        <!-- Header Bar -->
+        <div class="header-bar">
+            <div class="header-left">
+                <button class="hamburger" id="hamburgerBtn">☰</button>
+                <span class="header-title" id="headerTitle">Dashboard</span>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <span class="user-name" id="userName">Loading...</span>
+                    <span class="role-badge" id="userRole">—</span>
+                </div>
+                <button class="signout-btn" id="signOutBtn">Sign Out</button>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content-area">
+
+<!-- ═══════════════ TAB 1: DASHBOARD ═══════════════ -->
+<div class="tab-panel active" id="tab-dashboard">
+    <h1 class="section-title">Dashboard</h1>
+    <p class="section-subtitle">Organization-wide overview</p>
+
+    <div class="stats-grid" id="dashStats">
+        <div class="stat-card"><div class="stat-icon purple">💰</div><div><div class="stat-value" id="totalRaised">$0</div><div class="stat-label">Total Raised</div></div></div>
+        <div class="stat-card"><div class="stat-icon green">👥</div><div><div class="stat-value" id="totalDonors">0</div><div class="stat-label">Total Donors</div></div></div>
+        <div class="stat-card"><div class="stat-icon blue">🏛️</div><div><div class="stat-value" id="activeCampaigns">0</div><div class="stat-label">Active Campaigns</div></div></div>
+    </div>
+
+    <div class="glass-card mb-24" style="position:relative;">
+        <div class="loading-overlay" id="dashCampaignsLoading"><div class="loading-spinner"></div></div>
+        <div style="padding:20px 20px 8px;"><h3 style="font-size:0.95rem;font-weight:600;color:var(--text-primary);">Campaign Summary</h3></div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Campaign</th><th>Status</th><th>Raised / Goal</th><th>Donors</th><th>Links</th></tr></thead>
+                <tbody id="dashCampaignRows"><tr><td colspan="5" class="empty-state"><div class="empty-icon">📊</div>Loading campaigns...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="glass-card" style="position:relative;">
+        <div class="loading-overlay" id="dashActivityLoading"><div class="loading-spinner"></div></div>
+        <div style="padding:20px 20px 8px;"><h3 style="font-size:0.95rem;font-weight:600;color:var(--text-primary);">Recent Activity</h3></div>
+        <div class="activity-feed" id="activityFeed">
+            <div class="empty-state"><div class="empty-icon">📋</div>Loading recent activity...</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ TAB 2: CAMPAIGNS ═══════════════ -->
+<div class="tab-panel" id="tab-campaigns">
+    <div class="flex items-center justify-between mb-24">
+        <div><h1 class="section-title">Campaigns</h1><p class="section-subtitle" style="margin-bottom:0;">Manage all fundraising campaigns</p></div>
+        <button class="btn btn-primary" id="createCampaignBtn">+ Create Campaign</button>
+    </div>
+
+    <div class="inline-form glass-card mb-24" id="campaignForm">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h3 style="font-size:0.95rem;font-weight:600;" id="campaignFormTitle">Create Campaign</h3>
+            <button class="btn btn-secondary btn-sm" id="cancelCampaignForm">&times; Cancel</button>
+        </div>
+        <div class="form-grid">
+            <div class="form-col">
+                <div class="col-label">Campaign Info</div>
+                <div class="field"><label>Campaign Name <span class="req">*</span></label><input type="text" id="campName" placeholder="e.g. Keren Shlomo Yechiel"></div>
+                <div class="field"><label>Slug <span class="req">*</span></label><input type="text" id="campSlug" placeholder="e.g. ksy (auto-generated)"></div>
+                <div class="field"><label>Primary Gateway <span class="req">*</span></label><select id="campGateway"><option value="cardknox">Cardknox</option><option value="usaepay">USAePay</option></select></div>
+                <div class="field"><label>Cardknox iFields Key</label><input type="text" id="campCkIfields" placeholder="iFields key"></div>
+                <div class="field"><label>Cardknox Server Key</label><input type="text" id="campCkServer" placeholder="Server key"></div>
+                <div class="field"><label>USAePay Public Key</label><input type="text" id="campUePublic" placeholder="Public key"></div>
+                <div class="field"><label>USAePay Source Key</label><input type="text" id="campUeSource" placeholder="Source key"></div>
+            </div>
+            <div class="form-col">
+                <div class="col-label">Settings</div>
+                <div class="field"><label>Goal Amount</label><div class="amount-wrapper"><span class="currency">$</span><input type="number" id="campGoal" min="0" step="0.01" placeholder="0.00"></div></div>
+                <div class="field"><label>Start Date</label><input type="date" id="campStart"></div>
+                <div class="field"><label>End Date</label><input type="date" id="campEnd"></div>
+                <div class="field"><label>Page URL</label><input type="text" id="campPageUrl" placeholder="/campaign-name.html"></div>
+                <div class="field"><label>Admin URL</label><input type="text" id="campAdminUrl" placeholder="/admin/campaign/"></div>
+                <div class="field"><label>Wall URL</label><input type="text" id="campWallUrl" placeholder="/wall/campaign/"></div>
+                <div class="toggle-row"><label class="switch"><input type="checkbox" id="campWallEnabled" checked><span class="slider"></span></label><div class="toggle-text"><strong>Wall Enabled</strong>Show donor wall for this campaign</div></div>
+            </div>
+        </div>
+        <input type="hidden" id="campEditId">
+        <button class="btn btn-primary mt-16" id="saveCampaignBtn" style="width:100%;">Save Campaign</button>
+    </div>
+
+    <div class="glass-card" style="position:relative;">
+        <div class="loading-overlay" id="campaignsLoading"><div class="loading-spinner"></div></div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Name</th><th>Status</th><th>Raised / Goal</th><th>Gateway</th><th>Start</th><th>End</th><th>Actions</th></tr></thead>
+                <tbody id="campaignTableRows"><tr><td colspan="7" class="empty-state"><div class="empty-icon">🏛️</div>Loading campaigns...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ TAB 3: DONATIONS (Manual Entry) ═══════════════ -->
+<div class="tab-panel" id="tab-donations">
+    <h1 class="section-title">Manual Donation Entry</h1>
+    <p class="section-subtitle">Enter offline donations for any campaign</p>
+
+    <div class="form-card">
+        <form id="donationForm" novalidate autocomplete="off">
+            <div class="form-grid">
+                <div class="form-col">
+                    <div class="col-label">Donor Information</div>
+                    <div class="field"><label>First Name <span class="req">*</span></label><input type="text" id="donFirstName" placeholder="John" required></div>
+                    <div class="field"><label>Last Name <span class="req">*</span></label><input type="text" id="donLastName" placeholder="Doe" required></div>
+                    <div class="field"><label>Company Name</label><input type="text" id="donCompany" placeholder="Company (optional)"></div>
+                    <div class="field"><label>Email</label><input type="email" id="donEmail" placeholder="john@example.com"></div>
+                    <div class="field"><label>Phone</label><input type="tel" id="donPhone" placeholder="(555) 123-4567"></div>
+                    <div class="field"><label>Street Address</label><input type="text" id="donStreet" placeholder="123 Main St"></div>
+                    <div class="field"><label>City</label><input type="text" id="donCity" placeholder="Brooklyn"></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                        <div class="field"><label>State</label><input type="text" id="donState" placeholder="NY" maxlength="2" style="text-transform:uppercase;"></div>
+                        <div class="field"><label>Zip</label><input type="text" id="donZip" placeholder="11230" maxlength="10"></div>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="col-label">Donation Details</div>
+                    <div class="field"><label>Amount <span class="req">*</span></label><div class="amount-wrapper"><span class="currency">$</span><input type="number" id="donAmount" min="0.01" step="0.01" placeholder="0.00" required></div></div>
+                    <div class="field"><label>Display Name</label><input type="text" id="donDisplayName" placeholder="Name for donor wall (optional)"></div>
+                    <div class="field" style="position:relative;">
+                        <label>Campaign</label>
+                        <div class="chip-selector" id="donCampaignSelector"></div>
+                    </div>
+                    <div class="field"><label>Donation Method <span class="req">*</span></label>
+                        <select id="donMethod" required>
+                            <option value="" disabled selected>Select method…</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Check">Check</option>
+                            <option value="Zelle">Zelle</option>
+                            <option value="DAF - The Donors Fund">DAF — The Donors Fund</option>
+                            <option value="DAF - OJCF">DAF — OJCF</option>
+                            <option value="DAF - Pledger">DAF — Pledger</option>
+                            <option value="DAF - Matbia">DAF — Matbia</option>
+                            <option value="PayPal">PayPal</option>
+                            <option value="Wire Transfer">Wire Transfer</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="field"><label>Payment Status <span class="req">*</span></label>
+                        <select id="donStatus" required>
+                            <option value="" disabled selected>Select status…</option>
+                            <option value="Processed">Processed — Payment received</option>
+                            <option value="Pledged">Pledged — Commitment only</option>
+                            <option value="Scheduled">Scheduled — Recurring/installment</option>
+                            <option value="Split">Split — Partial payment now</option>
+                        </select>
+                    </div>
+                    <div class="field" id="donSplitFields" style="display:none;">
+                        <label>Amount Paid Now <span class="req">*</span></label>
+                        <div class="amount-wrapper"><span class="currency">$</span><input type="number" id="donAmountPaidNow" min="0.01" step="0.01" placeholder="0.00"></div>
+                        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">The "Amount" field above is the total pledge. Enter the partial payment received now.</p>
+                    </div>
+                    <div id="donScheduledFields" style="display:none;">
+                        <div class="field"><label>Frequency <span class="req">*</span></label>
+                            <select id="donFrequency"><option value="" disabled selected>Select frequency…</option><option value="weekly">Weekly</option><option value="biweekly">Bi-weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="annually">Annually</option></select>
+                        </div>
+                        <div class="field"><label>Total Payments</label><input type="number" id="donTotalPayments" min="2" placeholder="e.g. 12 (leave blank for ongoing)"></div>
+                        <div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="donIsInstallment" style="width:auto;"><span>This is an installment (total amount is split across payments)</span></label></div>
+                    </div>
+                    <div class="field"><label>Donation Date</label><input type="date" id="donDate"></div>
+                    <div class="field"><label>Memo</label><textarea id="donMemo" placeholder="Optional notes…"></textarea></div>
+                    <div class="field" style="position:relative;">
+                        <label>Teams</label>
+                        <div class="tag-input-wrapper" id="donTeamWrapper"><input type="text" class="chip-search" id="donTeamSearch" placeholder="Type to search teams..." autocomplete="off"></div>
+                        <div class="chip-dropdown" id="donTeamDropdown"></div>
+                    </div>
+                </div>
+                <div class="full-width">
+                    <div class="toggle-row" id="donAnonRow"><label class="switch"><input type="checkbox" id="donAnonymous"><span class="slider"></span></label><div class="toggle-text"><strong>Anonymous donation</strong>Donor name will appear as "בעילום שם" on the donor wall</div></div>
+                    <div style="height:0.5rem;"></div>
+                    <div class="toggle-row disabled" id="donReceiptRow"><label class="switch"><input type="checkbox" id="donSendReceipt"><span class="slider"></span></label><div class="toggle-text"><strong>Send receipt email to donor</strong>Receipt will be sent to the email address above</div></div>
+                    <p class="toggle-note" id="donReceiptNote">Enter an email address above to enable this option.</p>
+                    <button type="submit" class="btn btn-primary mt-16" id="donSubmitBtn" style="width:100%;padding:0.9rem;font-size:1rem;"><span class="btn-label">Log Donation</span></button>
+                    <div class="error-alert" id="donErrorAlert"><span style="flex-shrink:0;font-size:1rem;">⚠</span><span id="donErrorMessage">An error occurred.</span></div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ═══════════════ TAB 4: PLEDGES ═══════════════ -->
+<div class="tab-panel" id="tab-pledges">
+    <h1 class="section-title">Pledges</h1>
+    <p class="section-subtitle">Cross-campaign pledge management</p>
+
+    <div class="stats-grid" id="pledgeStats">
+        <div class="stat-card"><div class="stat-icon yellow">📋</div><div><div class="stat-value" id="pledgeOutstanding">$0</div><div class="stat-label">Total Outstanding</div></div></div>
+        <div class="stat-card"><div class="stat-icon green">✅</div><div><div class="stat-value" id="pledgeFulfilled">$0</div><div class="stat-label">Fulfilled This Month</div></div></div>
+        <div class="stat-card"><div class="stat-icon red">⚠️</div><div><div class="stat-value" id="pledgeOverdue">0</div><div class="stat-label">Overdue</div></div></div>
+    </div>
+
+    <div class="filter-pills" id="pledgeFilterPills">
+        <div class="pill active" data-filter="all">All</div>
+        <div class="pill" data-filter="outstanding">Outstanding</div>
+        <div class="pill" data-filter="fulfilled">Fulfilled</div>
+        <div class="pill" data-filter="overdue">Overdue</div>
+    </div>
+
+    <div class="filter-bar">
+        <select id="pledgeCampaignFilter"><option value="">All Campaigns</option></select>
+        <input type="date" id="pledgeDateFrom" placeholder="From">
+        <input type="date" id="pledgeDateTo" placeholder="To">
+        <input type="text" id="pledgeSearch" placeholder="Search donor name...">
+        <button class="btn btn-secondary btn-sm" id="pledgeApplyFilter">Apply</button>
+    </div>
+
+    <div class="glass-card" style="position:relative;">
+        <div class="loading-overlay" id="pledgesLoading"><div class="loading-spinner"></div></div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Pledge ID</th><th>Date</th><th>Donor</th><th>Campaign</th><th>Amount</th><th>Paid</th><th>Balance</th><th>Status</th><th>Method</th><th>Actions</th></tr></thead>
+                <tbody id="pledgeTableRows"><tr><td colspan="10" class="empty-state"><div class="empty-icon">💳</div>Loading pledges...</td></tr></tbody>
+            </table>
+        </div>
+        <div class="pagination" id="pledgePagination">
+            <div class="pagination-info" id="pledgePageInfo">Page 1</div>
+            <div class="pagination-btns">
+                <button class="btn btn-secondary btn-sm" id="pledgePrevBtn" disabled>← Prev</button>
+                <button class="btn btn-secondary btn-sm" id="pledgeNextBtn">Next →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ TAB 5: SCHEDULED PAYMENTS ═══════════════ -->
+<div class="tab-panel" id="tab-schedule">
+    <h1 class="section-title">Scheduled Payments</h1>
+    <p class="section-subtitle">Cross-campaign installment & recurring payment tracker</p>
+
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon blue">📅</div><div><div class="stat-value" id="schedDueWeek">0</div><div class="stat-label">Due This Week</div></div></div>
+        <div class="stat-card"><div class="stat-icon purple">📆</div><div><div class="stat-value" id="schedDueMonth">0</div><div class="stat-label">Due This Month</div></div></div>
+        <div class="stat-card"><div class="stat-icon red">🚨</div><div><div class="stat-value" id="schedOverdue">0</div><div class="stat-label">Overdue</div></div></div>
+        <div class="stat-card"><div class="stat-icon green">💵</div><div><div class="stat-value" id="schedTotal">$0</div><div class="stat-label">Total Scheduled</div></div></div>
+    </div>
+
+    <div class="filter-pills" id="schedFilterPills">
+        <div class="pill active" data-filter="all">All</div>
+        <div class="pill" data-filter="upcoming">Upcoming</div>
+        <div class="pill" data-filter="overdue">Overdue</div>
+        <div class="pill" data-filter="paid">Paid</div>
+    </div>
+
+    <div class="filter-bar">
+        <select id="schedCampaignFilter"><option value="">All Campaigns</option></select>
+        <input type="date" id="schedDateFrom">
+        <input type="date" id="schedDateTo">
+        <input type="text" id="schedSearch" placeholder="Search donor name...">
+        <button class="btn btn-secondary btn-sm" id="schedApplyFilter">Apply</button>
+        <button class="btn btn-success btn-sm" id="bulkMarkClearedBtn" style="margin-left:auto;" disabled>✓ Mark Selected as Cleared</button>
+    </div>
+
+    <div class="glass-card" style="position:relative;">
+        <div class="loading-overlay" id="schedLoading"><div class="loading-spinner"></div></div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead><tr><th><input type="checkbox" id="schedSelectAll"></th><th>Due Date</th><th>Donor</th><th>Campaign</th><th>Amount</th><th>Payment #</th><th>Frequency</th><th>Status</th><th>Funded</th><th>Pledge ID</th><th>Txn Ref</th><th>Actions</th></tr></thead>
+                <tbody id="schedTableRows"><tr><td colspan="12" class="empty-state"><div class="empty-icon">📅</div>Loading scheduled payments...</td></tr></tbody>
+            </table>
+        </div>
+        <div class="pagination" id="schedPagination">
+            <div class="pagination-info" id="schedPageInfo">Page 1</div>
+            <div class="pagination-btns">
+                <button class="btn btn-secondary btn-sm" id="schedPrevBtn" disabled>← Prev</button>
+                <button class="btn btn-secondary btn-sm" id="schedNextBtn">Next →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ TAB 6: RECEIPTS ═══════════════ -->
+<div class="tab-panel" id="tab-receipts">
+    <h1 class="section-title">Receipts</h1>
+    <p class="section-subtitle">Issue, resend, and track donation receipts</p>
+
+    <div class="sub-tabs" id="receiptSubTabs">
+        <div class="sub-tab active" data-subtab="issueReceipt">Issue Receipt</div>
+        <div class="sub-tab" data-subtab="resendReceipt">Resend Receipt</div>
+        <div class="sub-tab" data-subtab="receiptLog">Receipt Log</div>
+    </div>
+
+    <!-- Issue Receipt -->
+    <div class="sub-panel active" id="subtab-issueReceipt">
+        <div class="form-card">
+            <form id="receiptForm" novalidate autocomplete="off">
+                <div class="form-grid">
+                    <div class="form-col">
+                        <div class="col-label">Donor Information</div>
+                        <div class="field"><label>First Name <span class="req">*</span></label><input type="text" id="rcptFirstName" placeholder="John" required></div>
+                        <div class="field"><label>Last Name <span class="req">*</span></label><input type="text" id="rcptLastName" placeholder="Doe" required></div>
+                        <div class="field"><label>Company Name</label><input type="text" id="rcptCompany" placeholder="Company (optional)"></div>
+                        <div class="field"><label>Email <span class="req">*</span></label><input type="email" id="rcptEmail" placeholder="john@example.com" required></div>
+                    </div>
+                    <div class="form-col">
+                        <div class="col-label">Receipt Details</div>
+                        <div class="field"><label>Amount <span class="req">*</span></label><div class="amount-wrapper"><span class="currency">$</span><input type="number" id="rcptAmount" min="0.01" step="0.01" placeholder="0.00" required></div></div>
+                        <div class="field"><label>Date <span class="req">*</span></label><input type="date" id="rcptDate" required></div>
+                        <div class="field"><label>Payment Method <span class="req">*</span></label>
+                            <select id="rcptMethod" required><option value="" disabled selected>Select method…</option><option value="Credit Card">Credit Card</option><option value="Check">Check</option><option value="Zelle">Zelle</option><option value="DAF - The Donors Fund">DAF — The Donors Fund</option><option value="DAF - OJCF">DAF — OJCF</option><option value="DAF - Pledger">DAF — Pledger</option><option value="DAF - Matbia">DAF — Matbia</option><option value="PayPal">PayPal</option><option value="Wire Transfer">Wire Transfer</option><option value="Cash">Cash</option><option value="Other">Other</option></select>
+                        </div>
+                        <div class="field" style="position:relative;"><label>Campaign</label><div class="chip-selector" id="rcptCampaignSelector"></div></div>
+                        <div class="field"><label>Notes</label><textarea id="rcptNotes" placeholder="Optional notes…" style="min-height:60px;"></textarea></div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-16" id="rcptSubmitBtn" style="width:100%;padding:0.9rem;font-size:1rem;">Issue Receipt</button>
+                <div class="error-alert" id="rcptErrorAlert"><span style="flex-shrink:0;font-size:1rem;">⚠</span><span id="rcptErrorMessage">An error occurred.</span></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resend Receipt -->
+    <div class="sub-panel" id="subtab-resendReceipt">
+        <div class="glass-card" style="padding:20px;">
+            <div class="field"><label>Search receipts by transaction ref, donor name, or email</label><input type="text" id="resendSearch" placeholder="Search..."></div>
+            <button class="btn btn-secondary mt-16" id="resendSearchBtn">Search</button>
+        </div>
+        <div class="glass-card mt-16" style="position:relative;">
+            <div class="loading-overlay" id="resendLoading"><div class="loading-spinner"></div></div>
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead><tr><th>Receipt ID</th><th>Donor</th><th>Amount</th><th>Date</th><th>Campaign</th><th>Email</th><th>Actions</th></tr></thead>
+                    <tbody id="resendTableRows"><tr><td colspan="7" class="empty-state"><div class="empty-icon">🔍</div>Search for receipts to resend</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Log -->
+    <div class="sub-panel" id="subtab-receiptLog">
+        <div class="filter-bar">
+            <input type="text" id="rcptLogSearch" placeholder="Search receipt log...">
+            <button class="btn btn-secondary btn-sm" id="rcptLogSearchBtn">Search</button>
+        </div>
+        <div class="glass-card" style="position:relative;">
+            <div class="loading-overlay" id="rcptLogLoading"><div class="loading-spinner"></div></div>
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead><tr><th>Receipt ID</th><th>Date</th><th>Donor</th><th>Campaign</th><th>Amount</th><th>Sent To</th><th>Source</th><th>Issued By</th></tr></thead>
+                    <tbody id="rcptLogTableRows"><tr><td colspan="8" class="empty-state"><div class="empty-icon">🧾</div>Loading receipt log...</td></tr></tbody>
+                </table>
+            </div>
+            <div class="pagination" id="rcptLogPagination">
+                <div class="pagination-info" id="rcptLogPageInfo">Page 1</div>
+                <div class="pagination-btns">
+                    <button class="btn btn-secondary btn-sm" id="rcptLogPrevBtn" disabled>← Prev</button>
+                    <button class="btn btn-secondary btn-sm" id="rcptLogNextBtn">Next →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ TAB 7: USERS ═══════════════ -->
+<div class="tab-panel" id="tab-users">
+    <div class="flex items-center justify-between mb-24">
+        <div><h1 class="section-title">Users</h1><p class="section-subtitle" style="margin-bottom:0;">Manage authorized admin users</p></div>
+        <button class="btn btn-primary" id="addUserBtn">+ Add User</button>
+    </div>
+
+    <div class="inline-form glass-card mb-24" id="userForm">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h3 style="font-size:0.95rem;font-weight:600;" id="userFormTitle">Add User</h3>
+            <button class="btn btn-secondary btn-sm" id="cancelUserForm">&times; Cancel</button>
+        </div>
+        <div class="form-grid">
+            <div class="form-col">
+                <div class="field"><label>Email <span class="req">*</span></label><input type="email" id="userEmail" placeholder="user@example.com" required></div>
+                <div class="field"><label>Display Name <span class="req">*</span></label><input type="text" id="userDisplayName" placeholder="John Doe" required></div>
+                <div class="field"><label>Auth Method</label><select id="userAuthMethod"><option value="google">Google Sign-In</option><option value="otp">Email OTP</option></select></div>
+            </div>
+            <div class="form-col">
+                <div class="field"><label>Role <span class="req">*</span></label><select id="userRole"><option value="viewer">Viewer</option><option value="campaign_manager">Campaign Manager</option><option value="super_admin">Super Admin</option></select></div>
+                <div class="field"><label>Assigned Campaigns</label><input type="text" id="userCampaigns" placeholder="ksy, purim-2026 (or * for all)"></div>
+                <div class="toggle-row"><label class="switch"><input type="checkbox" id="userActive" checked><span class="slider"></span></label><div class="toggle-text"><strong>Active</strong>User can access the platform</div></div>
+            </div>
+        </div>
+        <input type="hidden" id="userEditEmail">
+        <button class="btn btn-primary mt-16" id="saveUserBtn" style="width:100%;">Save User</button>
+    </div>
+
+    <div class="glass-card" style="position:relative;">
+        <div class="loading-overlay" id="usersLoading"><div class="loading-spinner"></div></div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Email</th><th>Name</th><th>Auth</th><th>Role</th><th>Campaigns</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead>
+                <tbody id="userTableRows"><tr><td colspan="8" class="empty-state"><div class="empty-icon">👥</div>Loading users...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ TAB 8: REPORTS ═══════════════ -->
+<div class="tab-panel" id="tab-reports">
+    <h1 class="section-title">Reports</h1>
+    <p class="section-subtitle">Generate and schedule campaign reports</p>
+
+    <div class="sub-tabs" id="reportSubTabs">
+        <div class="sub-tab active" data-subtab="onDemand">On-Demand</div>
+        <div class="sub-tab" data-subtab="scheduled">Scheduled</div>
+        <div class="sub-tab" data-subtab="summary">Cross-Campaign Summary</div>
+    </div>
+
+    <!-- On-Demand -->
+    <div class="sub-panel active" id="subtab-onDemand">
+        <div class="glass-card" style="padding:24px;">
+            <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:16px;">Generate Report</h3>
+            <div class="form-grid">
+                <div class="form-col">
+                    <div class="field"><label>Campaign</label><select id="rptCampaign"><option value="*">All Campaigns</option></select></div>
+                    <div class="date-presets" id="rptDatePresets">
+                        <div class="date-preset" data-preset="today">Today</div>
+                        <div class="date-preset" data-preset="week">This Week</div>
+                        <div class="date-preset active" data-preset="month">This Month</div>
+                        <div class="date-preset" data-preset="custom">Custom</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <div class="field"><label>From</label><input type="date" id="rptDateFrom"></div>
+                        <div class="field"><label>To</label><input type="date" id="rptDateTo"></div>
+                    </div>
+                </div>
+                <div class="form-col" style="display:flex;flex-direction:column;justify-content:flex-end;">
+                    <button class="btn btn-primary" id="generateReportBtn" style="width:100%;padding:0.9rem;font-size:0.95rem;">📧 Generate & Email Report</button>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card mt-24" id="rptResultsCard" style="display:none;padding:24px;">
+            <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:12px;">📊 Report Summary</h3>
+            <div id="rptResults"></div>
+        </div>
+    </div>
+
+    <!-- Scheduled -->
+    <div class="sub-panel" id="subtab-scheduled">
+        <div class="flex items-center justify-between mb-16">
+            <h3 style="font-size:0.95rem;font-weight:600;">Report Schedules</h3>
+            <button class="btn btn-primary btn-sm" id="addScheduleBtn">+ Add Schedule</button>
+        </div>
+        <div class="inline-form glass-card mb-16" id="scheduleForm">
+            <div class="form-grid">
+                <div class="form-col">
+                    <div class="field"><label>Campaign</label><select id="schCampaign"><option value="*">All Campaigns</option></select></div>
+                    <div class="field"><label>Report Type</label><select id="schType"><option value="daily_summary">Daily Summary</option></select></div>
+                </div>
+                <div class="form-col">
+                    <div class="field"><label>Recipients (comma-separated emails)</label><input type="text" id="schRecipients" placeholder="admin@notzer.org"></div>
+                    <div class="toggle-row"><label class="switch"><input type="checkbox" id="schEnabled" checked><span class="slider"></span></label><div class="toggle-text"><strong>Enabled</strong></div></div>
+                </div>
+            </div>
+            <div class="flex gap-8 mt-16">
+                <button class="btn btn-primary" id="saveScheduleBtn">Save Schedule</button>
+                <button class="btn btn-secondary" id="cancelScheduleBtn">Cancel</button>
+            </div>
+        </div>
+        <div class="glass-card" style="position:relative;">
+            <div class="loading-overlay" id="schedulesLoading"><div class="loading-spinner"></div></div>
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead><tr><th>Campaign</th><th>Type</th><th>Recipients</th><th>Enabled</th><th>Last Sent</th><th>Actions</th></tr></thead>
+                    <tbody id="scheduleTableRows"><tr><td colspan="6" class="empty-state"><div class="empty-icon">📅</div>Loading schedules...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cross-Campaign Summary -->
+    <div class="sub-panel" id="subtab-summary">
+        <div class="stats-grid" id="summaryStats">
+            <div class="stat-card"><div class="stat-icon purple">💰</div><div><div class="stat-value" id="summaryTotalRaised">$0</div><div class="stat-label">Total Across All</div></div></div>
+            <div class="stat-card"><div class="stat-icon green">🏆</div><div><div class="stat-value" id="summaryTopCampaign">—</div><div class="stat-label">Top Campaign</div></div></div>
+            <div class="stat-card"><div class="stat-icon blue">📊</div><div><div class="stat-value" id="summaryAvg">$0</div><div class="stat-label">Average Donation</div></div></div>
+        </div>
+        <div class="glass-card" style="padding:24px;">
+            <h3 style="font-size:0.95rem;font-weight:600;margin-bottom:20px;">Campaign Comparison</h3>
+            <div class="bar-chart" id="summaryBarChart">
+                <div class="empty-state" style="width:100%;"><div class="empty-icon">📊</div>Loading comparison data...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+        </div><!-- /tab-content-area -->
+    </main>
+</div>
+
+<!-- Success Overlay (Donation) -->
+<div class="success-overlay" id="donSuccessOverlay">
+    <div class="success-card">
+        <div class="checkmark-circle"><svg viewBox="0 0 32 32"><path d="M8 17l6 6 10-14"/></svg></div>
+        <h2>Donation logged successfully!</h2>
+        <div class="success-summary" id="donSuccessSummary"></div>
+        <div class="success-actions">
+            <button type="button" class="btn btn-secondary" id="donAddAnotherBtn">Add Another</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Container (dynamic) -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Modal</h3>
+            <button class="modal-close" id="modalClose">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-footer" id="modalFooter"></div>
+    </div>
+</div>
+
+<!-- Auth Script -->
+<script src="../js/auth.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   ADMIN CONSOLE — Main Application Logic
+   ═══════════════════════════════════════════════════════════ */
+
+// ── State ──
+const APP = {
+    currentTab: 'dashboard',
+    campaigns: [],
+    pledges: { data: [], page: 1, pageSize: 20, total: 0, filter: 'all' },
+    schedule: { data: [], page: 1, pageSize: 20, total: 0, filter: 'all' },
+    receiptLog: { data: [], page: 1, pageSize: 20, total: 0 },
+    users: [],
+    reportSchedules: [],
+    teams: [],
+    selectedTeams: [],
+    donCampaignSelector: null,
+    rcptCampaignSelector: null,
+};
+
+// ── Utility ──
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+function formatCurrency(n) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
+}
+
+function formatDate(d) {
+    if (!d) return '—';
+    const dt = new Date(d);
+    if (isNaN(dt)) return d;
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function timeAgo(dateStr) {
+    if (!dateStr) return '';
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+    return formatDate(dateStr);
+}
+
+function getStatusBadge(status) {
+    const s = (status || '').toLowerCase();
+    const map = {
+        active: 'badge-active', inactive: 'badge-inactive', draft: 'badge-draft',
+        processed: 'badge-processed', pledged: 'badge-pledged', scheduled: 'badge-scheduled', split: 'badge-split',
+        overdue: 'badge-overdue', paid: 'badge-paid', skipped: 'badge-skipped', cancelled: 'badge-cancelled',
+        cleared: 'badge-cleared', pending: 'badge-pending',
+    };
+    return `<span class="badge ${map[s] || 'badge-inactive'}">${status || '—'}</span>`;
+}
+
+function getTodayStr() {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+}
+
+// ── Toast ──
+function showToast(message, type = 'info') {
+    const container = $('#toastContainer');
+    const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span>${icons[type] || 'ℹ'}</span><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.classList.add('removing'); setTimeout(() => toast.remove(), 300); }, 4000);
+}
+
+// ── Modal ──
+function openModal(title, bodyHtml, footerHtml) {
+    $('#modalTitle').textContent = title;
+    $('#modalBody').innerHTML = bodyHtml;
+    $('#modalFooter').innerHTML = footerHtml || '';
+    $('#modalOverlay').classList.add('visible');
+}
+function closeModal() { $('#modalOverlay').classList.remove('visible'); }
+$('#modalClose').addEventListener('click', closeModal);
+$('#modalOverlay').addEventListener('click', (e) => { if (e.target === $('#modalOverlay')) closeModal(); });
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', async () => {
+    await requireAuth('campaign_manager');
+    const user = getCurrentUser();
+    if (!user) return;
+
+    $('#userName').textContent = user.name || user.email;
+    $('#userRole').textContent = (user.role || 'viewer').replace('_', ' ');
+
+    if (user.role === 'super_admin') {
+        $('#usersNavItem').style.display = '';
+    }
+
+    initNavigation();
+    initDonationForm();
+    initReceiptForm();
+    initDateDefaults();
+
+    APP.donCampaignSelector = new CampaignSelector('donCampaignSelector', { defaultValue: 'general' });
+    APP.rcptCampaignSelector = new CampaignSelector('rcptCampaignSelector', { defaultValue: 'general' });
+    APP.donCampaignSelector.load();
+    APP.rcptCampaignSelector.load();
+
+    loadDashboard();
+});
+
+$('#signOutBtn').addEventListener('click', () => signOut());
+
+// ── Navigation ──
+function initNavigation() {
+    $$('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const tab = item.dataset.tab;
+            switchTab(tab);
+            // Mobile: close sidebar
+            $('#sidebar').classList.remove('open');
+            $('#sidebarOverlay').classList.remove('open');
+        });
+    });
+
+    $('#hamburgerBtn').addEventListener('click', () => {
+        $('#sidebar').classList.add('open');
+        $('#sidebarOverlay').classList.add('open');
+    });
+    $('#sidebarClose').addEventListener('click', () => {
+        $('#sidebar').classList.remove('open');
+        $('#sidebarOverlay').classList.remove('open');
+    });
+    $('#sidebarOverlay').addEventListener('click', () => {
+        $('#sidebar').classList.remove('open');
+        $('#sidebarOverlay').classList.remove('open');
+    });
+}
+
+function switchTab(tabId) {
+    APP.currentTab = tabId;
+    $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tabId));
+    $$('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${tabId}`));
+
+    const titles = { dashboard: 'Dashboard', campaigns: 'Campaigns', donations: 'Manual Entry', pledges: 'Pledges', schedule: 'Scheduled Payments', receipts: 'Receipts', users: 'Users', reports: 'Reports' };
+    $('#headerTitle').textContent = titles[tabId] || 'Admin';
+
+    // Load data on tab switch
+    if (tabId === 'dashboard') loadDashboard();
+    else if (tabId === 'campaigns') loadCampaigns();
+    else if (tabId === 'pledges') loadPledges();
+    else if (tabId === 'schedule') loadScheduledPayments();
+    else if (tabId === 'receipts') loadReceiptLog();
+    else if (tabId === 'users') loadUsers();
+    else if (tabId === 'reports') loadReportData();
+}
+
+// ── Date Defaults ──
+function initDateDefaults() {
+    const today = getTodayStr();
+    $('#donDate').value = today;
+    $('#rcptDate').value = today;
+    setReportDatePreset('month');
+}
+
+// ═══════════════════════════════════════════════════════════
+// CAMPAIGN SELECTOR COMPONENT
+// ═══════════════════════════════════════════════════════════
+class CampaignSelector {
+    constructor(containerId, options = {}) {
+        this.container = document.getElementById(containerId);
+        this.defaultValue = options.defaultValue || 'general';
+        this.onSelect = options.onSelect || (() => {});
+        this.campaigns = [];
+        this.selectedId = this.defaultValue;
+        this.isOpen = false;
+    }
+
+    async load() {
+        try {
+            const result = await authGet('getActiveCampaigns');
+            this.campaigns = [
+                { id: 'general', name: 'General / Where Needed Most' },
+                ...(result.campaigns || [])
+            ];
+        } catch (e) {
+            this.campaigns = [{ id: 'general', name: 'General / Where Needed Most' }];
+        }
+        this.render();
+    }
+
+    render() {
+        const selected = this.campaigns.find(c => c.id === this.selectedId) || this.campaigns[0];
+        this.container.innerHTML = `
+            <div class="chip-wrapper" data-cs-wrapper>
+                ${this.selectedId !== this.defaultValue ? `<span class="chip-tag">${selected?.name || this.selectedId}<span class="chip-remove" data-cs-remove>&times;</span></span>` : ''}
+                <input type="text" class="chip-search" data-cs-search placeholder="${this.selectedId === this.defaultValue ? (selected?.name || 'Select campaign...') : 'Change campaign...'}" autocomplete="off">
+            </div>
+            <div class="chip-dropdown" data-cs-dropdown></div>
+        `;
+
+        const wrapper = this.container.querySelector('[data-cs-wrapper]');
+        const search = this.container.querySelector('[data-cs-search]');
+        const dropdown = this.container.querySelector('[data-cs-dropdown]');
+        const remove = this.container.querySelector('[data-cs-remove]');
+
+        wrapper.addEventListener('click', () => search.focus());
+        search.addEventListener('focus', () => this.showDropdown(search.value.trim()));
+        search.addEventListener('input', () => this.showDropdown(search.value.trim()));
+        if (remove) remove.addEventListener('click', (e) => { e.stopPropagation(); this.select(this.defaultValue); });
+
+        document.addEventListener('click', (e) => {
+            if (!this.container.contains(e.target)) dropdown.classList.remove('visible');
+        });
+    }
+
+    showDropdown(query) {
+        const dropdown = this.container.querySelector('[data-cs-dropdown]');
+        const lq = (query || '').toLowerCase();
+        const filtered = this.campaigns.filter(c => c.id !== this.selectedId && (lq === '' || c.name.toLowerCase().includes(lq)));
+
+        if (filtered.length === 0) {
+            dropdown.innerHTML = '<div class="chip-dropdown-empty">No campaigns found</div>';
+        } else {
+            dropdown.innerHTML = filtered.map(c =>
+                `<div class="chip-dropdown-item" data-id="${c.id}">${c.name}</div>`
+            ).join('');
+            dropdown.querySelectorAll('.chip-dropdown-item').forEach(item => {
+                item.addEventListener('click', () => { this.select(item.dataset.id); dropdown.classList.remove('visible'); });
+            });
+        }
+        dropdown.classList.add('visible');
+    }
+
+    select(id) {
+        this.selectedId = id;
+        this.render();
+        this.onSelect(id);
+    }
+
+    getValue() { return this.selectedId; }
+    setValue(id) { this.select(id); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB 1: DASHBOARD
+// ═══════════════════════════════════════════════════════════
+async function loadDashboard() {
+    showLoading('dashCampaignsLoading');
+    showLoading('dashActivityLoading');
+    try {
+        const data = await authGet('getAllStats');
+        const stats = data || {};
+        $('#totalRaised').textContent = formatCurrency(stats.totalRaised || 0);
+        $('#totalDonors').textContent = (stats.totalDonors || 0).toLocaleString();
+        $('#activeCampaigns').textContent = stats.activeCampaigns || 0;
+
+        const campaigns = stats.campaigns || [];
+        APP.campaigns = campaigns;
+        renderDashCampaigns(campaigns);
+        renderActivityFeed(stats.recentDonations || []);
+        populateCampaignFilters(campaigns);
+    } catch (e) {
+        showToast('Failed to load dashboard data', 'error');
+        console.error('Dashboard load error:', e);
+    }
+    hideLoading('dashCampaignsLoading');
+    hideLoading('dashActivityLoading');
+}
+
+function renderDashCampaigns(campaigns) {
+    const tbody = $('#dashCampaignRows');
+    if (!campaigns.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-icon">📊</div>No campaigns found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = campaigns.map(c => {
+        const pct = c.goalAmount ? Math.min(100, ((c.raised || 0) / c.goalAmount * 100)) : 0;
+        return `<tr>
+            <td style="font-weight:600;color:var(--text-primary);">${c.name || c.id}</td>
+            <td>${getStatusBadge(c.status)}</td>
+            <td>
+                <div style="font-size:0.82rem;margin-bottom:4px;">${formatCurrency(c.raised)} / ${c.goalAmount ? formatCurrency(c.goalAmount) : '∞'}</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+            </td>
+            <td>${(c.donors || 0).toLocaleString()}</td>
+            <td>
+                <div style="display:flex;gap:4px;">
+                    ${c.pageUrl ? `<a class="quick-link" href="${c.pageUrl}" target="_blank" title="Donation Page">🔗</a>` : ''}
+                    ${c.adminUrl ? `<a class="quick-link" href="${c.adminUrl}" target="_blank" title="Admin Page">⚙️</a>` : ''}
+                    ${c.wallUrl ? `<a class="quick-link" href="${c.wallUrl}" target="_blank" title="Donor Wall">🏆</a>` : ''}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function renderActivityFeed(donations) {
+    const feed = $('#activityFeed');
+    if (!donations.length) {
+        feed.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>No recent activity</div>';
+        return;
+    }
+    feed.innerHTML = donations.slice(0, 10).map(d => `
+        <div class="activity-item">
+            <div class="activity-icon">💝</div>
+            <div class="activity-text"><strong>${d.donor || 'Anonymous'}</strong> donated <strong>${formatCurrency(d.amount)}</strong> to ${getStatusBadge(d.campaign || 'general')}</div>
+            <div class="activity-time">${timeAgo(d.date)}</div>
+        </div>
+    `).join('');
+}
+
+function populateCampaignFilters(campaigns) {
+    const selectors = ['#pledgeCampaignFilter', '#schedCampaignFilter', '#rptCampaign', '#schCampaign'];
+    selectors.forEach(sel => {
+        const el = $(sel);
+        if (!el) return;
+        const firstOpt = el.options[0];
+        el.innerHTML = '';
+        el.appendChild(firstOpt);
+        campaigns.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id; opt.textContent = c.name || c.id;
+            el.appendChild(opt);
+        });
+    });
+}
+
+function showLoading(id) { const el = document.getElementById(id); if (el) el.classList.add('visible'); }
+function hideLoading(id) { const el = document.getElementById(id); if (el) el.classList.remove('visible'); }
+
+// ═══════════════════════════════════════════════════════════
+// TAB 2: CAMPAIGNS
+// ═══════════════════════════════════════════════════════════
+$('#createCampaignBtn').addEventListener('click', () => {
+    clearCampaignForm();
+    $('#campaignFormTitle').textContent = 'Create Campaign';
+    $('#campaignForm').classList.add('visible');
+});
+$('#cancelCampaignForm').addEventListener('click', () => { $('#campaignForm').classList.remove('visible'); });
+
+$('#campName').addEventListener('input', () => {
+    if (!$('#campEditId').value) {
+        $('#campSlug').value = $('#campName').value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+});
+
+$('#saveCampaignBtn').addEventListener('click', async () => {
+    const data = {
+        name: $('#campName').value.trim(),
+        id: $('#campSlug').value.trim(),
+        primaryGateway: $('#campGateway').value,
+        cardknoxIfieldsKey: $('#campCkIfields').value.trim(),
+        cardknoxServerKey: $('#campCkServer').value.trim(),
+        usaepayPublicKey: $('#campUePublic').value.trim(),
+        usaepaySourceKey: $('#campUeSource').value.trim(),
+        goalAmount: parseFloat($('#campGoal').value) || 0,
+        startDate: $('#campStart').value,
+        endDate: $('#campEnd').value,
+        pageUrl: $('#campPageUrl').value.trim(),
+        adminUrl: $('#campAdminUrl').value.trim(),
+        wallUrl: $('#campWallUrl').value.trim(),
+        wallEnabled: $('#campWallEnabled').checked,
+    };
+    if (!data.name || !data.id) { showToast('Campaign name and slug are required', 'error'); return; }
+
+    const btn = $('#saveCampaignBtn');
+    btn.disabled = true; btn.classList.add('loading');
+    try {
+        const editId = $('#campEditId').value;
+        if (editId) {
+            await authPost('updateCampaign', { campaignId: editId, ...data });
+            showToast('Campaign updated successfully', 'success');
+        } else {
+            await authPost('createCampaign', data);
+            showToast('Campaign created successfully', 'success');
+        }
+        $('#campaignForm').classList.remove('visible');
+        loadCampaigns();
+    } catch (e) {
+        showToast('Failed to save campaign: ' + e.message, 'error');
+    }
+    btn.disabled = false; btn.classList.remove('loading');
+});
+
+async function loadCampaigns() {
+    showLoading('campaignsLoading');
+    try {
+        const data = await authGet('getCampaigns');
+        APP.campaigns = data.campaigns || [];
+        renderCampaignTable(APP.campaigns);
+    } catch (e) { showToast('Failed to load campaigns', 'error'); }
+    hideLoading('campaignsLoading');
+}
+
+function renderCampaignTable(campaigns) {
+    const tbody = $('#campaignTableRows');
+    if (!campaigns.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-icon">🏛️</div>No campaigns found. Click "Create Campaign" to get started.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = campaigns.map(c => `<tr>
+        <td style="font-weight:600;color:var(--text-primary);">${c.name || c.id}</td>
+        <td>${getStatusBadge(c.status)}</td>
+        <td>${formatCurrency(c.raised)} / ${c.goalAmount ? formatCurrency(c.goalAmount) : '∞'}</td>
+        <td style="text-transform:capitalize;">${c.primaryGateway || '—'}</td>
+        <td>${formatDate(c.startDate)}</td>
+        <td>${formatDate(c.endDate)}</td>
+        <td>
+            <div style="display:flex;gap:6px;">
+                <button class="btn btn-secondary btn-sm" onclick="editCampaign('${c.id}')">Edit</button>
+                <button class="btn btn-sm ${c.status === 'Active' ? 'btn-danger' : 'btn-success'}" onclick="toggleCampaignStatus('${c.id}', '${c.status}')">${c.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
+            </div>
+        </td>
+    </tr>`).join('');
+}
+
+function editCampaign(id) {
+    const c = APP.campaigns.find(x => x.id === id);
+    if (!c) return;
+    $('#campaignFormTitle').textContent = 'Edit Campaign';
+    $('#campEditId').value = id;
+    $('#campName').value = c.name || '';
+    $('#campSlug').value = c.id;
+    $('#campGateway').value = c.primaryGateway || 'cardknox';
+    $('#campCkIfields').value = c.cardknoxIfieldsKey || '';
+    $('#campCkServer').value = c.cardknoxServerKey || '';
+    $('#campUePublic').value = c.usaepayPublicKey || '';
+    $('#campUeSource').value = c.usaepaySourceKey || '';
+    $('#campGoal').value = c.goalAmount || '';
+    $('#campStart').value = c.startDate || '';
+    $('#campEnd').value = c.endDate || '';
+    $('#campPageUrl').value = c.pageUrl || '';
+    $('#campAdminUrl').value = c.adminUrl || '';
+    $('#campWallUrl').value = c.wallUrl || '';
+    $('#campWallEnabled').checked = c.wallEnabled !== false;
+    $('#campaignForm').classList.add('visible');
+}
+
+function clearCampaignForm() {
+    ['campEditId','campName','campSlug','campCkIfields','campCkServer','campUePublic','campUeSource','campGoal','campStart','campEnd','campPageUrl','campAdminUrl','campWallUrl'].forEach(id => $(`#${id}`).value = '');
+    $('#campGateway').value = 'cardknox';
+    $('#campWallEnabled').checked = true;
+}
+
+async function toggleCampaignStatus(id, currentStatus) {
+    const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+    if (!confirm(`Are you sure you want to set "${id}" to ${newStatus}?`)) return;
+    try {
+        await authPost('toggleCampaignStatus', { campaignId: id, status: newStatus });
+        showToast(`Campaign ${newStatus === 'Active' ? 'activated' : 'deactivated'}`, 'success');
+        loadCampaigns();
+    } catch (e) { showToast('Failed to update status', 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB 3: DONATIONS (Manual Entry)
+// ═══════════════════════════════════════════════════════════
+function initDonationForm() {
+    const form = $('#donationForm');
+    const statusSelect = $('#donStatus');
+    const emailInput = $('#donEmail');
+    const receiptRow = $('#donReceiptRow');
+    const receiptToggle = $('#donSendReceipt');
+
+    statusSelect.addEventListener('change', function() {
+        const val = this.value;
+        $('#donSplitFields').style.display = val === 'Split' ? 'block' : 'none';
+        $('#donScheduledFields').style.display = val === 'Scheduled' ? 'block' : 'none';
+        const methodField = $('#donMethod');
+        if (val === 'Pledged') {
+            methodField.removeAttribute('required');
+            methodField.closest('.field').style.opacity = '0.5';
+        } else {
+            methodField.setAttribute('required', '');
+            methodField.closest('.field').style.opacity = '1';
+        }
+    });
+
+    emailInput.addEventListener('input', () => {
+        const hasEmail = emailInput.value.trim().length > 0;
+        receiptRow.classList.toggle('disabled', !hasEmail);
+        if (!hasEmail) { receiptToggle.checked = false; $('#donReceiptNote').textContent = 'Enter an email address above to enable this option.'; }
+        else { $('#donReceiptNote').textContent = `Receipt will be sent to ${emailInput.value.trim()}`; }
+    });
+
+    form.addEventListener('submit', handleDonationSubmit);
+    $('#donAddAnotherBtn').addEventListener('click', resetDonationForm);
+
+    // Clear validation on input
+    form.querySelectorAll('.field input, .field select').forEach(el => {
+        el.addEventListener('input', () => el.closest('.field')?.classList.remove('invalid'));
+    });
+
+    // Teams tag input
+    initTeamTagInput();
+}
+
+async function handleDonationSubmit(e) {
+    e.preventDefault();
+    hideDonError();
+
+    const required = ['donFirstName', 'donLastName', 'donAmount', 'donStatus'];
+    const statusVal = $('#donStatus').value;
+    if (statusVal !== 'Pledged') required.push('donMethod');
+
+    let valid = true;
+    required.forEach(id => {
+        const el = $(`#${id}`);
+        const val = el.value.trim();
+        if (!val || (id === 'donAmount' && (isNaN(val) || Number(val) <= 0))) {
+            el.closest('.field')?.classList.add('invalid');
+            valid = false;
+        } else {
+            el.closest('.field')?.classList.remove('invalid');
+        }
+    });
+    if (!valid) { showDonError('Please fill in all required fields.'); return; }
+
+    const formData = {
+        firstName: $('#donFirstName').value.trim(),
+        lastName: $('#donLastName').value.trim(),
+        companyName: $('#donCompany').value.trim(),
+        email: $('#donEmail').value.trim(),
+        phone: $('#donPhone').value.trim(),
+        street: $('#donStreet').value.trim(),
+        city: $('#donCity').value.trim(),
+        state: $('#donState').value.trim().toUpperCase(),
+        zip: $('#donZip').value.trim(),
+        amount: parseFloat($('#donAmount').value),
+        displayName: $('#donDisplayName').value.trim(),
+        campaignId: APP.donCampaignSelector?.getValue() || 'general',
+        method: $('#donMethod').value,
+        paymentStatus: statusVal,
+        donationDate: $('#donDate').value,
+        memo: $('#donMemo').value.trim(),
+        anonymous: $('#donAnonymous').checked,
+        sendReceipt: $('#donSendReceipt').checked && $('#donEmail').value.trim().length > 0,
+        teams: APP.selectedTeams.join(','),
+        amountPaidNow: statusVal === 'Split' ? parseFloat($('#donAmountPaidNow').value) || 0 : 0,
+        frequency: statusVal === 'Scheduled' ? ($('#donFrequency').value || '') : '',
+        totalPayments: statusVal === 'Scheduled' ? (parseInt($('#donTotalPayments').value) || 0) : 0,
+        isInstallment: statusVal === 'Scheduled' ? $('#donIsInstallment').checked : false,
+    };
+
+    const btn = $('#donSubmitBtn');
+    btn.disabled = true; btn.classList.add('loading');
+    try {
+        const result = await authPost('issueManualReceipt', formData);
+        if (result.status === 'success' || result.success) {
+            showDonSuccess(formData);
+        } else {
+            showDonError(result.message || result.error || 'Submission failed.');
+        }
+    } catch (err) {
+        showDonError('Network error — could not reach the server.');
+    }
+    btn.disabled = false; btn.classList.remove('loading');
+}
+
+function showDonError(msg) { $('#donErrorMessage').textContent = msg; $('#donErrorAlert').classList.add('visible'); }
+function hideDonError() { $('#donErrorAlert').classList.remove('visible'); }
+function showDonSuccess(data) {
+    const amt = formatCurrency(data.amount);
+    $('#donSuccessSummary').innerHTML = `<strong>${data.firstName} ${data.lastName}</strong><br>Amount: <strong>${amt}</strong><br>Method: <strong>${data.method || '—'}</strong>`;
+    $('#donSuccessOverlay').classList.add('visible');
+}
+
+function resetDonationForm() {
+    $('#donationForm').reset();
+    $('#donSuccessOverlay').classList.remove('visible');
+    hideDonError();
+    $('#donDate').value = getTodayStr();
+    $('#donReceiptRow').classList.add('disabled');
+    $('#donSendReceipt').checked = false;
+    $('#donReceiptNote').textContent = 'Enter an email address above to enable this option.';
+    $('#donSplitFields').style.display = 'none';
+    $('#donScheduledFields').style.display = 'none';
+    $('#donMethod').closest('.field').style.opacity = '1';
+    $('#donationForm').querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+    APP.selectedTeams = [];
+    renderTeamTags();
+    if (APP.donCampaignSelector) APP.donCampaignSelector.setValue('general');
+}
+
+// Teams tag input
+function initTeamTagInput() {
+    const search = $('#donTeamSearch');
+    const dropdown = $('#donTeamDropdown');
+    const wrapper = $('#donTeamWrapper');
+
+    wrapper.addEventListener('click', () => search.focus());
+    search.addEventListener('focus', () => filterTeams(search.value.trim()));
+    search.addEventListener('input', () => filterTeams(search.value.trim()));
+    document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove('visible');
+    });
+
+    loadTeams();
+}
+
+async function loadTeams() {
+    try {
+        const data = await authGet('getTeams');
+        if (data.status === 'success' && Array.isArray(data.teams)) APP.teams = data.teams;
+    } catch (e) { /* silent */ }
+}
+
+function filterTeams(query) {
+    const dropdown = $('#donTeamDropdown');
+    const lq = query.toLowerCase();
+    const available = APP.teams.filter(t => !APP.selectedTeams.includes(t.id) && (lq === '' || t.name.toLowerCase().includes(lq)));
+    if (!available.length) { dropdown.innerHTML = '<div class="chip-dropdown-empty">No teams found</div>'; }
+    else {
+        dropdown.innerHTML = available.map(t => `<div class="chip-dropdown-item" data-id="${t.id}" data-name="${t.name}">${t.name}</div>`).join('');
+        dropdown.querySelectorAll('.chip-dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+                APP.selectedTeams.push(item.dataset.id);
+                renderTeamTags();
+                $('#donTeamSearch').value = '';
+                dropdown.classList.remove('visible');
+            });
+        });
+    }
+    dropdown.classList.add('visible');
+}
+
+function renderTeamTags() {
+    const wrapper = $('#donTeamWrapper');
+    const search = $('#donTeamSearch');
+    wrapper.querySelectorAll('.chip-tag').forEach(c => c.remove());
+    APP.selectedTeams.forEach(id => {
+        const team = APP.teams.find(t => t.id === id);
+        if (!team) return;
+        const chip = document.createElement('span');
+        chip.className = 'chip-tag';
+        chip.innerHTML = `${team.name}<span class="chip-remove" data-id="${id}">&times;</span>`;
+        chip.querySelector('.chip-remove').addEventListener('click', (e) => {
+            e.stopPropagation();
+            APP.selectedTeams = APP.selectedTeams.filter(t => t !== id);
+            renderTeamTags();
+        });
+        wrapper.insertBefore(chip, search);
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB 4: PLEDGES
+// ═══════════════════════════════════════════════════════════
+$('#pledgeApplyFilter').addEventListener('click', () => { APP.pledges.page = 1; loadPledges(); });
+$$('#pledgeFilterPills .pill').forEach(p => {
+    p.addEventListener('click', () => {
+        $$('#pledgeFilterPills .pill').forEach(x => x.classList.remove('active'));
+        p.classList.add('active');
+        APP.pledges.filter = p.dataset.filter;
+        APP.pledges.page = 1;
+        loadPledges();
+    });
+});
+$('#pledgePrevBtn').addEventListener('click', () => { if (APP.pledges.page > 1) { APP.pledges.page--; loadPledges(); } });
+$('#pledgeNextBtn').addEventListener('click', () => { APP.pledges.page++; loadPledges(); });
+
+async function loadPledges() {
+    showLoading('pledgesLoading');
+    try {
+        const params = {
+            page: String(APP.pledges.page),
+            pageSize: String(APP.pledges.pageSize),
+            status: APP.pledges.filter !== 'all' ? APP.pledges.filter : '',
+            campaignId: $('#pledgeCampaignFilter').value,
+            dateFrom: $('#pledgeDateFrom').value,
+            dateTo: $('#pledgeDateTo').value,
+            search: $('#pledgeSearch').value.trim(),
+        };
+        const data = await authGet('getPledges', params);
+        APP.pledges.data = data.pledges || [];
+        APP.pledges.total = data.total || 0;
+        renderPledgeTable();
+        updatePledgeStats(data);
+    } catch (e) { showToast('Failed to load pledges', 'error'); }
+    hideLoading('pledgesLoading');
+}
+
+function renderPledgeTable() {
+    const tbody = $('#pledgeTableRows');
+    const pledges = APP.pledges.data;
+    if (!pledges.length) {
+        tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-icon">💳</div>No pledges found</td></tr>';
+        updatePledgePagination();
+        return;
+    }
+    tbody.innerHTML = pledges.map(p => `<tr>
+        <td style="font-weight:500;color:var(--accent-light);font-size:0.78rem;">${p.pledgeId || '—'}</td>
+        <td>${formatDate(p.date)}</td>
+        <td style="font-weight:500;color:var(--text-primary);">${p.donor || '—'}</td>
+        <td>${getStatusBadge(p.campaign || 'general')}</td>
+        <td>${formatCurrency(p.amount)}</td>
+        <td>${formatCurrency(p.paid)}</td>
+        <td style="font-weight:600;color:${(p.balance || 0) > 0 ? 'var(--warning)' : 'var(--success)'};">${formatCurrency(p.balance)}</td>
+        <td>${getStatusBadge(p.status)}</td>
+        <td>${p.method || '—'}</td>
+        <td>
+            <div style="display:flex;gap:4px;">
+                ${(p.balance || 0) > 0 ? `<button class="btn btn-success btn-sm" onclick="openRecordPayment('${p.pledgeId}','${p.campaign}',${p.balance || 0})">Pay</button>` : ''}
+                ${p.email ? `<button class="btn btn-secondary btn-sm" onclick="sendPledgeReminder('${p.pledgeId}','${p.campaign}')">📧</button>` : ''}
+            </div>
+        </td>
+    </tr>`).join('');
+    updatePledgePagination();
+}
+
+function updatePledgePagination() {
+    const totalPages = Math.max(1, Math.ceil(APP.pledges.total / APP.pledges.pageSize));
+    $('#pledgePageInfo').textContent = `Page ${APP.pledges.page} of ${totalPages} (${APP.pledges.total} total)`;
+    $('#pledgePrevBtn').disabled = APP.pledges.page <= 1;
+    $('#pledgeNextBtn').disabled = APP.pledges.page >= totalPages;
+}
+
+function updatePledgeStats(data) {
+    $('#pledgeOutstanding').textContent = formatCurrency(data.totalOutstanding || 0);
+    $('#pledgeFulfilled').textContent = formatCurrency(data.fulfilledThisMonth || 0);
+    $('#pledgeOverdue').textContent = data.overdueCount || 0;
+}
+
+function openRecordPayment(pledgeId, campaignId, balance) {
+    openModal('Record Payment', `
+        <div class="field"><label>Amount</label><div class="amount-wrapper"><span class="currency">$</span><input type="number" id="payAmount" value="${balance}" min="0.01" step="0.01"></div></div>
+        <div class="field"><label>Payment Method</label>
+            <select id="payMethod"><option value="Check">Check</option><option value="Zelle">Zelle</option><option value="Credit Card">Credit Card</option><option value="Cash">Cash</option><option value="Other">Other</option></select>
+        </div>
+        <div class="field"><label>Date</label><input type="date" id="payDate" value="${getTodayStr()}"></div>
+        <div class="field"><label>Notes</label><textarea id="payNotes" placeholder="Optional" style="min-height:60px;"></textarea></div>
+    `, `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="confirmPayBtn">Record Payment</button>`
+    );
+    document.getElementById('confirmPayBtn').addEventListener('click', async () => {
+        const btn = document.getElementById('confirmPayBtn');
+        btn.disabled = true; btn.classList.add('loading');
+        try {
+            await authPost('recordPledgePayment', {
+                pledgeId, campaignId,
+                amount: parseFloat($('#payAmount').value),
+                method: $('#payMethod').value,
+                date: $('#payDate').value,
+                notes: $('#payNotes').value.trim(),
+            });
+            showToast('Payment recorded successfully', 'success');
+            closeModal();
+            loadPledges();
+        } catch (e) { showToast('Failed to record payment', 'error'); }
+        btn.disabled = false; btn.classList.remove('loading');
+    });
+}
+
+async function sendPledgeReminder(pledgeId, campaignId) {
+    if (!confirm('Send a reminder email to the donor?')) return;
+    try {
+        await authPost('sendPledgeReminder', { pledgeId, campaignId });
+        showToast('Reminder sent', 'success');
+    } catch (e) { showToast('Failed to send reminder', 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB 5: SCHEDULED PAYMENTS
+// ═══════════════════════════════════════════════════════════
+$('#schedApplyFilter').addEventListener('click', () => { APP.schedule.page = 1; loadScheduledPayments(); });
+$$('#schedFilterPills .pill').forEach(p => {
+    p.addEventListener('click', () => {
+        $$('#schedFilterPills .pill').forEach(x => x.classList.remove('active'));
+        p.classList.add('active');
+        APP.schedule.filter = p.dataset.filter;
+        APP.schedule.page = 1;
+        loadScheduledPayments();
+    });
+});
+$('#schedPrevBtn').addEventListener('click', () => { if (APP.schedule.page > 1) { APP.schedule.page--; loadScheduledPayments(); } });
+$('#schedNextBtn').addEventListener('click', () => { APP.schedule.page++; loadScheduledPayments(); });
+$('#schedSelectAll').addEventListener('change', function() {
+    $$('.sched-checkbox').forEach(cb => { cb.checked = this.checked; });
+    updateBulkClearBtn();
+});
+$('#bulkMarkClearedBtn').addEventListener('click', bulkMarkCleared);
+
+async function loadScheduledPayments() {
+    showLoading('schedLoading');
+    try {
+        const params = {
+            page: String(APP.schedule.page),
+            pageSize: String(APP.schedule.pageSize),
+            status: APP.schedule.filter !== 'all' ? APP.schedule.filter : '',
+            campaignId: $('#schedCampaignFilter').value,
+            dateFrom: $('#schedDateFrom').value,
+            dateTo: $('#schedDateTo').value,
+            search: $('#schedSearch').value.trim(),
+        };
+        const data = await authGet('getScheduledPayments', params);
+        APP.schedule.data = data.payments || [];
+        APP.schedule.total = data.total || 0;
+        renderScheduleTable();
+        updateScheduleStats(data);
+    } catch (e) { showToast('Failed to load scheduled payments', 'error'); }
+    hideLoading('schedLoading');
+}
+
+function renderScheduleTable() {
+    const tbody = $('#schedTableRows');
+    const payments = APP.schedule.data;
+    if (!payments.length) {
+        tbody.innerHTML = '<tr><td colspan="12" class="empty-state"><div class="empty-icon">📅</div>No scheduled payments found</td></tr>';
+        updateSchedulePagination();
+        return;
+    }
+    tbody.innerHTML = payments.map(p => {
+        const isOverdue = p.status === 'Overdue' || (p.status === 'Scheduled' && p.dueDate && new Date(p.dueDate) < new Date());
+        return `<tr class="${isOverdue ? 'overdue' : ''}">
+            <td><input type="checkbox" class="sched-checkbox" data-ref="${p.transactionRef || ''}" data-campaign="${p.campaignId || ''}" onchange="updateBulkClearBtn()"></td>
+            <td style="${isOverdue ? 'color:var(--error);font-weight:600;' : ''}">${formatDate(p.dueDate)}</td>
+            <td style="font-weight:500;color:var(--text-primary);">${p.donor || '—'}</td>
+            <td>${getStatusBadge(p.campaign || p.campaignId || 'general')}</td>
+            <td>${formatCurrency(p.amount)}</td>
+            <td>${p.paymentNum || '—'}</td>
+            <td style="text-transform:capitalize;">${p.frequency || '—'}</td>
+            <td>${getStatusBadge(isOverdue ? 'Overdue' : p.status)}</td>
+            <td>${getStatusBadge(p.funded || 'pending')}</td>
+            <td style="font-size:0.78rem;color:var(--accent-light);">${p.pledgeId || '—'}</td>
+            <td style="font-size:0.78rem;">${p.transactionRef || '—'}</td>
+            <td>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                    ${p.status === 'Scheduled' || isOverdue ? `<button class="btn btn-success btn-sm" onclick="markScheduledPaid('${p.scheduleId}','${p.paymentNum}','${p.campaignId}',${p.amount || 0})">Pay</button>` : ''}
+                    ${p.status === 'Scheduled' ? `<button class="btn btn-secondary btn-sm" onclick="skipScheduled('${p.scheduleId}','${p.paymentNum}','${p.campaignId}')">Skip</button>` : ''}
+                    ${p.status === 'Scheduled' ? `<button class="btn btn-danger btn-sm" onclick="cancelScheduledSeries('${p.scheduleId}','${p.campaignId}')">Cancel</button>` : ''}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+    updateSchedulePagination();
+}
+
+function updateSchedulePagination() {
+    const totalPages = Math.max(1, Math.ceil(APP.schedule.total / APP.schedule.pageSize));
+    $('#schedPageInfo').textContent = `Page ${APP.schedule.page} of ${totalPages} (${APP.schedule.total} total)`;
+    $('#schedPrevBtn').disabled = APP.schedule.page <= 1;
+    $('#schedNextBtn').disabled = APP.schedule.page >= totalPages;
+}
+
+function updateScheduleStats(data) {
+    $('#schedDueWeek').textContent = data.dueThisWeek || 0;
+    $('#schedDueMonth').textContent = data.dueThisMonth || 0;
+    $('#schedOverdue').textContent = data.overdueCount || 0;
+    $('#schedTotal').textContent = formatCurrency(data.totalScheduled || 0);
+}
+
+function updateBulkClearBtn() {
+    const checked = $$('.sched-checkbox:checked');
+    $('#bulkMarkClearedBtn').disabled = checked.length === 0;
+}
+
+async function markScheduledPaid(scheduleId, paymentNum, campaignId, amount) {
+    if (!confirm(`Mark this $${amount} payment as paid?`)) return;
+    try {
+        await authPost('updateScheduledPayment', { action: 'markPaid', scheduleId, paymentNum, campaignId, amount });
+        showToast('Payment marked as paid', 'success');
+        loadScheduledPayments();
+    } catch (e) { showToast('Failed to mark as paid', 'error'); }
+}
+
+async function skipScheduled(scheduleId, paymentNum, campaignId) {
+    if (!confirm('Skip this payment?')) return;
+    try {
+        await authPost('updateScheduledPayment', { action: 'skip', scheduleId, paymentNum, campaignId });
+        showToast('Payment skipped', 'success');
+        loadScheduledPayments();
+    } catch (e) { showToast('Failed to skip', 'error'); }
+}
+
+async function cancelScheduledSeries(scheduleId, campaignId) {
+    if (!confirm('Cancel ALL remaining scheduled payments in this series? This cannot be undone.')) return;
+    try {
+        await authPost('updateScheduledPayment', { action: 'cancelSeries', scheduleId, campaignId });
+        showToast('Series cancelled', 'success');
+        loadScheduledPayments();
+    } catch (e) { showToast('Failed to cancel series', 'error'); }
+}
+
+async function bulkMarkCleared() {
+    const checked = $$('.sched-checkbox:checked');
+    if (!checked.length) return;
+    if (!confirm(`Mark ${checked.length} transaction(s) as cleared?`)) return;
+    const refs = [];
+    const campaignId = checked[0].dataset.campaign;
+    checked.forEach(cb => { if (cb.dataset.ref) refs.push(cb.dataset.ref); });
+    try {
+        await authPost('bulkMarkFunded', { campaignId, transactionRefs: refs });
+        showToast(`${refs.length} transaction(s) marked as cleared`, 'success');
+        loadScheduledPayments();
+    } catch (e) { showToast('Failed to mark as cleared', 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB 6: RECEIPTS
+// ═══════════════════════════════════════════════════════════
+// Sub-tab navigation
+$$('#receiptSubTabs .sub-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        $$('#receiptSubTabs .sub-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        $$('#tab-receipts .sub-panel').forEach(p => p.classList.toggle('active', p.id === `subtab-${tab.dataset.subtab}`));
+        if (tab.dataset.subtab === 'receiptLog') loadReceiptLog();
+    });
+});
+
+// Issue Receipt
+function initReceiptForm() {
+    $('#receiptForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = $('#rcptSubmitBtn');
+        const required = ['rcptFirstName', 'rcptLastName', 'rcptEmail', 'rcptAmount', 'rcptDate', 'rcptMethod'];
+        let valid = true;
+        required.forEach(id => {
+            const el = $(`#${id}`);
+            if (!el.value.trim()) { el.closest('.field')?.classList.add('invalid'); valid = false; }
+            else { el.closest('.field')?.classList.remove('invalid'); }
+        });
+        if (!valid) { $('#rcptErrorMessage').textContent = 'Please fill in all required fields.'; $('#rcptErrorAlert').classList.add('visible'); return; }
+
+        btn.disabled = true; btn.classList.add('loading');
+        try {
+            const result = await authPost('issueManualReceipt', {
+                firstName: $('#rcptFirstName').value.trim(),
+                lastName: $('#rcptLastName').value.trim(),
+                companyName: $('#rcptCompany').value.trim(),
+                email: $('#rcptEmail').value.trim(),
+                amount: parseFloat($('#rcptAmount').value),
+                date: $('#rcptDate').value,
+                method: $('#rcptMethod').value,
+                campaignId: APP.rcptCampaignSelector?.getValue() || 'general',
+                notes: $('#rcptNotes').value.trim(),
+                sendReceipt: true,
+            });
+            if (result.status === 'success' || result.receiptId) {
+                showToast(`Receipt ${result.receiptId || ''} issued successfully!`, 'success');
+                $('#receiptForm').reset();
+                $('#rcptDate').value = getTodayStr();
+                if (APP.rcptCampaignSelector) APP.rcptCampaignSelector.setValue('general');
+            } else {
+                showToast(result.message || 'Failed to issue receipt', 'error');
+            }
+        } catch (e) { showToast('Failed to issue receipt', 'error'); }
+        btn.disabled = false; btn.classList.remove('loading');
+        $('#rcptErrorAlert').classList.remove('visible');
+    });
+}
+
+// Resend Receipt
+$('#resendSearchBtn').addEventListener('click', async () => {
+    const query = $('#resendSearch').value.trim();
+    if (!query) return;
+    showLoading('resendLoading');
+    try {
+        const data = await authGet('getReceiptLog', { search: query, pageSize: '20' });
+        renderResendResults(data.receipts || []);
+    } catch (e) { showToast('Search failed', 'error'); }
+    hideLoading('resendLoading');
+});
+
+function renderResendResults(receipts) {
+    const tbody = $('#resendTableRows');
+    if (!receipts.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-icon">🔍</div>No receipts found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = receipts.map(r => `<tr>
+        <td style="font-size:0.78rem;color:var(--accent-light);">${r.receiptId || '—'}</td>
+        <td style="font-weight:500;">${r.donor || '—'}</td>
+        <td>${formatCurrency(r.amount)}</td>
+        <td>${formatDate(r.date)}</td>
+        <td>${r.campaign || '—'}</td>
+        <td>${r.sentTo || r.email || '—'}</td>
+        <td><button class="btn btn-secondary btn-sm" onclick="openResendModal('${r.receiptId}','${r.campaignId || ''}','${r.pledgeId || ''}','${r.sentTo || r.email || ''}')">Resend</button></td>
+    </tr>`).join('');
+}
+
+function openResendModal(receiptId, campaignId, pledgeId, originalEmail) {
+    openModal('Resend Receipt', `
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">Original email: <strong style="color:var(--text-secondary);">${originalEmail || '—'}</strong></p>
+        <div class="field"><label>Send to alternate email <span class="req">*</span></label><input type="email" id="resendEmail" placeholder="alternate@example.com"></div>
+        <div class="toggle-row"><label class="switch"><input type="checkbox" id="resendAlsoOriginal"><span class="slider"></span></label><div class="toggle-text"><strong>Also send to original email</strong></div></div>
+    `, `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="confirmResendBtn">Send</button>`
+    );
+    document.getElementById('confirmResendBtn').addEventListener('click', async () => {
+        const email = $('#resendEmail').value.trim();
+        if (!email) { showToast('Please enter an email', 'error'); return; }
+        const btn = document.getElementById('confirmResendBtn');
+        btn.disabled = true; btn.classList.add('loading');
+        try {
+            await authPost('resendReceipt', {
+                receiptId, campaignId, pledgeId,
+                targetEmail: email,
+                alsoSendOriginal: $('#resendAlsoOriginal').checked,
+            });
+            showToast('Receipt resent successfully', 'success');
+            closeModal();
+        } catch (e) { showToast('Failed to resend receipt', 'error'); }
+        btn.disabled = false; btn.classList.remove('loading');
+    });
+}
+
+// Receipt Log
+$('#rcptLogSearchBtn').addEventListener('click', () => { APP.receiptLog.page = 1; loadReceiptLog(); });
+$('#rcptLogPrevBtn').addEventListener('click', () => { if (APP.receiptLog.page > 1) { APP.receiptLog.page--; loadReceiptLog(); } });
+$('#rcptLogNextBtn').addEventListener('click', () => { APP.receiptLog.page++; loadReceiptLog(); });
+
+async function loadReceiptLog() {
+    showLoading('rcptLogLoading');
+    try {
+        const data = await authGet('getReceiptLog', {
+            page: String(APP.receiptLog.page),
+            pageSize: String(APP.receiptLog.pageSize),
+            search: $('#rcptLogSearch').value.trim(),
+        });
+        APP.receiptLog.data = data.receipts || [];
+        APP.receiptLog.total = data.total || 0;
+        renderReceiptLog();
+    } catch (e) { showToast('Failed to load receipt log', 'error'); }
+    hideLoading('rcptLogLoading');
+}
+
+function renderReceiptLog() {
+    const tbody = $('#rcptLogTableRows');
+    const receipts = APP.receiptLog.data;
+    if (!receipts.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-icon">🧾</div>No receipts found</td></tr>';
+        updateReceiptLogPagination();
+        return;
+    }
+    const sourceMap = { auto: 'badge-auto', manual: 'badge-manual', resend_alternate: 'badge-resend', resend_original: 'badge-scheduled' };
+    tbody.innerHTML = receipts.map(r => `<tr>
+        <td style="font-size:0.78rem;color:var(--accent-light);font-weight:500;">${r.receiptId || '—'}</td>
+        <td>${formatDate(r.date)}</td>
+        <td style="font-weight:500;color:var(--text-primary);">${r.donor || '—'}</td>
+        <td>${r.campaign || '—'}</td>
+        <td>${formatCurrency(r.amount)}</td>
+        <td>${r.sentTo || '—'}</td>
+        <td><span class="badge ${sourceMap[r.source] || 'badge-auto'}">${r.source || '—'}</span></td>
+        <td>${r.issuedBy || '—'}</td>
+    </tr>`).join('');
+    updateReceiptLogPagination();
+}
+
+function updateReceiptLogPagination() {
+    const totalPages = Math.max(1, Math.ceil(APP.receiptLog.total / APP.receiptLog.pageSize));
+    $('#rcptLogPageInfo').textContent = `Page ${APP.receiptLog.page} of ${totalPages} (${APP.receiptLog.total} total)`;
+    $('#rcptLogPrevBtn').disabled = APP.receiptLog.page <= 1;
+    $('#rcptLogNextBtn').disabled = APP.receiptLog.page >= totalPages;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB 7: USERS
+// ═══════════════════════════════════════════════════════════
+$('#addUserBtn').addEventListener('click', () => {
+    clearUserForm();
+    $('#userFormTitle').textContent = 'Add User';
+    $('#userForm').classList.add('visible');
+});
+$('#cancelUserForm').addEventListener('click', () => { $('#userForm').classList.remove('visible'); });
+
+$('#saveUserBtn').addEventListener('click', async () => {
+    const data = {
+        email: $('#userEmail').value.trim(),
+        name: $('#userDisplayName').value.trim(),
+        authMethod: $('#userAuthMethod').value,
+        role: $('#userRole').value,
+        campaigns: $('#userCampaigns').value.trim(),
+        status: $('#userActive').checked ? 'Active' : 'Inactive',
+    };
+    if (!data.email || !data.name) { showToast('Email and name are required', 'error'); return; }
+
+    const btn = $('#saveUserBtn');
+    btn.disabled = true; btn.classList.add('loading');
+    try {
+        const editEmail = $('#userEditEmail').value;
+        if (editEmail) {
+            await authPost('updateUser', data);
+            showToast('User updated successfully', 'success');
+        } else {
+            await authPost('addUser', data);
+            showToast('User added successfully', 'success');
+        }
+        $('#userForm').classList.remove('visible');
+        loadUsers();
+    } catch (e) { showToast('Failed to save user', 'error'); }
+    btn.disabled = false; btn.classList.remove('loading');
+});
+
+async function loadUsers() {
+    showLoading('usersLoading');
+    try {
+        const data = await authGet('getAuthorizedUsers');
+        APP.users = data.users || [];
+        renderUserTable();
+    } catch (e) { showToast('Failed to load users', 'error'); }
+    hideLoading('usersLoading');
+}
+
+function renderUserTable() {
+    const tbody = $('#userTableRows');
+    if (!APP.users.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-icon">👥</div>No users found</td></tr>';
+        return;
+    }
+    const roleMap = { super_admin: 'badge-super', campaign_manager: 'badge-manager', viewer: 'badge-viewer' };
+    const authMap = { google: 'badge-google', otp: 'badge-otp' };
+    tbody.innerHTML = APP.users.map(u => `<tr>
+        <td style="font-weight:500;">${u.email}</td>
+        <td>${u.name || '—'}</td>
+        <td><span class="badge ${authMap[u.authMethod] || 'badge-otp'}">${u.authMethod || '—'}</span></td>
+        <td><span class="badge ${roleMap[u.role] || 'badge-viewer'}">${(u.role || '').replace('_', ' ')}</span></td>
+        <td style="font-size:0.78rem;">${u.campaigns || '—'}</td>
+        <td>${getStatusBadge(u.status)}</td>
+        <td style="font-size:0.78rem;">${formatDate(u.lastLogin)}</td>
+        <td>
+            <div style="display:flex;gap:4px;">
+                <button class="btn btn-secondary btn-sm" onclick="editUser('${u.email}')">Edit</button>
+                ${u.status === 'Active' ? `<button class="btn btn-danger btn-sm" onclick="deactivateUser('${u.email}')">Deactivate</button>` : ''}
+            </div>
+        </td>
+    </tr>`).join('');
+}
+
+function editUser(email) {
+    const u = APP.users.find(x => x.email === email);
+    if (!u) return;
+    $('#userFormTitle').textContent = 'Edit User';
+    $('#userEditEmail').value = email;
+    $('#userEmail').value = u.email;
+    $('#userDisplayName').value = u.name || '';
+    $('#userAuthMethod').value = u.authMethod || 'google';
+    $('#userRole').value = u.role || 'viewer';
+    $('#userCampaigns').value = u.campaigns || '';
+    $('#userActive').checked = u.status === 'Active';
+    $('#userForm').classList.add('visible');
+}
+
+function clearUserForm() {
+    ['userEditEmail', 'userEmail', 'userDisplayName', 'userCampaigns'].forEach(id => $(`#${id}`).value = '');
+    $('#userAuthMethod').value = 'google';
+    $('#userRole').value = 'viewer';
+    $('#userActive').checked = true;
+}
+
+async function deactivateUser(email) {
+    if (!confirm(`Deactivate user ${email}? They will no longer be able to log in.`)) return;
+    try {
+        await authPost('updateUser', { email, status: 'Inactive' });
+        showToast('User deactivated', 'success');
+        loadUsers();
+    } catch (e) { showToast('Failed to deactivate user', 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB 8: REPORTS
+// ═══════════════════════════════════════════════════════════
+// Sub-tab navigation
+$$('#reportSubTabs .sub-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        $$('#reportSubTabs .sub-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        $$('#tab-reports .sub-panel').forEach(p => p.classList.toggle('active', p.id === `subtab-${tab.dataset.subtab}`));
+        if (tab.dataset.subtab === 'scheduled') loadReportSchedules();
+        if (tab.dataset.subtab === 'summary') loadCrossSummary();
+    });
+});
+
+// Date presets
+$$('#rptDatePresets .date-preset').forEach(preset => {
+    preset.addEventListener('click', () => {
+        $$('#rptDatePresets .date-preset').forEach(p => p.classList.remove('active'));
+        preset.classList.add('active');
+        setReportDatePreset(preset.dataset.preset);
+    });
+});
+
+function setReportDatePreset(preset) {
+    const today = new Date();
+    let from, to;
+    to = getTodayStr();
+    switch (preset) {
+        case 'today': from = to; break;
+        case 'week':
+            const weekStart = new Date(today); weekStart.setDate(today.getDate() - today.getDay());
+            from = weekStart.toISOString().split('T')[0]; break;
+        case 'month':
+            from = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`; break;
+        default: return; // custom — don't set
+    }
+    $('#rptDateFrom').value = from;
+    $('#rptDateTo').value = to;
+}
+
+// Generate report
+$('#generateReportBtn').addEventListener('click', async () => {
+    const btn = $('#generateReportBtn');
+    btn.disabled = true; btn.classList.add('loading');
+    try {
+        const result = await authPost('generateReport', {
+            campaignId: $('#rptCampaign').value,
+            dateFrom: $('#rptDateFrom').value,
+            dateTo: $('#rptDateTo').value,
+        });
+        if (result.status === 'success' || result.summary) {
+            showToast('Report generated and emailed!', 'success');
+            displayReportResults(result.summary || result);
+        } else {
+            showToast(result.message || 'Failed to generate report', 'error');
+        }
+    } catch (e) { showToast('Failed to generate report', 'error'); }
+    btn.disabled = false; btn.classList.remove('loading');
+});
+
+function displayReportResults(summary) {
+    const card = $('#rptResultsCard');
+    card.style.display = 'block';
+    const s = summary;
+    $('#rptResults').innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon green">💰</div><div><div class="stat-value">${formatCurrency(s.totalCollected || 0)}</div><div class="stat-label">Total Collected</div></div></div>
+            <div class="stat-card"><div class="stat-icon blue">📋</div><div><div class="stat-value">${s.newDonations || 0}</div><div class="stat-label">Donations</div></div></div>
+            <div class="stat-card"><div class="stat-icon purple">📊</div><div><div class="stat-value">${formatCurrency(s.averageDonation || 0)}</div><div class="stat-label">Average</div></div></div>
+        </div>
+        ${s.byMethod ? `<div style="margin-top:16px;"><h4 style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">By Payment Method</h4>${Object.entries(s.byMethod).map(([m, v]) => `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.83rem;border-bottom:1px solid var(--border-subtle);"><span style="color:var(--text-secondary);">${m}</span><span style="font-weight:600;">${formatCurrency(v)}</span></div>`).join('')}</div>` : ''}
+    `;
+}
+
+// Scheduled reports
+$('#addScheduleBtn').addEventListener('click', () => { $('#scheduleForm').classList.add('visible'); });
+$('#cancelScheduleBtn').addEventListener('click', () => { $('#scheduleForm').classList.remove('visible'); });
+$('#saveScheduleBtn').addEventListener('click', async () => {
+    const btn = $('#saveScheduleBtn');
+    btn.disabled = true; btn.classList.add('loading');
+    try {
+        await authPost('updateReportSchedule', {
+            campaignId: $('#schCampaign').value,
+            type: $('#schType').value,
+            recipients: $('#schRecipients').value.trim(),
+            enabled: $('#schEnabled').checked,
+        });
+        showToast('Schedule saved', 'success');
+        $('#scheduleForm').classList.remove('visible');
+        loadReportSchedules();
+    } catch (e) { showToast('Failed to save schedule', 'error'); }
+    btn.disabled = false; btn.classList.remove('loading');
+});
+
+async function loadReportSchedules() {
+    showLoading('schedulesLoading');
+    try {
+        const data = await authGet('getReportSchedules');
+        APP.reportSchedules = data.schedules || [];
+        renderScheduleTable2();
+    } catch (e) { showToast('Failed to load schedules', 'error'); }
+    hideLoading('schedulesLoading');
+}
+
+function renderScheduleTable2() {
+    const tbody = $('#scheduleTableRows');
+    if (!APP.reportSchedules.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-icon">📅</div>No report schedules configured</td></tr>';
+        return;
+    }
+    tbody.innerHTML = APP.reportSchedules.map(s => `<tr>
+        <td>${s.campaignId === '*' ? 'All Campaigns' : s.campaignId}</td>
+        <td style="text-transform:capitalize;">${(s.type || '').replace('_', ' ')}</td>
+        <td style="font-size:0.78rem;">${s.recipients || '—'}</td>
+        <td>${getStatusBadge(s.enabled ? 'Active' : 'Inactive')}</td>
+        <td>${formatDate(s.lastSent)}</td>
+        <td><button class="btn btn-secondary btn-sm" onclick="editSchedule('${s.campaignId}')">Edit</button></td>
+    </tr>`).join('');
+}
+
+function editSchedule(campaignId) {
+    const s = APP.reportSchedules.find(x => x.campaignId === campaignId);
+    if (!s) return;
+    $('#schCampaign').value = s.campaignId;
+    $('#schType').value = s.type || 'daily_summary';
+    $('#schRecipients').value = s.recipients || '';
+    $('#schEnabled').checked = s.enabled !== false;
+    $('#scheduleForm').classList.add('visible');
+}
+
+// Cross-campaign summary
+async function loadCrossSummary() {
+    try {
+        const data = await authGet('getAllStats');
+        const stats = data || {};
+        const campaigns = stats.campaigns || [];
+        $('#summaryTotalRaised').textContent = formatCurrency(stats.totalRaised || 0);
+        $('#summaryAvg').textContent = formatCurrency(stats.averageDonation || 0);
+        if (campaigns.length) {
+            const top = campaigns.reduce((a, b) => (a.raised || 0) > (b.raised || 0) ? a : b);
+            $('#summaryTopCampaign').textContent = top.name || top.id;
+        }
+        renderBarChart(campaigns);
+    } catch (e) { showToast('Failed to load summary', 'error'); }
+}
+
+function renderBarChart(campaigns) {
+    const chart = $('#summaryBarChart');
+    if (!campaigns.length) { chart.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div>No campaign data</div>'; return; }
+    const maxRaised = Math.max(...campaigns.map(c => c.raised || 0), 1);
+    chart.innerHTML = campaigns.map(c => {
+        const pct = ((c.raised || 0) / maxRaised * 100);
+        const height = Math.max(10, pct * 1.8);
+        return `<div class="bar-item">
+            <div class="bar-value">${formatCurrency(c.raised)}</div>
+            <div class="bar" style="height:${height}px;"></div>
+            <div class="bar-label" title="${c.name || c.id}">${c.name || c.id}</div>
+        </div>`;
+    }).join('');
+}
+
+async function loadReportData() {
+    // Populate campaign selector for reports if not already done
+    if (APP.campaigns.length) populateCampaignFilters(APP.campaigns);
+}
+
+</script>
+</body>
+</html>

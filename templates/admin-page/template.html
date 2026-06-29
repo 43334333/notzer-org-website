@@ -1,0 +1,2304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Admin Entry — {{CAMPAIGN_NAME}}</title>
+    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="../../js/auth.js"></script>
+    <style>
+        /* ── Reset & Base ──────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #121212;
+            color: #EFEFEF;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ── Utility ───────────────────────────────────── */
+        .accent { color: #4dabf7; }
+        .req { color: #ff5252; font-weight: 400; }
+
+        /* ── User Info Bar ─────────────────────────────── */
+        .user-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1.25rem;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 0.8rem;
+            color: #888;
+        }
+        .user-bar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .user-bar .user-email {
+            color: #bbb;
+            font-weight: 500;
+        }
+        .user-bar .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .user-bar .nav-links a {
+            color: #4dabf7;
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: color 0.2s;
+        }
+        .user-bar .nav-links a:hover {
+            color: #74c0fc;
+        }
+        .user-bar .sign-out-btn {
+            background: rgba(255, 82, 82, 0.1);
+            border: 1px solid rgba(255, 82, 82, 0.25);
+            color: #ff6b6b;
+            padding: 0.3rem 0.75rem;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .user-bar .sign-out-btn:hover {
+            background: rgba(255, 82, 82, 0.2);
+            border-color: rgba(255, 82, 82, 0.4);
+        }
+
+        /* ── Access Denied ─────────────────────────────── */
+        .access-denied {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 2rem;
+        }
+        .access-denied .lock-icon {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            background: rgba(255, 82, 82, 0.12);
+            border: 2px solid rgba(255, 82, 82, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .access-denied h1 { font-size: 1.5rem; margin-bottom: .5rem; color: #ff5252; }
+        .access-denied p { color: #888; max-width: 360px; font-size: 0.95rem; }
+
+        /* ── Page Wrapper ──────────────────────────────── */
+        .page-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.25rem 4rem;
+        }
+
+        /* ── Header ────────────────────────────────────── */
+        .page-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .page-header img {
+            height: 48px;
+            width: auto;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+        .page-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.35rem;
+        }
+        .page-header .subtitle {
+            font-size: 0.95rem;
+            color: #888;
+            font-weight: 400;
+        }
+
+        /* ── Tab Navigation ────────────────────────────── */
+        .tab-nav {
+            display: flex;
+            gap: 0;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #777;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover {
+            color: #bbb;
+            background: rgba(255,255,255,0.02);
+        }
+        .tab-btn.active {
+            color: #4dabf7;
+            border-bottom-color: #4dabf7;
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* ── Card (Glassmorphism) ──────────────────────── */
+        .form-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* ── Two-Column Grid ───────────────────────────── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 2rem;
+        }
+        @media (max-width: 640px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ── Column Headings ───────────────────────────── */
+        .col-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #4dabf7;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(77, 171, 247, 0.15);
+        }
+
+        /* ── Form Groups ───────────────────────────────── */
+        .field {
+            margin-bottom: 1.1rem;
+        }
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #aaa;
+            margin-bottom: 0.35rem;
+        }
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            padding: 0.65rem 0.8rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #EFEFEF;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            outline: none;
+        }
+        .field input:hover,
+        .field select:hover,
+        .field textarea:hover {
+            border-color: rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.055);
+        }
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.12);
+            background: rgba(255,255,255,0.06);
+        }
+        .field input::placeholder,
+        .field textarea::placeholder {
+            color: #555;
+        }
+        .field textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .field select {
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.8rem center;
+            padding-right: 2.2rem;
+        }
+        .field select option {
+            background: #1e1e1e;
+            color: #EFEFEF;
+        }
+
+        /* ── Amount Wrapper ────────────────────────────── */
+        .amount-wrapper {
+            position: relative;
+        }
+        .amount-wrapper .currency {
+            position: absolute;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-weight: 600;
+            font-size: 0.95rem;
+            pointer-events: none;
+        }
+        .amount-wrapper input {
+            padding-left: 1.6rem;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* ── Full-Width Section ────────────────────────── */
+        .full-width {
+            grid-column: 1 / -1;
+            margin-top: 0.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* ── Toggle Switch ─────────────────────────────── */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem 1rem;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+        }
+        .toggle-row.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .switch {
+            position: relative;
+            width: 42px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 24px;
+            transition: background 0.25s;
+        }
+        .slider::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #888;
+            border-radius: 50%;
+            transition: transform 0.25s, background 0.25s;
+        }
+        .switch input:checked + .slider {
+            background: rgba(77, 171, 247, 0.25);
+        }
+        .switch input:checked + .slider::before {
+            transform: translateX(18px);
+            background: #4dabf7;
+        }
+        .toggle-text {
+            font-size: 0.85rem;
+            color: #bbb;
+            line-height: 1.4;
+        }
+        .toggle-text strong {
+            display: block;
+            color: #ddd;
+            font-weight: 500;
+            font-size: 0.88rem;
+        }
+        .toggle-note {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.35rem;
+            padding-left: calc(42px + 0.8rem);
+        }
+
+        /* ── Submit Button ─────────────────────────────── */
+        .submit-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            width: 100%;
+            padding: 0.9rem 1.5rem;
+            margin-top: 1.5rem;
+            background: linear-gradient(135deg, #4dabf7, #339af0);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.25s, opacity 0.2s;
+            letter-spacing: 0.01em;
+            position: relative;
+        }
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(77, 171, 247, 0.3);
+        }
+        .submit-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .submit-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Spinner */
+        .spinner {
+            display: none;
+            width: 20px; height: 20px;
+            border: 2.5px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        .submit-btn.loading .spinner { display: block; }
+        .submit-btn.loading .btn-label { display: none; }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ── Error Alert ───────────────────────────────── */
+        .error-alert {
+            display: none;
+            padding: 0.8rem 1rem;
+            background: rgba(255, 82, 82, 0.08);
+            border: 1px solid rgba(255, 82, 82, 0.25);
+            border-radius: 10px;
+            color: #ff6b6b;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            line-height: 1.5;
+        }
+        .error-alert.visible { display: flex; gap: 0.6rem; align-items: flex-start; }
+        .error-alert .err-icon { flex-shrink: 0; font-size: 1rem; margin-top: 1px; }
+
+        /* ── Success Card ──────────────────────────────── */
+        .success-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            animation: fadeIn 0.25s ease;
+        }
+        .success-overlay.visible { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .success-card {
+            background: #1a1a1a;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            animation: slideUp 0.35s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .checkmark-circle {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            background: rgba(81, 207, 102, 0.1);
+            border: 2px solid rgba(81, 207, 102, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.25rem;
+            animation: popIn 0.4s ease 0.15s both;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .checkmark-circle svg {
+            width: 30px; height: 30px;
+        }
+        .checkmark-circle svg path {
+            stroke: #51cf66;
+            stroke-width: 3;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 40;
+            stroke-dashoffset: 40;
+            animation: drawCheck 0.4s ease 0.4s forwards;
+        }
+        @keyframes drawCheck {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .success-card h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+        .success-summary {
+            font-size: 0.85rem;
+            color: #999;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+        .success-summary strong {
+            color: #ccc;
+        }
+
+        .success-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        .success-actions button,
+        .success-actions a {
+            flex: 1;
+            padding: 0.7rem 1rem;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #ccc;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.18);
+            color: #fff;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4dabf7, #339af0);
+            border: none;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 4px 16px rgba(77, 171, 247, 0.3);
+        }
+
+        /* ── Field Validation ──────────────────────────── */
+        .field.invalid input,
+        .field.invalid select {
+            border-color: rgba(255, 82, 82, 0.5);
+            box-shadow: 0 0 0 3px rgba(255, 82, 82, 0.08);
+        }
+
+        /* ── Tag Input ─────────────────────────────────── */
+        .tag-input-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            padding: 0.5rem 0.6rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            min-height: 42px;
+            cursor: text;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .tag-input-wrapper:focus-within {
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.12);
+        }
+        .tag-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(77, 171, 247, 0.15);
+            border: 1px solid rgba(77, 171, 247, 0.3);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            color: #8cc4f7;
+            white-space: nowrap;
+        }
+        .tag-chip .remove-tag {
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #ff6b6b;
+            opacity: 0.7;
+            transition: opacity 0.15s;
+            line-height: 1;
+        }
+        .tag-chip .remove-tag:hover { opacity: 1; }
+        .tag-search {
+            border: none;
+            background: transparent;
+            color: #EFEFEF;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            flex: 1;
+            min-width: 80px;
+        }
+        .tag-search::placeholder { color: #555; }
+        .tag-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1e1e1e;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            max-height: 160px;
+            overflow-y: auto;
+            z-index: 50;
+            margin-top: 4px;
+            display: none;
+        }
+        .tag-dropdown.visible { display: block; }
+        .tag-dropdown-item {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            color: #ccc;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .tag-dropdown-item:hover {
+            background: rgba(77, 171, 247, 0.1);
+            color: #fff;
+        }
+        .tag-dropdown-empty {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* ── Campaign Chip Selector ────────────────────── */
+        .campaign-chip-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            padding: 0.5rem 0.6rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            min-height: 42px;
+            cursor: text;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .campaign-chip-wrapper:focus-within {
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.12);
+        }
+        .campaign-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(81, 207, 102, 0.15);
+            border: 1px solid rgba(81, 207, 102, 0.3);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            color: #7ddb8c;
+            white-space: nowrap;
+        }
+        .campaign-chip .remove-campaign {
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #ff6b6b;
+            opacity: 0.7;
+            transition: opacity 0.15s;
+            line-height: 1;
+        }
+        .campaign-chip .remove-campaign:hover { opacity: 1; }
+
+        /* ── Summary Cards ─────────────────────────────── */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+        .summary-card .card-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+        .summary-card .card-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #777;
+        }
+        .summary-card.accent-green .card-value { color: #51cf66; }
+        .summary-card.accent-orange .card-value { color: #ffa94d; }
+        .summary-card.accent-red .card-value { color: #ff6b6b; }
+        .summary-card.accent-blue .card-value { color: #4dabf7; }
+
+        /* ── Filter Pills ──────────────────────────────── */
+        .filter-pills {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .filter-pill {
+            padding: 0.4rem 1rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            color: #888;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-pill:hover {
+            background: rgba(255,255,255,0.08);
+            color: #bbb;
+        }
+        .filter-pill.active {
+            background: rgba(77, 171, 247, 0.15);
+            border-color: rgba(77, 171, 247, 0.3);
+            color: #4dabf7;
+        }
+
+        /* ── Data Table ────────────────────────────────── */
+        .data-table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+        .data-table thead {
+            background: rgba(255,255,255,0.04);
+        }
+        .data-table th {
+            padding: 0.75rem 0.8rem;
+            text-align: left;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-size: 0.7rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            white-space: nowrap;
+        }
+        .data-table td {
+            padding: 0.7rem 0.8rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: #ccc;
+            white-space: nowrap;
+        }
+        .data-table tbody tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        .data-table tbody tr.overdue {
+            background: rgba(255, 82, 82, 0.06);
+        }
+        .data-table tbody tr.overdue td {
+            color: #ff8a8a;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .status-badge.outstanding {
+            background: rgba(255, 169, 77, 0.15);
+            color: #ffa94d;
+            border: 1px solid rgba(255, 169, 77, 0.3);
+        }
+        .status-badge.fulfilled {
+            background: rgba(81, 207, 102, 0.15);
+            color: #51cf66;
+            border: 1px solid rgba(81, 207, 102, 0.3);
+        }
+        .status-badge.scheduled {
+            background: rgba(77, 171, 247, 0.15);
+            color: #4dabf7;
+            border: 1px solid rgba(77, 171, 247, 0.3);
+        }
+        .status-badge.overdue {
+            background: rgba(255, 82, 82, 0.15);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 82, 82, 0.3);
+        }
+        .status-badge.paid {
+            background: rgba(81, 207, 102, 0.15);
+            color: #51cf66;
+            border: 1px solid rgba(81, 207, 102, 0.3);
+        }
+        .status-badge.skipped {
+            background: rgba(255,255,255,0.06);
+            color: #777;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .status-badge.cancelled {
+            background: rgba(255, 82, 82, 0.1);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 82, 82, 0.2);
+        }
+
+        /* Table Action Buttons */
+        .tbl-action-btn {
+            padding: 0.3rem 0.6rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: #bbb;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            margin-right: 0.3rem;
+        }
+        .tbl-action-btn:hover {
+            background: rgba(77, 171, 247, 0.12);
+            border-color: rgba(77, 171, 247, 0.3);
+            color: #4dabf7;
+        }
+        .tbl-action-btn.danger:hover {
+            background: rgba(255, 82, 82, 0.12);
+            border-color: rgba(255, 82, 82, 0.3);
+            color: #ff6b6b;
+        }
+
+        /* ── Modal ─────────────────────────────────────── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            animation: fadeIn 0.25s ease;
+        }
+        .modal-overlay.visible { display: flex; }
+        .modal-card {
+            background: #1a1a1a;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 480px;
+            width: 100%;
+            animation: slideUp 0.3s ease;
+        }
+        .modal-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 1.25rem;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .modal-actions button {
+            flex: 1;
+            padding: 0.65rem 1rem;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        /* ── Resend Receipt Icon Button ────────────────── */
+        .icon-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #888;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .icon-btn:hover {
+            background: rgba(77, 171, 247, 0.1);
+            border-color: rgba(77, 171, 247, 0.3);
+            color: #4dabf7;
+        }
+
+        /* ── Loading state for tables ──────────────────── */
+        .table-loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            font-size: 0.85rem;
+        }
+        .table-empty {
+            text-align: center;
+            padding: 2rem;
+            color: #555;
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+
+        /* ── Responsive ────────────────────────────────── */
+        @media (max-width: 640px) {
+            .page-wrapper { padding: 1.25rem 1rem 3rem; }
+            .form-card { padding: 1.25rem; border-radius: 12px; }
+            .page-header h1 { font-size: 1.3rem; }
+            .success-actions { flex-direction: column; }
+            .tab-nav { overflow-x: auto; }
+            .user-bar { flex-direction: column; gap: 0.5rem; text-align: center; }
+            .user-bar .nav-links { flex-wrap: wrap; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ User Info Bar ═══ -->
+<div class="user-bar" id="userBar" style="display:none;">
+    <div class="user-info">
+        <span>👤</span>
+        <span class="user-email" id="userEmail"></span>
+    </div>
+    <div class="nav-links">
+        <a href="../../admin/">← Master Admin Console</a>
+        <button class="sign-out-btn" onclick="signOut()">Sign Out</button>
+    </div>
+</div>
+
+<!-- ═══ Access Denied Screen ═══ -->
+<div class="access-denied" id="accessDenied" style="display:none;">
+    <div class="lock-icon">🔒</div>
+    <h1>Access Denied</h1>
+    <p>You do not have permission to access this page. Please contact your administrator.</p>
+</div>
+
+<!-- ═══ Main App ═══ -->
+<div class="page-wrapper" id="appMain" style="display:none;">
+
+    <!-- Header -->
+    <header class="page-header">
+        <img src="../../NC_Logo_03.png" alt="Notzer Chesed">
+        <h1>Admin — Manual Donation Entry</h1>
+        <p class="subtitle" id="campaignSubtitle"></p>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav" id="tabNav">
+        <button class="tab-btn active" data-tab="donationEntry">Donation Entry</button>
+        <button class="tab-btn" data-tab="pledges">Pledges</button>
+        <button class="tab-btn" data-tab="scheduledPayments">Scheduled Payments</button>
+    </nav>
+
+    <!-- ═══ Tab: Donation Entry ═══ -->
+    <div class="tab-panel active" id="tab-donationEntry">
+        <div class="form-card">
+            <form id="donationForm" novalidate autocomplete="off">
+                <div class="form-grid">
+
+                    <!-- ── Left Column ── -->
+                    <div class="form-col">
+                        <div class="col-label">Donor Information</div>
+
+                        <div class="field">
+                            <label for="firstName">First Name <span class="req">*</span></label>
+                            <input type="text" id="firstName" name="firstName" placeholder="John" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="lastName">Last Name <span class="req">*</span></label>
+                            <input type="text" id="lastName" name="lastName" placeholder="Doe" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" placeholder="john@example.com">
+                        </div>
+
+                        <div class="field">
+                            <label for="companyName">Company Name</label>
+                            <input type="text" id="companyName" name="companyName" placeholder="Company (optional)">
+                        </div>
+
+                        <div class="field">
+                            <label for="phone">Phone</label>
+                            <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567">
+                        </div>
+
+                        <div class="field">
+                            <label for="street">Street Address</label>
+                            <input type="text" id="street" name="street" placeholder="123 Main St">
+                        </div>
+
+                        <div class="field">
+                            <label for="city">City</label>
+                            <input type="text" id="city" name="city" placeholder="Brooklyn">
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                            <div class="field">
+                                <label for="state">State</label>
+                                <input type="text" id="state" name="state" placeholder="NY" maxlength="2" style="text-transform:uppercase;">
+                            </div>
+                            <div class="field">
+                                <label for="zip">Zip</label>
+                                <input type="text" id="zip" name="zip" placeholder="11230" maxlength="10">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Right Column ── -->
+                    <div class="form-col">
+                        <div class="col-label">Donation Details</div>
+
+                        <div class="field">
+                            <label for="amount">Amount <span class="req">*</span></label>
+                            <div class="amount-wrapper">
+                                <span class="currency">$</span>
+                                <input type="number" id="amount" name="amount" min="0.01" step="0.01" placeholder="0.00" required>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="displayName">Display Name</label>
+                            <input type="text" id="displayName" name="displayName" placeholder="Name for donor wall (optional)">
+                        </div>
+
+                        <div class="field">
+                            <label for="method">Donation Method <span class="req">*</span></label>
+                            <select id="method" name="method" required>
+                                <option value="" disabled selected>Select method…</option>
+                                <option value="Check">Check</option>
+                                <option value="Zelle">Zelle</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="DAF - The Donors Fund">DAF — The Donors Fund</option>
+                                <option value="DAF - OJCF">DAF — OJCF</option>
+                                <option value="DAF - Pledger">DAF — Pledger</option>
+                                <option value="DAF - Matbia">DAF — Matbia</option>
+                                <option value="PayPal">PayPal</option>
+                                <option value="Wire Transfer">Wire Transfer</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="paymentStatus">Payment Status <span class="req">*</span></label>
+                            <select id="paymentStatus" name="paymentStatus" required>
+                                <option value="" disabled selected>Select status…</option>
+                                <option value="Processed">Processed — Payment received</option>
+                                <option value="Pledged">Pledged — Commitment only</option>
+                                <option value="Scheduled">Scheduled — Recurring/installment</option>
+                                <option value="Split">Split — Partial payment now</option>
+                            </select>
+                        </div>
+
+                        <div class="field" id="splitFields" style="display:none;">
+                            <label for="amountPaidNow">Amount Paid Now <span class="req">*</span></label>
+                            <div class="amount-wrapper">
+                                <span class="currency">$</span>
+                                <input type="number" id="amountPaidNow" name="amountPaidNow" min="0.01" step="0.01" placeholder="0.00">
+                            </div>
+                            <p style="font-size:0.75rem; color:#777; margin-top:4px;">The "Amount" field above is the total pledge. Enter the partial payment received now.</p>
+                        </div>
+
+                        <div id="scheduledFields" style="display:none;">
+                            <div class="field">
+                                <label for="frequency">Frequency <span class="req">*</span></label>
+                                <select id="frequency" name="frequency">
+                                    <option value="" disabled selected>Select frequency…</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="biweekly">Bi-weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="quarterly">Quarterly</option>
+                                    <option value="annually">Annually</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="totalPayments">Total Payments</label>
+                                <input type="number" id="totalPayments" name="totalPayments" min="2" placeholder="e.g. 12 (leave blank for ongoing)">
+                            </div>
+                            <div class="field">
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                    <input type="checkbox" id="isInstallment" style="width:auto;">
+                                    <span>This is an installment (total amount is split across payments)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="donationDate">Donation Date</label>
+                            <input type="date" id="donationDate" name="donationDate">
+                        </div>
+
+                        <div class="field">
+                            <label for="memo">Memo</label>
+                            <textarea id="memo" name="memo" placeholder="Optional notes…"></textarea>
+                        </div>
+
+                        <div class="field" style="position:relative;">
+                            <label>Teams</label>
+                            <div class="tag-input-wrapper" id="teamTagWrapper">
+                                <input type="text" class="tag-search" id="teamSearch" placeholder="Type to search teams..." autocomplete="off">
+                            </div>
+                            <div class="tag-dropdown" id="teamDropdown"></div>
+                        </div>
+
+                        <div class="field" style="position:relative;">
+                            <label>Campaign</label>
+                            <div class="campaign-chip-wrapper" id="campaignChipWrapper">
+                                <input type="text" class="tag-search" id="campaignSearch" placeholder="Type to search campaigns..." autocomplete="off">
+                            </div>
+                            <div class="tag-dropdown" id="campaignDropdown"></div>
+                        </div>
+                    </div>
+
+                    <!-- ── Full Width: Toggles ── -->
+                    <div class="full-width">
+                        <div class="toggle-row" id="anonymousToggleRow">
+                            <label class="switch">
+                                <input type="checkbox" id="anonymousDonor">
+                                <span class="slider"></span>
+                            </label>
+                            <div class="toggle-text">
+                                <strong>Anonymous donation</strong>
+                                Donor name will appear as "בעילום שם" on the donor wall
+                            </div>
+                        </div>
+                        <div style="height:0.5rem;"></div>
+                        <div class="toggle-row disabled" id="receiptToggleRow">
+                            <label class="switch">
+                                <input type="checkbox" id="sendReceipt">
+                                <span class="slider"></span>
+                            </label>
+                            <div class="toggle-text">
+                                <strong>Send receipt email to donor</strong>
+                                Receipt will be sent to the email address above
+                            </div>
+                        </div>
+                        <p class="toggle-note" id="receiptNote">Enter an email address above to enable this option.</p>
+
+                        <!-- Submit -->
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            <span class="btn-label">Log Donation</span>
+                            <span class="spinner"></span>
+                        </button>
+
+                        <!-- Error -->
+                        <div class="error-alert" id="errorAlert">
+                            <span class="err-icon">⚠</span>
+                            <span id="errorMessage">An error occurred.</span>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ Tab: Pledges ═══ -->
+    <div class="tab-panel" id="tab-pledges">
+        <div class="summary-cards" id="pledgeSummaryCards">
+            <div class="summary-card accent-orange">
+                <div class="card-value" id="pledgeTotalOutstanding">$0</div>
+                <div class="card-label">Total Outstanding</div>
+            </div>
+            <div class="summary-card accent-green">
+                <div class="card-value" id="pledgeTotalFulfilled">$0</div>
+                <div class="card-label">Total Fulfilled</div>
+            </div>
+            <div class="summary-card accent-red">
+                <div class="card-value" id="pledgeOverdueCount">0</div>
+                <div class="card-label">Overdue Count</div>
+            </div>
+        </div>
+
+        <div class="filter-pills" id="pledgeFilterPills">
+            <button class="filter-pill active" data-filter="all">All</button>
+            <button class="filter-pill" data-filter="outstanding">Outstanding</button>
+            <button class="filter-pill" data-filter="fulfilled">Fulfilled</button>
+        </div>
+
+        <div class="form-card">
+            <div class="data-table-wrapper">
+                <table class="data-table" id="pledgesTable">
+                    <thead>
+                        <tr>
+                            <th>Pledge ID</th>
+                            <th>Date</th>
+                            <th>Donor</th>
+                            <th>Amount</th>
+                            <th>Paid</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th>Method</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pledgesTableBody">
+                        <tr><td colspan="9" class="table-loading">Loading pledges…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Tab: Scheduled Payments ═══ -->
+    <div class="tab-panel" id="tab-scheduledPayments">
+        <div class="summary-cards" id="scheduledSummaryCards">
+            <div class="summary-card accent-orange">
+                <div class="card-value" id="scheduledDueThisWeek">0</div>
+                <div class="card-label">Due This Week</div>
+            </div>
+            <div class="summary-card accent-blue">
+                <div class="card-value" id="scheduledDueThisMonth">0</div>
+                <div class="card-label">Due This Month</div>
+            </div>
+            <div class="summary-card accent-red">
+                <div class="card-value" id="scheduledOverdue">0</div>
+                <div class="card-label">Overdue</div>
+            </div>
+            <div class="summary-card accent-green">
+                <div class="card-value" id="scheduledTotal">$0</div>
+                <div class="card-label">Total Scheduled</div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="data-table-wrapper">
+                <table class="data-table" id="scheduledTable">
+                    <thead>
+                        <tr>
+                            <th>Due Date</th>
+                            <th>Donor</th>
+                            <th>Amount</th>
+                            <th>Payment #</th>
+                            <th>Frequency</th>
+                            <th>Status</th>
+                            <th>Pledge ID</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduledTableBody">
+                        <tr><td colspan="8" class="table-loading">Loading scheduled payments…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Success Overlay ═══ -->
+<div class="success-overlay" id="successOverlay">
+    <div class="success-card">
+        <div class="checkmark-circle">
+            <svg viewBox="0 0 32 32">
+                <path d="M8 17l6 6 10-14"/>
+            </svg>
+        </div>
+        <h2>Donation logged successfully!</h2>
+        <div class="success-summary" id="successSummary"></div>
+        <div class="success-actions">
+            <button type="button" class="btn-secondary" id="addAnotherBtn">Add Another</button>
+            <button type="button" class="btn-secondary icon-btn" id="resendReceiptBtn" title="Resend Receipt" style="flex:0; width:40px; height:40px; font-size:1rem;">📧</button>
+            <a class="btn-primary" id="viewWallBtn" href="#">View Donor Wall</a>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Record Payment Modal ═══ -->
+<div class="modal-overlay" id="recordPaymentModal">
+    <div class="modal-card">
+        <h3>Record Payment</h3>
+        <div class="field">
+            <label for="rpAmount">Amount <span class="req">*</span></label>
+            <div class="amount-wrapper">
+                <span class="currency">$</span>
+                <input type="number" id="rpAmount" min="0.01" step="0.01" placeholder="0.00">
+            </div>
+        </div>
+        <div class="field">
+            <label for="rpMethod">Payment Method <span class="req">*</span></label>
+            <select id="rpMethod">
+                <option value="" disabled selected>Select method…</option>
+                <option value="Check">Check</option>
+                <option value="Zelle">Zelle</option>
+                <option value="Credit Card">Credit Card</option>
+                <option value="DAF - The Donors Fund">DAF — The Donors Fund</option>
+                <option value="DAF - OJCF">DAF — OJCF</option>
+                <option value="DAF - Pledger">DAF — Pledger</option>
+                <option value="DAF - Matbia">DAF — Matbia</option>
+                <option value="PayPal">PayPal</option>
+                <option value="Wire Transfer">Wire Transfer</option>
+                <option value="Cash">Cash</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="rpDate">Payment Date</label>
+            <input type="date" id="rpDate">
+        </div>
+        <input type="hidden" id="rpPledgeId">
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeRecordPaymentModal()">Cancel</button>
+            <button class="btn-primary" onclick="submitRecordPayment()">Record Payment</button>
+        </div>
+        <div class="error-alert" id="rpError" style="margin-top:1rem;">
+            <span class="err-icon">⚠</span>
+            <span id="rpErrorMessage"></span>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Resend Receipt Modal ═══ -->
+<div class="modal-overlay" id="resendReceiptModal">
+    <div class="modal-card">
+        <h3>Resend Receipt</h3>
+        <div class="field">
+            <label for="rrOriginalEmail">Original Email</label>
+            <input type="email" id="rrOriginalEmail" readonly style="opacity:0.6; cursor:not-allowed;">
+        </div>
+        <div class="field">
+            <label for="rrAlternateEmail">Alternate Email</label>
+            <input type="email" id="rrAlternateEmail" placeholder="Enter alternate email address">
+        </div>
+        <div class="field">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="rrAlsoSendOriginal" checked style="width:auto;">
+                <span style="font-size:0.85rem; color:#bbb;">Also send to original email</span>
+            </label>
+        </div>
+        <input type="hidden" id="rrDonationId">
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeResendReceiptModal()">Cancel</button>
+            <button class="btn-primary" onclick="submitResendReceipt()">Send Receipt</button>
+        </div>
+        <div class="error-alert" id="rrError" style="margin-top:1rem;">
+            <span class="err-icon">⚠</span>
+            <span id="rrErrorMessage"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ─── Campaign Config ─────────────────────────────────── */
+const CAMPAIGN_CONFIG = {
+    id: '{{CAMPAIGN_ID}}',
+    name: '{{CAMPAIGN_NAME}}',
+    appsScriptUrl: '{{APPS_SCRIPT_URL}}',
+    wallUrl: '../../wall/{{CAMPAIGN_ID}}/',
+};
+
+/* ─── DOM Refs ────────────────────────────────────────── */
+const $ = (s) => document.querySelector(s);
+const accessDenied  = $('#accessDenied');
+const appMain       = $('#appMain');
+const userBar       = $('#userBar');
+const userEmailEl   = $('#userEmail');
+const form          = $('#donationForm');
+const submitBtn     = $('#submitBtn');
+const errorAlert    = $('#errorAlert');
+const errorMessage  = $('#errorMessage');
+const successOverlay = $('#successOverlay');
+const successSummary = $('#successSummary');
+const addAnotherBtn = $('#addAnotherBtn');
+const viewWallBtn   = $('#viewWallBtn');
+const emailInput    = $('#email');
+const receiptToggle = $('#sendReceipt');
+const receiptRow    = $('#receiptToggleRow');
+const anonymousToggle = $('#anonymousDonor');
+const receiptNote   = $('#receiptNote');
+const dateInput     = $('#donationDate');
+const campaignSubtitle = $('#campaignSubtitle');
+const resendReceiptBtn = $('#resendReceiptBtn');
+
+/* ─── State ───────────────────────────────────────────── */
+let lastSubmittedData = null;
+let lastDonationId = null;
+let pledgesData = [];
+let scheduledData = [];
+let currentPledgeFilter = 'all';
+
+/* ─── Auth Gate ───────────────────────────────────────── */
+(async function boot() {
+    try {
+        await requireAuth('campaign_manager', CAMPAIGN_CONFIG.id);
+
+        // Auth succeeded — show the app
+        const user = getCurrentUser();
+        if (user) {
+            userBar.style.display = 'flex';
+            userEmailEl.textContent = user.email || user.name || 'Authenticated';
+        }
+
+        appMain.style.display = 'block';
+        campaignSubtitle.textContent = CAMPAIGN_CONFIG.name + ' Campaign';
+        viewWallBtn.href = CAMPAIGN_CONFIG.wallUrl;
+        init();
+    } catch (err) {
+        console.error('Auth boot error:', err);
+    }
+})();
+
+/* ─── Init ────────────────────────────────────────────── */
+function init() {
+    // Set today's date
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+    // Email ↔ receipt toggle
+    emailInput.addEventListener('input', () => {
+        const hasEmail = emailInput.value.trim().length > 0;
+        receiptRow.classList.toggle('disabled', !hasEmail);
+        if (!hasEmail) {
+            receiptToggle.checked = false;
+            receiptNote.textContent = 'Enter an email address above to enable this option.';
+        } else {
+            receiptNote.textContent = `Receipt will be sent to ${emailInput.value.trim()}`;
+        }
+    });
+
+    // Form submit
+    form.addEventListener('submit', handleSubmit);
+    addAnotherBtn.addEventListener('click', resetForm);
+
+    // Status-dependent field visibility
+    const statusSelect = document.getElementById('paymentStatus');
+    const splitFields = document.getElementById('splitFields');
+    const scheduledFields = document.getElementById('scheduledFields');
+    const methodField = document.getElementById('method');
+
+    statusSelect.addEventListener('change', function() {
+        const val = this.value;
+        splitFields.style.display = val === 'Split' ? 'block' : 'none';
+        scheduledFields.style.display = val === 'Scheduled' ? 'block' : 'none';
+
+        // For Pledged, method isn't required (no payment)
+        if (val === 'Pledged') {
+            methodField.removeAttribute('required');
+            methodField.closest('.field').style.opacity = '0.5';
+        } else {
+            methodField.setAttribute('required', '');
+            methodField.closest('.field').style.opacity = '1';
+        }
+    });
+
+    // Teams tag input
+    window.allTeams = [];
+    window.selectedTeams = [];
+    loadTeams();
+    initTeamTagInput();
+
+    // Campaign selector
+    window.campaignSelector = new CampaignSelector();
+
+    // Tab navigation
+    initTabs();
+
+    // Resend receipt button
+    resendReceiptBtn.addEventListener('click', () => {
+        openResendReceiptModal();
+    });
+
+    // Clear validation on input
+    document.querySelectorAll('.field input, .field select').forEach(el => {
+        el.addEventListener('input', () => {
+            el.closest('.field').classList.remove('invalid');
+        });
+    });
+}
+
+/* ─── Tab Navigation ──────────────────────────────────── */
+function initTabs() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.tab;
+            // Deactivate all
+            tabButtons.forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            // Activate target
+            btn.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            // Load data on first switch
+            if (tabId === 'pledges') {
+                loadPledges();
+            } else if (tabId === 'scheduledPayments') {
+                loadScheduledPayments();
+            }
+        });
+    });
+}
+
+/* ─── Submit ──────────────────────────────────────────── */
+async function handleSubmit(e) {
+    e.preventDefault();
+    hideError();
+
+    // Validate
+    const required = ['firstName', 'lastName', 'amount', 'method', 'paymentStatus'];
+    let valid = true;
+
+    required.forEach(name => {
+        const field = form.querySelector(`[name="${name}"]`);
+        const wrapper = field.closest('.field');
+        const val = field.value.trim();
+        if (!val || (name === 'amount' && (isNaN(val) || Number(val) <= 0))) {
+            wrapper.classList.add('invalid');
+            valid = false;
+        } else {
+            wrapper.classList.remove('invalid');
+        }
+    });
+
+    // For Pledged status, method is optional
+    if (form.paymentStatus.value === 'Pledged') {
+        document.getElementById('method').closest('.field').classList.remove('invalid');
+    }
+
+    if (!valid) {
+        showError('Please fill in all required fields.');
+        return;
+    }
+
+    // Gather data
+    const selectedCampaign = window.campaignSelector ? window.campaignSelector.getSelectedId() : CAMPAIGN_CONFIG.id;
+
+    const formData = {
+        firstName:    form.firstName.value.trim(),
+        lastName:     form.lastName.value.trim(),
+        email:        form.email.value.trim(),
+        companyName:  form.companyName.value.trim(),
+        phone:        form.phone.value.trim(),
+        street:       form.street.value.trim(),
+        city:         form.city.value.trim(),
+        state:        form.state.value.trim().toUpperCase(),
+        zip:          form.zip.value.trim(),
+        amount:       parseFloat(form.amount.value),
+        displayName:  form.displayName.value.trim(),
+        memo:         form.memo.value.trim(),
+        method:       form.method.value,
+        donationDate: form.donationDate.value,
+        sendReceipt:  receiptToggle.checked && form.email.value.trim().length > 0,
+        anonymous:    anonymousToggle.checked,
+        teams:        window.selectedTeams.join(','),
+        paymentStatus: form.paymentStatus.value,
+        amountPaidNow: form.paymentStatus.value === 'Split' ? parseFloat(document.getElementById('amountPaidNow').value) || 0 : 0,
+        frequency: form.paymentStatus.value === 'Scheduled' ? (document.getElementById('frequency').value || '') : '',
+        totalPayments: form.paymentStatus.value === 'Scheduled' ? (parseInt(document.getElementById('totalPayments').value) || 0) : 0,
+        isInstallment: form.paymentStatus.value === 'Scheduled' ? document.getElementById('isInstallment').checked : false,
+        campaignId: selectedCampaign,
+    };
+
+    // Submit
+    setLoading(true);
+
+    try {
+        const result = await submitDonation(formData);
+
+        if (result.success || result.status === 'success') {
+            lastSubmittedData = formData;
+            lastDonationId = result.donationId || null;
+            showSuccess(formData);
+        } else {
+            showError(result.message || result.error || 'Submission failed. Please try again.');
+        }
+    } catch (err) {
+        showError('Network error — could not reach the server. Please check your connection and try again.');
+    } finally {
+        setLoading(false);
+    }
+}
+
+/* ─── API Call (Donation) ─────────────────────────────── */
+async function submitDonation(formData) {
+    const payload = {
+        campaignId:   formData.campaignId || CAMPAIGN_CONFIG.id,
+        campaign:     CAMPAIGN_CONFIG.id,
+        firstName:    formData.firstName,
+        lastName:     formData.lastName,
+        email:        formData.email || '',
+        companyName:  formData.companyName || '',
+        phone:        formData.phone || '',
+        street:       formData.street || '',
+        city:         formData.city || '',
+        state:        formData.state || '',
+        zip:          formData.zip || '',
+        amount:       formData.amount,
+        displayName:  formData.displayName || '',
+        memo:         formData.memo || '',
+        method:       formData.method,
+        donationDate: formData.donationDate,
+        sendReceipt:  formData.sendReceipt,
+        anonymous:    formData.anonymous,
+        campaignCode: CAMPAIGN_CONFIG.id,
+        campaignName: CAMPAIGN_CONFIG.name,
+        teams:        formData.teams || '',
+        paymentStatus: formData.paymentStatus,
+        amountPaidNow: formData.amountPaidNow,
+        frequency: formData.frequency || '',
+        totalPayments: formData.totalPayments || 0,
+        isInstallment: formData.isInstallment || false,
+    };
+
+    return await authPost('addManualDonation', payload);
+}
+
+/* ─── UI Helpers ──────────────────────────────────────── */
+function setLoading(on) {
+    submitBtn.disabled = on;
+    submitBtn.classList.toggle('loading', on);
+}
+
+function showError(msg) {
+    errorMessage.textContent = msg;
+    errorAlert.classList.add('visible');
+}
+
+function hideError() {
+    errorAlert.classList.remove('visible');
+}
+
+function showSuccess(data) {
+    const amt = Number(data.amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    successSummary.innerHTML = `
+        <strong>${data.firstName} ${data.lastName}</strong><br>
+        Amount: <strong>${amt}</strong><br>
+        Method: <strong>${data.method}</strong>
+    `;
+    successOverlay.classList.add('visible');
+}
+
+function resetForm() {
+    form.reset();
+    successOverlay.classList.remove('visible');
+    hideError();
+
+    // Re-set today's date
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+    // Reset toggles
+    receiptRow.classList.add('disabled');
+    receiptToggle.checked = false;
+    anonymousToggle.checked = false;
+    receiptNote.textContent = 'Enter an email address above to enable this option.';
+
+    // Clear validation
+    form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+
+    // Reset payment status fields
+    document.getElementById('paymentStatus').selectedIndex = 0;
+    document.getElementById('splitFields').style.display = 'none';
+    document.getElementById('scheduledFields').style.display = 'none';
+    document.getElementById('amountPaidNow').value = '';
+    document.getElementById('frequency').selectedIndex = 0;
+    document.getElementById('totalPayments').value = '';
+    document.getElementById('isInstallment').checked = false;
+    document.getElementById('method').closest('.field').style.opacity = '1';
+
+    // Clear teams
+    window.selectedTeams = [];
+    renderTeamTags();
+
+    // Reset campaign selector to default
+    if (window.campaignSelector) {
+        window.campaignSelector.reset();
+    }
+
+    // Clear last submitted data
+    lastSubmittedData = null;
+    lastDonationId = null;
+}
+
+/* ─── Teams Tag Input ─────────────────────────────────── */
+async function loadTeams() {
+    try {
+        const data = await authGet('getTeams', { campaignId: CAMPAIGN_CONFIG.id });
+        if (data.status === 'success' && Array.isArray(data.teams)) {
+            window.allTeams = data.teams;
+        }
+    } catch (err) {
+        console.warn('Could not load teams:', err);
+    }
+}
+
+function initTeamTagInput() {
+    const searchInput = document.getElementById('teamSearch');
+    const dropdown = document.getElementById('teamDropdown');
+    const wrapper = document.getElementById('teamTagWrapper');
+
+    // Focus the input when clicking the wrapper
+    wrapper.addEventListener('click', () => searchInput.focus());
+
+    // Filter on typing
+    searchInput.addEventListener('input', () => {
+        filterTeams(searchInput.value.trim());
+    });
+
+    // Show dropdown on focus
+    searchInput.addEventListener('focus', () => {
+        filterTeams(searchInput.value.trim());
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('visible');
+        }
+    });
+}
+
+function filterTeams(query) {
+    const dropdown = document.getElementById('teamDropdown');
+    const lowerQ = query.toLowerCase();
+    const available = window.allTeams.filter(t =>
+        !window.selectedTeams.includes(t.id) &&
+        (lowerQ === '' || t.name.toLowerCase().includes(lowerQ))
+    );
+
+    if (available.length === 0) {
+        dropdown.innerHTML = '<div class="tag-dropdown-empty">No teams found</div>';
+    } else {
+        dropdown.innerHTML = available.map(t =>
+            `<div class="tag-dropdown-item" data-id="${t.id}" data-name="${t.name}">${t.name}</div>`
+        ).join('');
+
+        dropdown.querySelectorAll('.tag-dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+                addTeam(item.dataset.id, item.dataset.name);
+                document.getElementById('teamSearch').value = '';
+                dropdown.classList.remove('visible');
+            });
+        });
+    }
+
+    dropdown.classList.add('visible');
+}
+
+function addTeam(id, name) {
+    if (window.selectedTeams.includes(id)) return;
+    window.selectedTeams.push(id);
+    renderTeamTags();
+}
+
+function removeTeam(id) {
+    window.selectedTeams = window.selectedTeams.filter(t => t !== id);
+    renderTeamTags();
+}
+
+function renderTeamTags() {
+    const wrapper = document.getElementById('teamTagWrapper');
+    const searchInput = document.getElementById('teamSearch');
+
+    // Remove existing chips
+    wrapper.querySelectorAll('.tag-chip').forEach(chip => chip.remove());
+
+    // Add chips before the input
+    window.selectedTeams.forEach(id => {
+        const team = window.allTeams.find(t => t.id === id);
+        if (!team) return;
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.innerHTML = `${team.name}<span class="remove-tag" data-id="${id}">&times;</span>`;
+        chip.querySelector('.remove-tag').addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeTeam(id);
+        });
+        wrapper.insertBefore(chip, searchInput);
+    });
+}
+
+/* ─── Campaign Selector ───────────────────────────────── */
+class CampaignSelector {
+    constructor() {
+        this.allCampaigns = [];
+        this.selectedCampaign = { id: CAMPAIGN_CONFIG.id, name: CAMPAIGN_CONFIG.name };
+        this.wrapper = document.getElementById('campaignChipWrapper');
+        this.searchInput = document.getElementById('campaignSearch');
+        this.dropdown = document.getElementById('campaignDropdown');
+        this.loaded = false;
+
+        this.init();
+        this.loadCampaigns();
+    }
+
+    init() {
+        // Render default chip
+        this.renderChip();
+
+        // Focus the input when clicking the wrapper
+        this.wrapper.addEventListener('click', () => this.searchInput.focus());
+
+        // Filter on typing
+        this.searchInput.addEventListener('input', () => {
+            this.filterCampaigns(this.searchInput.value.trim());
+        });
+
+        // Show dropdown on focus
+        this.searchInput.addEventListener('focus', () => {
+            this.filterCampaigns(this.searchInput.value.trim());
+        });
+
+        // Close dropdown on outside click
+        document.addEventListener('click', (e) => {
+            if (!this.wrapper.contains(e.target) && !this.dropdown.contains(e.target)) {
+                this.dropdown.classList.remove('visible');
+            }
+        });
+    }
+
+    async loadCampaigns() {
+        try {
+            const data = await authGet('getActiveCampaigns');
+            if (data.status === 'success' && Array.isArray(data.campaigns)) {
+                this.allCampaigns = data.campaigns;
+                this.loaded = true;
+            }
+        } catch (err) {
+            console.warn('Could not load campaigns:', err);
+            // Fallback: use current campaign only
+            this.allCampaigns = [{ id: CAMPAIGN_CONFIG.id, name: CAMPAIGN_CONFIG.name }];
+        }
+    }
+
+    filterCampaigns(query) {
+        const lowerQ = query.toLowerCase();
+        const available = this.allCampaigns.filter(c =>
+            c.id !== (this.selectedCampaign ? this.selectedCampaign.id : '') &&
+            (lowerQ === '' || c.name.toLowerCase().includes(lowerQ) || c.id.toLowerCase().includes(lowerQ))
+        );
+
+        if (available.length === 0) {
+            this.dropdown.innerHTML = '<div class="tag-dropdown-empty">No campaigns found</div>';
+        } else {
+            this.dropdown.innerHTML = available.map(c =>
+                `<div class="tag-dropdown-item" data-id="${c.id}" data-name="${c.name}">${c.name} <span style="color:#666; font-size:0.75rem;">(${c.id})</span></div>`
+            ).join('');
+
+            this.dropdown.querySelectorAll('.tag-dropdown-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    this.selectCampaign(item.dataset.id, item.dataset.name);
+                    this.searchInput.value = '';
+                    this.dropdown.classList.remove('visible');
+                });
+            });
+        }
+
+        this.dropdown.classList.add('visible');
+    }
+
+    selectCampaign(id, name) {
+        this.selectedCampaign = { id, name };
+        this.renderChip();
+    }
+
+    renderChip() {
+        // Remove existing chips
+        this.wrapper.querySelectorAll('.campaign-chip').forEach(chip => chip.remove());
+
+        if (this.selectedCampaign) {
+            const chip = document.createElement('span');
+            chip.className = 'campaign-chip';
+            chip.innerHTML = `${this.selectedCampaign.name}<span class="remove-campaign">&times;</span>`;
+            chip.querySelector('.remove-campaign').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.clearSelection();
+            });
+            this.wrapper.insertBefore(chip, this.searchInput);
+        }
+    }
+
+    clearSelection() {
+        this.selectedCampaign = null;
+        this.renderChip();
+    }
+
+    getSelectedId() {
+        return this.selectedCampaign ? this.selectedCampaign.id : CAMPAIGN_CONFIG.id;
+    }
+
+    reset() {
+        this.selectedCampaign = { id: CAMPAIGN_CONFIG.id, name: CAMPAIGN_CONFIG.name };
+        this.renderChip();
+    }
+}
+
+/* ─── Pledges Management ──────────────────────────────── */
+async function loadPledges() {
+    const tbody = document.getElementById('pledgesTableBody');
+    tbody.innerHTML = '<tr><td colspan="9" class="table-loading">Loading pledges…</td></tr>';
+
+    try {
+        const data = await authGet('getPledges', { campaignId: CAMPAIGN_CONFIG.id });
+        if (data.status === 'success' && Array.isArray(data.pledges)) {
+            pledgesData = data.pledges;
+            renderPledges();
+            updatePledgeSummary();
+        } else {
+            tbody.innerHTML = '<tr><td colspan="9" class="table-empty">No pledges found.</td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load pledges:', err);
+        tbody.innerHTML = '<tr><td colspan="9" class="table-empty">Failed to load pledges.</td></tr>';
+    }
+}
+
+function renderPledges() {
+    const tbody = document.getElementById('pledgesTableBody');
+    let filtered = pledgesData;
+
+    if (currentPledgeFilter === 'outstanding') {
+        filtered = pledgesData.filter(p => p.status && p.status.toLowerCase() === 'outstanding');
+    } else if (currentPledgeFilter === 'fulfilled') {
+        filtered = pledgesData.filter(p => p.status && p.status.toLowerCase() === 'fulfilled');
+    }
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="table-empty">No pledges match this filter.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(p => {
+        const amount = Number(p.amount || 0);
+        const paid = Number(p.paid || 0);
+        const balance = amount - paid;
+        const statusLower = (p.status || '').toLowerCase();
+        const statusClass = statusLower === 'fulfilled' ? 'fulfilled' : statusLower === 'overdue' ? 'overdue' : 'outstanding';
+
+        return `<tr>
+            <td style="font-family:monospace; font-size:0.75rem; color:#777;">${escapeHtml(p.pledgeId || p.id || '—')}</td>
+            <td>${escapeHtml(p.date || '—')}</td>
+            <td><strong style="color:#ddd;">${escapeHtml(p.donor || p.firstName + ' ' + p.lastName || '—')}</strong></td>
+            <td>${formatCurrency(amount)}</td>
+            <td>${formatCurrency(paid)}</td>
+            <td>${formatCurrency(balance)}</td>
+            <td><span class="status-badge ${statusClass}">${escapeHtml(p.status || 'Outstanding')}</span></td>
+            <td>${escapeHtml(p.method || '—')}</td>
+            <td>
+                ${statusLower !== 'fulfilled' ? `<button class="tbl-action-btn" onclick="openRecordPaymentModal('${escapeHtml(p.pledgeId || p.id || '')}', ${balance})">Record Payment</button>` : ''}
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function updatePledgeSummary() {
+    let totalOutstanding = 0;
+    let totalFulfilled = 0;
+    let overdueCount = 0;
+
+    pledgesData.forEach(p => {
+        const amount = Number(p.amount || 0);
+        const paid = Number(p.paid || 0);
+        const balance = amount - paid;
+        const statusLower = (p.status || '').toLowerCase();
+
+        if (statusLower === 'fulfilled') {
+            totalFulfilled += amount;
+        } else {
+            totalOutstanding += balance;
+        }
+
+        if (statusLower === 'overdue') {
+            overdueCount++;
+        }
+    });
+
+    document.getElementById('pledgeTotalOutstanding').textContent = formatCurrency(totalOutstanding);
+    document.getElementById('pledgeTotalFulfilled').textContent = formatCurrency(totalFulfilled);
+    document.getElementById('pledgeOverdueCount').textContent = overdueCount;
+}
+
+// Pledge filter pills
+document.getElementById('pledgeFilterPills').addEventListener('click', (e) => {
+    if (e.target.classList.contains('filter-pill')) {
+        document.querySelectorAll('#pledgeFilterPills .filter-pill').forEach(p => p.classList.remove('active'));
+        e.target.classList.add('active');
+        currentPledgeFilter = e.target.dataset.filter;
+        renderPledges();
+    }
+});
+
+/* ─── Record Payment Modal ────────────────────────────── */
+function openRecordPaymentModal(pledgeId, maxAmount) {
+    document.getElementById('rpPledgeId').value = pledgeId;
+    document.getElementById('rpAmount').value = '';
+    document.getElementById('rpAmount').max = maxAmount;
+    document.getElementById('rpAmount').placeholder = maxAmount ? maxAmount.toFixed(2) : '0.00';
+    document.getElementById('rpMethod').selectedIndex = 0;
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    document.getElementById('rpDate').value = `${yyyy}-${mm}-${dd}`;
+
+    document.getElementById('rpError').classList.remove('visible');
+    document.getElementById('recordPaymentModal').classList.add('visible');
+}
+
+function closeRecordPaymentModal() {
+    document.getElementById('recordPaymentModal').classList.remove('visible');
+}
+
+async function submitRecordPayment() {
+    const pledgeId = document.getElementById('rpPledgeId').value;
+    const amount = parseFloat(document.getElementById('rpAmount').value);
+    const method = document.getElementById('rpMethod').value;
+    const date = document.getElementById('rpDate').value;
+
+    if (!amount || amount <= 0) {
+        document.getElementById('rpErrorMessage').textContent = 'Please enter a valid amount.';
+        document.getElementById('rpError').classList.add('visible');
+        return;
+    }
+    if (!method) {
+        document.getElementById('rpErrorMessage').textContent = 'Please select a payment method.';
+        document.getElementById('rpError').classList.add('visible');
+        return;
+    }
+
+    try {
+        const result = await authPost('recordPledgePayment', {
+            pledgeId,
+            amount,
+            method,
+            date,
+            campaignId: CAMPAIGN_CONFIG.id,
+        });
+
+        if (result.success || result.status === 'success') {
+            closeRecordPaymentModal();
+            loadPledges(); // Refresh
+        } else {
+            document.getElementById('rpErrorMessage').textContent = result.message || 'Failed to record payment.';
+            document.getElementById('rpError').classList.add('visible');
+        }
+    } catch (err) {
+        document.getElementById('rpErrorMessage').textContent = 'Network error. Please try again.';
+        document.getElementById('rpError').classList.add('visible');
+    }
+}
+
+/* ─── Scheduled Payments ──────────────────────────────── */
+async function loadScheduledPayments() {
+    const tbody = document.getElementById('scheduledTableBody');
+    tbody.innerHTML = '<tr><td colspan="8" class="table-loading">Loading scheduled payments…</td></tr>';
+
+    try {
+        const data = await authGet('getScheduledPayments', { campaignId: CAMPAIGN_CONFIG.id });
+        if (data.status === 'success' && Array.isArray(data.payments)) {
+            scheduledData = data.payments;
+            renderScheduledPayments();
+            updateScheduledSummary();
+        } else {
+            tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No scheduled payments found.</td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load scheduled payments:', err);
+        tbody.innerHTML = '<tr><td colspan="8" class="table-empty">Failed to load scheduled payments.</td></tr>';
+    }
+}
+
+function renderScheduledPayments() {
+    const tbody = document.getElementById('scheduledTableBody');
+
+    if (scheduledData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No scheduled payments found.</td></tr>';
+        return;
+    }
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    tbody.innerHTML = scheduledData.map(p => {
+        const dueDate = p.dueDate ? new Date(p.dueDate) : null;
+        const statusLower = (p.status || '').toLowerCase();
+        const isOverdue = dueDate && dueDate < now && statusLower === 'scheduled';
+        const rowClass = isOverdue ? 'overdue' : '';
+        const badgeClass = isOverdue ? 'overdue' : statusLower === 'paid' ? 'paid' : statusLower === 'skipped' ? 'skipped' : statusLower === 'cancelled' ? 'cancelled' : 'scheduled';
+        const displayStatus = isOverdue ? 'Overdue' : (p.status || 'Scheduled');
+
+        const actions = [];
+        if (statusLower === 'scheduled') {
+            actions.push(`<button class="tbl-action-btn" onclick="markScheduledPaid('${escapeHtml(p.id || '')}')">Mark Paid</button>`);
+            actions.push(`<button class="tbl-action-btn" onclick="skipScheduledPayment('${escapeHtml(p.id || '')}')">Skip</button>`);
+            actions.push(`<button class="tbl-action-btn danger" onclick="cancelScheduledSeries('${escapeHtml(p.pledgeId || p.id || '')}')">Cancel Series</button>`);
+        }
+
+        return `<tr class="${rowClass}">
+            <td>${p.dueDate ? escapeHtml(p.dueDate) : '—'}</td>
+            <td><strong style="color:#ddd;">${escapeHtml(p.donor || '—')}</strong></td>
+            <td>${formatCurrency(Number(p.amount || 0))}</td>
+            <td>${escapeHtml(p.paymentNumber || '—')}</td>
+            <td>${escapeHtml(p.frequency || '—')}</td>
+            <td><span class="status-badge ${badgeClass}">${escapeHtml(displayStatus)}</span></td>
+            <td style="font-family:monospace; font-size:0.75rem; color:#777;">${escapeHtml(p.pledgeId || '—')}</td>
+            <td>${actions.join('')}</td>
+        </tr>`;
+    }).join('');
+}
+
+function updateScheduledSummary() {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const weekEnd = new Date(now);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    let dueThisWeek = 0;
+    let dueThisMonth = 0;
+    let overdue = 0;
+    let totalScheduled = 0;
+
+    scheduledData.forEach(p => {
+        const statusLower = (p.status || '').toLowerCase();
+        if (statusLower !== 'scheduled') return;
+
+        const amount = Number(p.amount || 0);
+        const dueDate = p.dueDate ? new Date(p.dueDate) : null;
+
+        totalScheduled += amount;
+
+        if (dueDate) {
+            dueDate.setHours(0, 0, 0, 0);
+            if (dueDate < now) {
+                overdue++;
+            } else if (dueDate <= weekEnd) {
+                dueThisWeek++;
+            }
+            if (dueDate >= now && dueDate <= monthEnd) {
+                dueThisMonth++;
+            }
+        }
+    });
+
+    document.getElementById('scheduledDueThisWeek').textContent = dueThisWeek;
+    document.getElementById('scheduledDueThisMonth').textContent = dueThisMonth;
+    document.getElementById('scheduledOverdue').textContent = overdue;
+    document.getElementById('scheduledTotal').textContent = formatCurrency(totalScheduled);
+}
+
+/* ─── Scheduled Payment Actions ───────────────────────── */
+async function markScheduledPaid(paymentId) {
+    try {
+        const result = await authPost('markScheduledPaid', {
+            paymentId,
+            campaignId: CAMPAIGN_CONFIG.id,
+        });
+        if (result.success || result.status === 'success') {
+            loadScheduledPayments();
+        } else {
+            alert(result.message || 'Failed to mark as paid.');
+        }
+    } catch (err) {
+        alert('Network error. Please try again.');
+    }
+}
+
+async function skipScheduledPayment(paymentId) {
+    if (!confirm('Skip this scheduled payment?')) return;
+    try {
+        const result = await authPost('skipScheduledPayment', {
+            paymentId,
+            campaignId: CAMPAIGN_CONFIG.id,
+        });
+        if (result.success || result.status === 'success') {
+            loadScheduledPayments();
+        } else {
+            alert(result.message || 'Failed to skip payment.');
+        }
+    } catch (err) {
+        alert('Network error. Please try again.');
+    }
+}
+
+async function cancelScheduledSeries(pledgeId) {
+    if (!confirm('Cancel the entire scheduled series? This cannot be undone.')) return;
+    try {
+        const result = await authPost('cancelScheduledSeries', {
+            pledgeId,
+            campaignId: CAMPAIGN_CONFIG.id,
+        });
+        if (result.success || result.status === 'success') {
+            loadScheduledPayments();
+        } else {
+            alert(result.message || 'Failed to cancel series.');
+        }
+    } catch (err) {
+        alert('Network error. Please try again.');
+    }
+}
+
+/* ─── Resend Receipt Modal ────────────────────────────── */
+function openResendReceiptModal() {
+    const originalEmail = lastSubmittedData ? lastSubmittedData.email : '';
+    document.getElementById('rrOriginalEmail').value = originalEmail;
+    document.getElementById('rrAlternateEmail').value = '';
+    document.getElementById('rrAlsoSendOriginal').checked = !!originalEmail;
+    document.getElementById('rrDonationId').value = lastDonationId || '';
+    document.getElementById('rrError').classList.remove('visible');
+    document.getElementById('resendReceiptModal').classList.add('visible');
+}
+
+function closeResendReceiptModal() {
+    document.getElementById('resendReceiptModal').classList.remove('visible');
+}
+
+async function submitResendReceipt() {
+    const originalEmail = document.getElementById('rrOriginalEmail').value;
+    const alternateEmail = document.getElementById('rrAlternateEmail').value.trim();
+    const alsoSendOriginal = document.getElementById('rrAlsoSendOriginal').checked;
+    const donationId = document.getElementById('rrDonationId').value;
+
+    if (!alternateEmail && !alsoSendOriginal) {
+        document.getElementById('rrErrorMessage').textContent = 'Please enter an alternate email or select to send to the original.';
+        document.getElementById('rrError').classList.add('visible');
+        return;
+    }
+
+    // Basic email validation
+    if (alternateEmail && !alternateEmail.includes('@')) {
+        document.getElementById('rrErrorMessage').textContent = 'Please enter a valid email address.';
+        document.getElementById('rrError').classList.add('visible');
+        return;
+    }
+
+    try {
+        const result = await authPost('resendReceipt', {
+            donationId,
+            originalEmail,
+            alternateEmail,
+            sendToOriginal: alsoSendOriginal,
+            campaignId: CAMPAIGN_CONFIG.id,
+        });
+
+        if (result.success || result.status === 'success') {
+            closeResendReceiptModal();
+            // Brief confirmation
+            const btn = document.getElementById('resendReceiptBtn');
+            const origTitle = btn.title;
+            btn.title = '✓ Sent!';
+            btn.textContent = '✓';
+            setTimeout(() => {
+                btn.title = origTitle;
+                btn.textContent = '📧';
+            }, 2000);
+        } else {
+            document.getElementById('rrErrorMessage').textContent = result.message || 'Failed to resend receipt.';
+            document.getElementById('rrError').classList.add('visible');
+        }
+    } catch (err) {
+        document.getElementById('rrErrorMessage').textContent = 'Network error. Please try again.';
+        document.getElementById('rrError').classList.add('visible');
+    }
+}
+
+/* ─── Utility Functions ───────────────────────────────── */
+function formatCurrency(amount) {
+    return Number(amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = String(str || '');
+    return div.innerHTML;
+}
+</script>
+
+</body>
+</html>
