@@ -551,6 +551,31 @@
             .page-header h1 { font-size: 1.3rem; }
             .success-actions { flex-direction: column; }
         }
+
+        /* ── Schedule Preview Modal ─────────────────────── */
+        .schedule-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); z-index:10000; display:none; align-items:center; justify-content:center; }
+        .schedule-modal-overlay.visible { display:flex; }
+        .schedule-modal { background:#1a1a2e; border:1px solid rgba(255,255,255,0.08); border-radius:16px; width:90%; max-width:560px; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.5); animation:modalFadeIn 0.25s ease; }
+        @keyframes modalFadeIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+        .schedule-modal-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 16px; border-bottom:1px solid rgba(255,255,255,0.06); }
+        .schedule-modal-header h3 { font-size:1.15rem; color:#fff; margin:0; font-weight:700; }
+        .schedule-modal-close { background:none; border:none; color:rgba(255,255,255,0.4); font-size:1.5rem; cursor:pointer; padding:4px 8px; border-radius:8px; transition:all 0.2s; }
+        .schedule-modal-close:hover { color:#fff; background:rgba(255,255,255,0.08); }
+        .schedule-modal-summary { padding:16px 24px; font-size:0.9rem; color:rgba(255,255,255,0.7); line-height:1.6; border-bottom:1px solid rgba(255,255,255,0.06); }
+        .schedule-modal-summary strong { color:#4dabf7; }
+        .schedule-modal-table-wrap { flex:1; overflow-y:auto; padding:0 24px; }
+        .schedule-table { width:100%; border-collapse:collapse; margin:12px 0; }
+        .schedule-table th { font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,0.35); padding:10px 8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08); font-weight:600; }
+        .schedule-table td { padding:10px 8px; font-size:0.88rem; color:rgba(255,255,255,0.8); border-bottom:1px solid rgba(255,255,255,0.04); }
+        .schedule-table tr:last-child td { border-bottom:none; }
+        .schedule-table .sched-paid { color:#69db7c; font-weight:600; }
+        .schedule-table .sched-upcoming { color:#4dabf7; }
+        .schedule-table .sched-amount { font-weight:600; font-variant-numeric:tabular-nums; }
+        .schedule-modal-footer { display:flex; gap:12px; justify-content:flex-end; padding:16px 24px 20px; border-top:1px solid rgba(255,255,255,0.06); }
+        .schedule-btn-cancel { padding:10px 24px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.6); border-radius:10px; cursor:pointer; font-size:0.9rem; font-weight:600; transition:all 0.2s; font-family:inherit; }
+        .schedule-btn-cancel:hover { background:rgba(255,255,255,0.1); color:#fff; }
+        #admin-preview-schedule-btn { margin-top:12px; width:100%; padding:10px 16px; background:rgba(77,171,247,0.1); border:1px solid rgba(77,171,247,0.25); color:#4dabf7; border-radius:10px; cursor:pointer; font-size:0.88rem; font-weight:600; transition:all 0.2s; font-family:inherit; }
+        #admin-preview-schedule-btn:hover { background:rgba(77,171,247,0.18); border-color:rgba(77,171,247,0.4); }
     </style>
 </head>
 <body>
@@ -699,6 +724,15 @@
                                 <span>This is an installment (total amount is split across payments)</span>
                             </label>
                         </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="scheduled-start-date">Start Date <span style="color: #888; font-weight: normal;">(blank = starts immediately)</span></label>
+                            <input type="date" id="scheduled-start-date" style="color-scheme:dark;">
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="admin-initial-amount">Initial Payment Amount <span style="color: #888; font-weight: normal;">(optional, different first payment)</span></label>
+                            <input type="number" id="admin-initial-amount" min="1" step="0.01" placeholder="e.g. 1000">
+                        </div>
+                        <button type="button" id="admin-preview-schedule-btn" style="display: none;" onclick="openAdminSchedulePreview()">📋 Preview Payment Schedule</button>
                     </div>
 
 
@@ -852,6 +886,15 @@ function init() {
         splitFields.style.display = val === 'Split' ? 'block' : 'none';
         scheduledFields.style.display = val === 'Scheduled' ? 'block' : 'none';
 
+        // Clear scheduled-specific fields when switching away
+        if (val !== 'Scheduled') {
+            document.getElementById('scheduled-start-date').value = '';
+            document.getElementById('admin-initial-amount').value = '';
+            document.getElementById('admin-preview-schedule-btn').style.display = 'none';
+        } else {
+            updateAdminPreviewBtnVisibility();
+        }
+
         // For Pledged, method isn't required (no payment)
         if (val === 'Pledged') {
             methodField.removeAttribute('required');
@@ -918,6 +961,9 @@ async function handleSubmit(e) {
         frequency: form.paymentStatus.value === 'Scheduled' ? (document.getElementById('frequency').value || '') : '',
         totalPayments: form.paymentStatus.value === 'Scheduled' ? (parseInt(document.getElementById('totalPayments').value) || 0) : 0,
         isInstallment: form.paymentStatus.value === 'Scheduled' ? document.getElementById('isInstallment').checked : false,
+        startDate: document.getElementById('scheduled-start-date').value,
+        initialAmount: parseFloat(document.getElementById('admin-initial-amount').value) || 0,
+        deferStart: (function() { var sd = document.getElementById('scheduled-start-date').value; if (!sd) return false; var d = new Date(sd + 'T00:00:00'); var t = new Date(); t.setHours(0,0,0,0); return d > t; })(),
     };
 
     // Submit
@@ -967,6 +1013,9 @@ async function submitDonation(formData) {
         frequency: formData.frequency || '',
         totalPayments: formData.totalPayments || 0,
         isInstallment: formData.isInstallment || false,
+        startDate: formData.startDate || '',
+        initialAmount: formData.initialAmount || 0,
+        deferStart: formData.deferStart || false,
     };
 
     const response = await fetch(CONFIG.appsScriptUrl, {
@@ -1030,6 +1079,9 @@ function resetForm() {
     document.getElementById('frequency').selectedIndex = 0;
     document.getElementById('totalPayments').value = '';
     document.getElementById('isInstallment').checked = false;
+    document.getElementById('scheduled-start-date').value = '';
+    document.getElementById('admin-initial-amount').value = '';
+    document.getElementById('admin-preview-schedule-btn').style.display = 'none';
     document.getElementById('method').closest('.field').style.opacity = '1';
 
     // Clear teams
@@ -1142,7 +1194,147 @@ function renderTeamTags() {
         wrapper.insertBefore(chip, searchInput);
     });
 }
+/* ─── Schedule Preview ─────────────────────────────── */
+function updateAdminPreviewBtnVisibility() {
+    var btn = document.getElementById('admin-preview-schedule-btn');
+    var status = document.getElementById('paymentStatus').value;
+    var freq = document.getElementById('frequency').value;
+    var amt = parseFloat(document.getElementById('amount').value);
+    if (status === 'Scheduled' && freq && amt > 0) {
+        btn.style.display = 'block';
+    } else {
+        btn.style.display = 'none';
+    }
+}
+
+function openAdminSchedulePreview() {
+    var amt = parseFloat(document.getElementById('amount').value);
+    var count = parseInt(document.getElementById('totalPayments').value) || 0;
+    var freq = document.getElementById('frequency').value;
+    var isInst = document.getElementById('isInstallment').checked;
+    var startDateVal = document.getElementById('scheduled-start-date').value;
+    var initialAmt = parseFloat(document.getElementById('admin-initial-amount').value) || 0;
+    var freqLabels = { weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly', quarterly: 'Quarterly', annually: 'Annual' };
+
+    if (!amt || !freq) return;
+
+    // Calculate per-payment amount
+    var perPayment = isInst && count >= 2 ? Math.round((amt / count) * 100) / 100 : amt;
+    var totalCommitment = isInst ? amt : (count >= 2 ? amt * count : 0);
+    var numToShow = count >= 2 ? count : 12; // show 12 for ongoing
+
+    // Determine start date
+    var isDeferredStart = false;
+    var baseDate;
+    var today = new Date();
+    today.setHours(0,0,0,0);
+
+    if (startDateVal) {
+        baseDate = new Date(startDateVal + 'T00:00:00');
+        isDeferredStart = baseDate > today;
+    } else {
+        baseDate = new Date(today);
+    }
+
+    // Frequency intervals
+    var freqMap = { weekly:{d:7,m:0,y:0}, biweekly:{d:14,m:0,y:0}, monthly:{d:0,m:1,y:0}, quarterly:{d:0,m:3,y:0}, annually:{d:0,m:0,y:1} };
+    var interval = freqMap[freq] || freqMap.monthly;
+
+    // Build summary
+    var summaryHtml = '';
+    if (isDeferredStart) {
+        summaryHtml += '<strong>Deferred Start</strong> — payments begin ' + baseDate.toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'}) + '<br>';
+    } else if (initialAmt > 0 && initialAmt !== perPayment) {
+        summaryHtml += '<strong>Initial payment:</strong> $' + initialAmt.toLocaleString('en-US',{minimumFractionDigits:2}) + ' (today)<br>';
+    }
+    summaryHtml += '<strong>Frequency:</strong> ' + (freqLabels[freq] || freq);
+    if (count >= 2) {
+        summaryHtml += ' &nbsp;|&nbsp; <strong>Payments:</strong> ' + count;
+    } else {
+        summaryHtml += ' &nbsp;|&nbsp; <strong>Ongoing</strong> (showing next 12)';
+    }
+    if (totalCommitment > 0) {
+        summaryHtml += ' &nbsp;|&nbsp; <strong>Total:</strong> $' + totalCommitment.toLocaleString('en-US',{minimumFractionDigits:2});
+    }
+    document.getElementById('admin-schedule-summary').innerHTML = summaryHtml;
+
+    // Build payment table
+    var tbody = document.getElementById('admin-schedule-table-body');
+    tbody.innerHTML = '';
+    for (var i = 0; i < numToShow; i++) {
+        var dueDate = new Date(baseDate);
+        if (!isDeferredStart && i === 0) {
+            dueDate = new Date(today);
+        } else if (!isDeferredStart && i > 0) {
+            dueDate = new Date(today);
+            if (interval.d) dueDate.setDate(dueDate.getDate() + interval.d * i);
+            if (interval.m) dueDate.setMonth(dueDate.getMonth() + interval.m * i);
+            if (interval.y) dueDate.setFullYear(dueDate.getFullYear() + interval.y * i);
+        } else {
+            if (interval.d) dueDate.setDate(dueDate.getDate() + interval.d * i);
+            if (interval.m) dueDate.setMonth(dueDate.getMonth() + interval.m * i);
+            if (interval.y) dueDate.setFullYear(dueDate.getFullYear() + interval.y * i);
+        }
+
+        var payAmt = perPayment;
+        var statusText = 'Scheduled';
+        var statusClass = 'sched-upcoming';
+
+        if (!isDeferredStart && i === 0) {
+            payAmt = (initialAmt > 0) ? initialAmt : perPayment;
+            statusText = 'First payment';
+            statusClass = 'sched-paid';
+        } else if (isDeferredStart && i === 0 && initialAmt > 0) {
+            payAmt = initialAmt;
+        }
+
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + (i + 1) + '</td>' +
+            '<td>' + dueDate.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) + '</td>' +
+            '<td class="sched-amount">$' + payAmt.toLocaleString('en-US',{minimumFractionDigits:2}) + '</td>' +
+            '<td class="' + statusClass + '">' + statusText + '</td>';
+        tbody.appendChild(tr);
+    }
+
+    document.getElementById('schedule-modal').classList.add('visible');
+}
+
+function closeAdminSchedulePreview() {
+    document.getElementById('schedule-modal').classList.remove('visible');
+}
+
+// Event listeners for preview button visibility
+['frequency', 'totalPayments', 'amount'].forEach(function(id) {
+    document.getElementById(id).addEventListener('change', updateAdminPreviewBtnVisibility);
+    document.getElementById(id).addEventListener('input', updateAdminPreviewBtnVisibility);
+});
+['scheduled-start-date', 'admin-initial-amount'].forEach(function(id) {
+    document.getElementById(id).addEventListener('change', updateAdminPreviewBtnVisibility);
+    document.getElementById(id).addEventListener('input', updateAdminPreviewBtnVisibility);
+});
 </script>
+
+    <!-- Schedule Preview Modal -->
+    <div class="schedule-modal-overlay" id="schedule-modal">
+        <div class="schedule-modal">
+            <div class="schedule-modal-header">
+                <h3>📋 Payment Schedule Preview</h3>
+                <button class="schedule-modal-close" onclick="closeAdminSchedulePreview()">&times;</button>
+            </div>
+            <div class="schedule-modal-summary" id="admin-schedule-summary"></div>
+            <div class="schedule-modal-table-wrap">
+                <table class="schedule-table">
+                    <thead>
+                        <tr><th>#</th><th>Due Date</th><th>Amount</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="admin-schedule-table-body"></tbody>
+                </table>
+            </div>
+            <div class="schedule-modal-footer">
+                <button type="button" class="schedule-btn-cancel" onclick="closeAdminSchedulePreview()">Close</button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
