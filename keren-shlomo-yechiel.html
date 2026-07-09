@@ -670,6 +670,12 @@
         // ============================================================
         // Schedule Preview
         // ============================================================
+        // Adjust date for Shabbat: if Saturday (day 6), shift to Sunday
+        function adjustForShabbat(date) {
+            if (date.getDay() === 6) date.setDate(date.getDate() + 1);
+            return date;
+        }
+
         function openSchedulePreview() {
             var amt = selectedAmount || parseFloat(customInput.value);
             var count = parseInt(document.getElementById('recurring-count').value) || 0;
@@ -719,6 +725,7 @@
             if (totalCommitment > 0) {
                 summaryHtml += ' &nbsp;|&nbsp; <strong>Total:</strong> $' + totalCommitment.toLocaleString('en-US',{minimumFractionDigits:2});
             }
+            summaryHtml += '<br><span style="font-size:0.8rem;color:#999;">* Payments falling on Shabbat are shifted to Sunday. Dates may also adjust for Yom Tov.</span>';
             document.getElementById('schedule-summary').innerHTML = summaryHtml;
 
             // Build payment table
@@ -740,6 +747,8 @@
                     if (interval.m) dueDate.setMonth(dueDate.getMonth() + interval.m * i);
                     if (interval.y) dueDate.setFullYear(dueDate.getFullYear() + interval.y * i);
                 }
+                // Adjust for Shabbat (Saturday → Sunday)
+                adjustForShabbat(dueDate);
 
                 var payAmt = perPayment;
                 var statusText = 'Scheduled';

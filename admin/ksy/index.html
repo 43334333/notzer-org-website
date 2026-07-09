@@ -1207,6 +1207,13 @@ function updateAdminPreviewBtnVisibility() {
     }
 }
 
+
+// Adjust date for Shabbat: if Saturday (day 6), shift to Sunday
+function adjustForShabbat(date) {
+    if (date.getDay() === 6) date.setDate(date.getDate() + 1);
+    return date;
+}
+
 function openAdminSchedulePreview() {
     var amt = parseFloat(document.getElementById('amount').value);
     var count = parseInt(document.getElementById('totalPayments').value) || 0;
@@ -1256,6 +1263,7 @@ function openAdminSchedulePreview() {
     if (totalCommitment > 0) {
         summaryHtml += ' &nbsp;|&nbsp; <strong>Total:</strong> $' + totalCommitment.toLocaleString('en-US',{minimumFractionDigits:2});
     }
+    summaryHtml += '<br><span style="font-size:0.8rem;color:#999;">* Payments falling on Shabbat are shifted to Sunday. Dates may also adjust for Yom Tov.</span>';
     document.getElementById('admin-schedule-summary').innerHTML = summaryHtml;
 
     // Build payment table
@@ -1275,6 +1283,8 @@ function openAdminSchedulePreview() {
             if (interval.m) dueDate.setMonth(dueDate.getMonth() + interval.m * i);
             if (interval.y) dueDate.setFullYear(dueDate.getFullYear() + interval.y * i);
         }
+        // Adjust for Shabbat (Saturday → Sunday)
+        adjustForShabbat(dueDate);
 
         var payAmt = perPayment;
         var statusText = 'Scheduled';
