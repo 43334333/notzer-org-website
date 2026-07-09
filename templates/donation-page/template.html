@@ -1756,17 +1756,17 @@
         var isInstallment = isRecurring && document.getElementById('installment-check').checked;
         if (isInstallment && totalPayments < 2) { showStatus('error', 'Please enter the number of installment payments (at least 2).'); return; }
 
-        // If recurring with count, require schedule preview confirmation
-        if (isRecurring && !scheduleConfirmed && (parseInt(document.getElementById('recurring-count').value) || 0) >= 2) {
-            openSchedulePreview();
-            return;
-        }
-        scheduleConfirmed = false; // reset for next submission
-
         var startDateVal = isRecurring ? document.getElementById('recurring-start-date').value : '';
         var initialPaymentAmt = isRecurring ? (parseFloat(document.getElementById('initial-amount').value) || 0) : 0;
         var today = new Date(); today.setHours(0,0,0,0);
         var isDeferredStart = isRecurring && startDateVal && new Date(startDateVal + 'T00:00:00') > today;
+
+        // Require schedule preview confirmation for recurring with count OR deferred start
+        if (isRecurring && !scheduleConfirmed && ((parseInt(document.getElementById('recurring-count').value) || 0) >= 2 || isDeferredStart)) {
+            openSchedulePreview();
+            return;
+        }
+        scheduleConfirmed = false; // reset for next submission
 
         // For deferred start: no immediate charge (will do $0 auth in backend)
         // For initial amount: charge that instead of the per-payment amount
