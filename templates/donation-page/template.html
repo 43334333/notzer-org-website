@@ -707,6 +707,37 @@
         @media (max-width: 480px) {
             .donation-amounts { grid-template-columns: repeat(3, 1fr); }
         }
+
+        /* ============================================================
+           SCHEDULE PREVIEW MODAL
+           ============================================================ */
+        .schedule-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); z-index:10000; display:none; align-items:center; justify-content:center; }
+        .schedule-modal-overlay.visible { display:flex; }
+        .schedule-modal { background:#1a1a2e; border:1px solid rgba(255,255,255,0.08); border-radius:16px; width:90%; max-width:560px; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.5); animation:modalFadeIn 0.25s ease; }
+        @keyframes modalFadeIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+        .schedule-modal-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 16px; border-bottom:1px solid rgba(255,255,255,0.06); }
+        .schedule-modal-header h3 { font-size:1.15rem; color:#fff; margin:0; font-weight:700; }
+        .schedule-modal-close { background:none; border:none; color:rgba(255,255,255,0.4); font-size:1.5rem; cursor:pointer; padding:4px 8px; border-radius:8px; transition:all 0.2s; }
+        .schedule-modal-close:hover { color:#fff; background:rgba(255,255,255,0.08); }
+        .schedule-modal-summary { padding:16px 24px; font-size:0.9rem; color:rgba(255,255,255,0.7); line-height:1.6; border-bottom:1px solid rgba(255,255,255,0.06); }
+        .schedule-modal-summary strong { color:var(--accent); }
+        .schedule-modal-table-wrap { flex:1; overflow-y:auto; padding:0 24px; }
+        .schedule-table { width:100%; border-collapse:collapse; margin:12px 0; }
+        .schedule-table th { font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,0.35); padding:10px 8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08); font-weight:600; }
+        .schedule-table td { padding:10px 8px; font-size:0.88rem; color:rgba(255,255,255,0.8); border-bottom:1px solid rgba(255,255,255,0.04); }
+        .schedule-table tr:last-child td { border-bottom:none; }
+        .schedule-table .sched-paid { color:#69db7c; font-weight:600; }
+        .schedule-table .sched-upcoming { color:var(--accent); }
+        .schedule-table .sched-amount { font-weight:600; font-variant-numeric:tabular-nums; }
+        .schedule-modal-footer { display:flex; gap:12px; justify-content:flex-end; padding:16px 24px 20px; border-top:1px solid rgba(255,255,255,0.06); }
+        .schedule-btn-cancel { padding:10px 24px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.6); border-radius:10px; cursor:pointer; font-size:0.9rem; font-weight:600; transition:all 0.2s; font-family:inherit; }
+        .schedule-btn-cancel:hover { background:rgba(255,255,255,0.1); color:#fff; }
+        .schedule-btn-confirm { padding:10px 24px; background:linear-gradient(135deg,var(--accent),var(--accent-dark)); border:none; color:#fff; border-radius:10px; cursor:pointer; font-size:0.9rem; font-weight:700; transition:all 0.2s; font-family:inherit; box-shadow:0 4px 16px rgba(77,171,247,0.25); }
+        .schedule-btn-confirm:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(77,171,247,0.35); }
+        #preview-schedule-btn { margin-top:12px; width:100%; padding:10px 16px; background:rgba(77,171,247,0.1); border:1px solid rgba(77,171,247,0.25); color:var(--accent); border-radius:10px; cursor:pointer; font-size:0.88rem; font-weight:600; transition:all 0.2s; font-family:inherit; }
+        #preview-schedule-btn:hover { background:rgba(77,171,247,0.18); border-color:rgba(77,171,247,0.4); }
+        /* Date input styling for dark theme */
+        #recurring-start-date { color-scheme:dark; }
     </style>
 </head>
 <body>
@@ -956,6 +987,15 @@
                                         <span>Split total into installments</span>
                                     </label>
                                     <p id="installment-summary" style="display: none; font-size: 0.85rem; color: #4dabf7; margin: 4px 0 0; line-height: 1.4;"></p>
+                                    <div class="form-group" style="margin-top: 10px;">
+                                        <label for="recurring-start-date">Start Date <span style="color: #888; font-weight: normal;">(blank = start now)</span></label>
+                                        <input type="date" id="recurring-start-date">
+                                    </div>
+                                    <div class="form-group" style="margin-top: 10px;">
+                                        <label for="initial-amount">Initial Payment Amount <span style="color: #888; font-weight: normal;">(optional, different first payment)</span></label>
+                                        <input type="number" id="initial-amount" min="1" step="0.01" placeholder="e.g. 1000">
+                                    </div>
+                                    <button type="button" id="preview-schedule-btn" style="display: none;" onclick="openSchedulePreview()">📋 Preview Payment Schedule</button>
                                 </div>
                             </div>
                         </div>
@@ -1548,6 +1588,9 @@
                 document.getElementById('recurring-count').value = '';
                 document.getElementById('installment-check').checked = false;
                 document.getElementById('installment-summary').style.display = 'none';
+                document.getElementById('recurring-start-date').value = '';
+                document.getElementById('initial-amount').value = '';
+                document.getElementById('preview-schedule-btn').style.display = 'none';
             }
             updateInstallmentSummary();
         });
@@ -1560,18 +1603,35 @@
         var freq = document.getElementById('recurring-frequency').value;
         var isInst = document.getElementById('installment-check').checked;
         var summary = document.getElementById('installment-summary');
+        var previewBtn = document.getElementById('preview-schedule-btn');
         var freqLabels = { weekly: 'weekly', biweekly: 'bi-weekly', monthly: 'monthly', quarterly: 'quarterly', annually: 'annual' };
 
-        if (!recurringCheck.checked || !amt || count < 2 || !freq) { summary.style.display = 'none'; return; }
+        if (!recurringCheck.checked || !amt || !freq) { summary.style.display = 'none'; previewBtn.style.display = 'none'; return; }
 
-        if (isInst) {
-            var perPayment = (amt / count).toFixed(2);
-            summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' each';
+        if (count >= 2) {
+            if (isInst) {
+                var perPayment = (amt / count).toFixed(2);
+                summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' each';
+            } else {
+                var total = (amt * count).toFixed(2);
+                summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+            }
+            summary.style.display = 'block';
+            previewBtn.style.display = 'block';
         } else {
-            var total = (amt * count).toFixed(2);
-            summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+            // Ongoing (no count) — still show preview if freq is set
+            summary.style.display = 'none';
+            previewBtn.style.display = freq ? 'block' : 'none';
         }
-        summary.style.display = 'block';
+
+        // Set date input constraints
+        var startDateInput = document.getElementById('recurring-start-date');
+        var tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        startDateInput.min = tomorrow.toISOString().split('T')[0];
+        var maxDate = new Date();
+        maxDate.setFullYear(maxDate.getFullYear() + 1);
+        startDateInput.max = maxDate.toISOString().split('T')[0];
     }
 
     if (recurringSelect) {
@@ -1579,6 +1639,8 @@
     }
     document.getElementById('recurring-count').addEventListener('input', updateInstallmentSummary);
     document.getElementById('installment-check').addEventListener('change', updateInstallmentSummary);
+    document.getElementById('recurring-start-date').addEventListener('change', updateInstallmentSummary);
+    document.getElementById('initial-amount').addEventListener('input', updateInstallmentSummary);
 
     // ════════════════════════════════════════════════════════════════
     // TURNSTILE
@@ -1694,8 +1756,30 @@
         var isInstallment = isRecurring && document.getElementById('installment-check').checked;
         if (isInstallment && totalPayments < 2) { showStatus('error', 'Please enter the number of installment payments (at least 2).'); return; }
 
-        // For installments: each charge = total amount ÷ number of payments
-        var chargeAmount = (isInstallment && totalPayments >= 2) ? Math.round((amount / totalPayments) * 100) / 100 : amount;
+        // If recurring with count, require schedule preview confirmation
+        if (isRecurring && !scheduleConfirmed && (parseInt(document.getElementById('recurring-count').value) || 0) >= 2) {
+            openSchedulePreview();
+            return;
+        }
+        scheduleConfirmed = false; // reset for next submission
+
+        var startDateVal = isRecurring ? document.getElementById('recurring-start-date').value : '';
+        var initialPaymentAmt = isRecurring ? (parseFloat(document.getElementById('initial-amount').value) || 0) : 0;
+        var today = new Date(); today.setHours(0,0,0,0);
+        var isDeferredStart = isRecurring && startDateVal && new Date(startDateVal + 'T00:00:00') > today;
+
+        // For deferred start: no immediate charge (will do $0 auth in backend)
+        // For initial amount: charge that instead of the per-payment amount
+        var chargeAmount;
+        if (isDeferredStart) {
+            chargeAmount = 0; // Backend will do $0 auth
+        } else if (initialPaymentAmt > 0) {
+            chargeAmount = initialPaymentAmt;
+        } else if (isInstallment && totalPayments >= 2) {
+            chargeAmount = Math.round((amount / totalPayments) * 100) / 100;
+        } else {
+            chargeAmount = amount;
+        }
 
         // Disable button
         var btn = document.getElementById('donate-btn');
@@ -1705,13 +1789,13 @@
         hideStatus();
 
         // Tokenize and submit
-        processPayment(chargeAmount, amount, firstName, lastName, email, isRecurring, frequency, totalPayments, isInstallment, false);
+        processPayment(chargeAmount, amount, firstName, lastName, email, isRecurring, frequency, totalPayments, isInstallment, false, startDateVal, initialPaymentAmt, isDeferredStart);
     });
 
     /**
      * Core payment processing function — handles tokenize → submit → failover
      */
-    async function processPayment(chargeAmount, totalAmount, firstName, lastName, email, isRecurring, frequency, totalPayments, isInstallment, isRetry) {
+    async function processPayment(chargeAmount, totalAmount, firstName, lastName, email, isRecurring, frequency, totalPayments, isInstallment, isRetry, startDateVal, initialPaymentAmt, isDeferredStart) {
         var btn = document.getElementById('donate-btn');
 
         try {
@@ -1720,7 +1804,7 @@
 
             // Step 2: Build payload
             var payload = {
-                amount: chargeAmount,
+                amount: isDeferredStart ? ((isInstallment && totalPayments >= 2) ? Math.round((totalAmount / totalPayments) * 100) / 100 : totalAmount) : chargeAmount,
                 firstName: firstName,
                 lastName: lastName,
                 email: email,
@@ -1737,6 +1821,9 @@
                 totalPayments: totalPayments,
                 isInstallment: isInstallment,
                 totalPledgeAmount: isInstallment ? totalAmount : 0,
+                startDate: startDateVal || '',
+                initialAmount: initialPaymentAmt || 0,
+                deferStart: isDeferredStart || false,
                 campaign: CAMPAIGN_CONFIG.name,
                 campaignCode: CAMPAIGN_CONFIG.id,
                 teams: (window.selectedTeamIds || []).join(','),
@@ -1768,7 +1855,7 @@
             if (data.status === 'success') {
                 // Success → redirect
                 redirectToSuccess(
-                    chargeAmount, email, data.refNum,
+                    isDeferredStart ? (isInstallment ? totalAmount : (totalPayments >= 2 ? totalAmount * totalPayments : totalAmount)) : chargeAmount, email, data.refNum,
                     firstName, lastName,
                     document.getElementById('donor-phone').value.trim(),
                     document.getElementById('donor-street').value.trim(),
@@ -1791,7 +1878,7 @@
                     await new Promise(function(resolve) { setTimeout(resolve, 1000); });
 
                     // Re-tokenize and re-submit with fallback gateway
-                    await processPayment(chargeAmount, totalAmount, firstName, lastName, email, isRecurring, frequency, totalPayments, isInstallment, true);
+                    await processPayment(chargeAmount, totalAmount, firstName, lastName, email, isRecurring, frequency, totalPayments, isInstallment, true, startDateVal, initialPaymentAmt, isDeferredStart);
                     return;
                 } catch (fallbackErr) {
                     showStatus('error', 'Both payment processors are unavailable. Please try again later.');
@@ -2066,7 +2153,139 @@
             .catch(function() {});
     })();
 
+    // ════════════════════════════════════════════════════════════════
+    // SCHEDULE PREVIEW
+    // ════════════════════════════════════════════════════════════════
+    function openSchedulePreview() {
+        var customInput = document.getElementById('custom-amount');
+        var amt = selectedAmount || parseFloat(customInput.value);
+        var count = parseInt(document.getElementById('recurring-count').value) || 0;
+        var freq = document.getElementById('recurring-frequency').value;
+        var isInst = document.getElementById('installment-check').checked;
+        var startDateVal = document.getElementById('recurring-start-date').value;
+        var initialAmt = parseFloat(document.getElementById('initial-amount').value) || 0;
+        var freqLabels = { weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly', quarterly: 'Quarterly', annually: 'Annual' };
+
+        if (!amt || !freq) return;
+
+        // Calculate per-payment amount
+        var perPayment = isInst && count >= 2 ? Math.round((amt / count) * 100) / 100 : amt;
+        var totalCommitment = isInst ? amt : (count >= 2 ? amt * count : 0);
+        var numToShow = count >= 2 ? count : 12; // show 12 for ongoing
+
+        // Determine start date
+        var isDeferredStart = false;
+        var baseDate;
+        var today = new Date();
+        today.setHours(0,0,0,0);
+
+        if (startDateVal) {
+            baseDate = new Date(startDateVal + 'T00:00:00');
+            isDeferredStart = baseDate > today;
+        } else {
+            baseDate = new Date(today);
+        }
+
+        // Frequency intervals
+        var freqMap = { weekly:{d:7,m:0,y:0}, biweekly:{d:14,m:0,y:0}, monthly:{d:0,m:1,y:0}, quarterly:{d:0,m:3,y:0}, annually:{d:0,m:0,y:1} };
+        var interval = freqMap[freq] || freqMap.monthly;
+
+        // Build summary
+        var summaryHtml = '';
+        if (isDeferredStart) {
+            summaryHtml += '<strong>Deferred Start</strong> — no charge today, payments begin ' + baseDate.toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'}) + '<br>';
+        } else if (initialAmt > 0 && initialAmt !== perPayment) {
+            summaryHtml += '<strong>Initial payment:</strong> $' + initialAmt.toLocaleString('en-US',{minimumFractionDigits:2}) + ' (today)<br>';
+        }
+        summaryHtml += '<strong>Frequency:</strong> ' + (freqLabels[freq] || freq);
+        if (count >= 2) {
+            summaryHtml += ' &nbsp;|&nbsp; <strong>Payments:</strong> ' + count;
+        } else {
+            summaryHtml += ' &nbsp;|&nbsp; <strong>Ongoing</strong> (showing next 12)';
+        }
+        if (totalCommitment > 0) {
+            summaryHtml += ' &nbsp;|&nbsp; <strong>Total:</strong> $' + totalCommitment.toLocaleString('en-US',{minimumFractionDigits:2});
+        }
+        document.getElementById('schedule-summary').innerHTML = summaryHtml;
+
+        // Build payment table
+        var tbody = document.getElementById('schedule-table-body');
+        tbody.innerHTML = '';
+        for (var i = 0; i < numToShow; i++) {
+            var dueDate = new Date(baseDate);
+            if (!isDeferredStart && i === 0) {
+                // First payment is today when not deferred
+                dueDate = new Date(today);
+            } else if (!isDeferredStart && i > 0) {
+                dueDate = new Date(today);
+                if (interval.d) dueDate.setDate(dueDate.getDate() + interval.d * i);
+                if (interval.m) dueDate.setMonth(dueDate.getMonth() + interval.m * i);
+                if (interval.y) dueDate.setFullYear(dueDate.getFullYear() + interval.y * i);
+            } else {
+                // Deferred: all start from baseDate
+                if (interval.d) dueDate.setDate(dueDate.getDate() + interval.d * i);
+                if (interval.m) dueDate.setMonth(dueDate.getMonth() + interval.m * i);
+                if (interval.y) dueDate.setFullYear(dueDate.getFullYear() + interval.y * i);
+            }
+
+            var payAmt = perPayment;
+            var statusText = 'Scheduled';
+            var statusClass = 'sched-upcoming';
+
+            if (!isDeferredStart && i === 0) {
+                payAmt = (initialAmt > 0) ? initialAmt : perPayment;
+                statusText = 'Charge today';
+                statusClass = 'sched-paid';
+            } else if (isDeferredStart && i === 0 && initialAmt > 0) {
+                payAmt = initialAmt;
+            }
+
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + (i + 1) + '</td>' +
+                '<td>' + dueDate.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) + '</td>' +
+                '<td class="sched-amount">$' + payAmt.toLocaleString('en-US',{minimumFractionDigits:2}) + '</td>' +
+                '<td class="' + statusClass + '">' + statusText + '</td>';
+            tbody.appendChild(tr);
+        }
+
+        document.getElementById('schedule-modal').classList.add('visible');
+    }
+
+    function closeSchedulePreview() {
+        document.getElementById('schedule-modal').classList.remove('visible');
+    }
+
+    var scheduleConfirmed = false;
+    function confirmScheduleAndSubmit() {
+        closeSchedulePreview();
+        scheduleConfirmed = true;
+        document.getElementById('donation-form').dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+
     </script>
+
+    <!-- Schedule Preview Modal -->
+    <div class="schedule-modal-overlay" id="schedule-modal">
+        <div class="schedule-modal">
+            <div class="schedule-modal-header">
+                <h3>📋 Payment Schedule Preview</h3>
+                <button class="schedule-modal-close" onclick="closeSchedulePreview()">&times;</button>
+            </div>
+            <div class="schedule-modal-summary" id="schedule-summary"></div>
+            <div class="schedule-modal-table-wrap">
+                <table class="schedule-table">
+                    <thead>
+                        <tr><th>#</th><th>Due Date</th><th>Amount</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="schedule-table-body"></tbody>
+                </table>
+            </div>
+            <div class="schedule-modal-footer">
+                <button type="button" class="schedule-btn-cancel" onclick="closeSchedulePreview()">Cancel</button>
+                <button type="button" class="schedule-btn-confirm" onclick="confirmScheduleAndSubmit()">Confirm & Donate</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-09VTELTDTM"></script>
