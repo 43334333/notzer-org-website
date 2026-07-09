@@ -1405,7 +1405,16 @@ async function resendReceipt() {
             statusEl.style.background = 'rgba(107,207,107,0.1)';
             statusEl.style.border = '1px solid rgba(107,207,107,0.3)';
             statusEl.style.color = '#6bcf6b';
-            statusEl.textContent = '✓ ' + result.message;
+            var debugText = '';
+            if (result.debug) {
+                debugText = '\n📋 Schedule ID: ' + result.debug.scheduleId +
+                    ' | Recurring: ' + result.debug.isRecurring +
+                    ' | Payments: ' + result.debug.totalPayments +
+                    ' | Dates: ' + result.debug.upcomingDatesCount +
+                    ' | Freq: ' + result.debug.frequency +
+                    ' | Amt: $' + result.debug.amount;
+            }
+            statusEl.textContent = '✓ ' + result.message + debugText;
         } else {
             statusEl.style.background = 'rgba(255,82,82,0.1)';
             statusEl.style.border = '1px solid rgba(255,82,82,0.3)';
