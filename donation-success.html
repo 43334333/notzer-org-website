@@ -93,7 +93,7 @@
             text-align: center;
             margin-top: 30px;
         }
-        .success-actions a {
+        .success-actions a, .success-actions button {
             display: inline-block;
             margin: 0 8px;
         }
@@ -106,10 +106,111 @@
             font-size: 0.95rem;
             font-weight: 500;
             transition: all 0.2s;
+            background: transparent;
+            cursor: pointer;
         }
         .btn-outline:hover {
             background: rgba(77,171,247,0.1);
             text-decoration: none;
+        }
+        .btn-print {
+            display: inline-block;
+            padding: 10px 22px;
+            border: 1px solid #6bcf6b;
+            color: #6bcf6b;
+            border-radius: 5px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            background: transparent;
+            cursor: pointer;
+        }
+        .btn-print:hover {
+            background: rgba(107,207,107,0.1);
+        }
+        /* Schedule table */
+        .schedule-section {
+            margin: 20px 25px;
+            background: #181818;
+            border: 1px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .schedule-section h3 {
+            margin: 0;
+            padding: 12px 15px;
+            font-size: 0.95rem;
+            color: #4dabf7;
+            border-bottom: 1px solid #333;
+        }
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .schedule-table th {
+            padding: 8px 10px;
+            text-align: left;
+            color: #666;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.75rem;
+            border-bottom: 1px solid #333;
+        }
+        .schedule-table th:nth-child(3) {
+            text-align: right;
+        }
+        .schedule-table td {
+            padding: 6px 10px;
+            color: #ccc;
+            border-bottom: 1px solid #222;
+        }
+        .schedule-table td:nth-child(3) {
+            text-align: right;
+            font-weight: 600;
+            color: #4dabf7;
+        }
+        .schedule-table td.status-paid {
+            color: #6bcf6b;
+        }
+        .schedule-table td.status-scheduled {
+            color: #888;
+        }
+        .schedule-note {
+            padding: 8px 15px;
+            font-size: 0.75rem;
+            color: #666;
+            font-style: italic;
+            border-top: 1px solid #222;
+        }
+        .deferred-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            background: rgba(255,193,7,0.15);
+            border: 1px solid rgba(255,193,7,0.3);
+            color: #ffc107;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        @media print {
+            body { background: #fff !important; color: #000 !important; }
+            .header, .footer, .success-actions, .nav { display: none !important; }
+            .receipt-card { border: 2px solid #000; background: #fff !important; }
+            .receipt-header { background: #4dabf7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .receipt-body { background: #fff !important; }
+            .receipt-row { border-bottom-color: #ddd !important; }
+            .receipt-label { color: #555 !important; }
+            .receipt-value { color: #000 !important; }
+            .receipt-amount { color: #2271b1 !important; }
+            .receipt-notice { background: #f0f0f0 !important; border-color: #ccc !important; color: #333 !important; }
+            .email-sent { display: none !important; }
+            .schedule-section { background: #f9f9f9 !important; border-color: #ccc !important; }
+            .schedule-section h3 { color: #2271b1 !important; border-bottom-color: #ccc !important; }
+            .schedule-table td { color: #000 !important; border-bottom-color: #ddd !important; }
+            .schedule-table td:nth-child(3) { color: #2271b1 !important; }
+            .schedule-note { color: #666 !important; }
         }
     </style>
 </head>
@@ -134,13 +235,17 @@
                 <div class="receipt-header">
                     <div class="check-icon">✓</div>
                     <h2>Thank You for Your Generosity!</h2>
-                    <p>Your donation has been successfully processed.</p>
+                    <p id="header-subtitle">Your donation has been successfully processed.</p>
                 </div>
 
                 <div class="receipt-body">
                     <div class="receipt-row">
-                        <span class="receipt-label">Amount</span>
+                        <span class="receipt-label" id="amount-label">Amount</span>
                         <span class="receipt-value receipt-amount" id="r-amount">—</span>
+                    </div>
+                    <div class="receipt-row" id="r-perpayment-row" style="display: none;">
+                        <span class="receipt-label">Per Payment</span>
+                        <span class="receipt-value" id="r-perpayment">—</span>
                     </div>
                     <div class="receipt-row">
                         <span class="receipt-label">Campaign</span>
@@ -167,8 +272,12 @@
                         <span class="receipt-value" id="r-address">—</span>
                     </div>
                     <div class="receipt-row" id="r-recurring-row" style="display: none;">
-                        <span class="receipt-label">Recurring</span>
+                        <span class="receipt-label" id="recurring-label">Recurring</span>
                         <span class="receipt-value" id="r-recurring">—</span>
+                    </div>
+                    <div class="receipt-row" id="r-startdate-row" style="display: none;">
+                        <span class="receipt-label">Start Date</span>
+                        <span class="receipt-value" id="r-startdate">—</span>
                     </div>
                     <div class="receipt-row">
                         <span class="receipt-label">Date</span>
@@ -184,6 +293,23 @@
                     </div>
                 </div>
 
+                <!-- Schedule table (populated by JS for installment/recurring) -->
+                <div id="schedule-section" class="schedule-section" style="display: none;">
+                    <h3 id="schedule-title">Payment Schedule</h3>
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Due Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedule-tbody"></tbody>
+                    </table>
+                    <div class="schedule-note">* Payments falling on Shabbat are shifted to Sunday. Dates may also adjust for Yom Tov.</div>
+                </div>
+
                 <div id="email-sent-notice" class="email-sent" style="display: none;"></div>
 
                 <div class="receipt-notice">
@@ -193,6 +319,7 @@
             </div>
 
             <div class="success-actions">
+                <button class="btn-print" onclick="window.print()">🖨️ Print Receipt</button>
                 <a href="keren-shlomo-yechiel.html" class="btn-outline">Make Another Donation</a>
                 <a href="index.html" class="cta-button">Return to Homepage</a>
             </div>
@@ -205,6 +332,12 @@
     </footer>
 
     <script>
+        // Adjust date for Shabbat: if Saturday (day 6), shift to Sunday
+        function adjustForShabbat(date) {
+            if (date.getDay() === 6) date.setDate(date.getDate() + 1);
+            return date;
+        }
+
         // Read URL parameters and populate receipt
         (function() {
             var params = new URLSearchParams(window.location.search);
@@ -247,15 +380,95 @@
                 document.getElementById('r-address-row').style.display = 'flex';
             }
 
+            // Recurring / Installment display
             var recurring = params.get('recurring');
+            var isInstallment = params.get('installment') === '1';
+            var totalPayments = parseInt(params.get('payments')) || 0;
+            var perPayment = parseFloat(params.get('perPayment')) || 0;
+            var startDate = params.get('startDate');
+            var labels = { weekly: 'Weekly', biweekly: 'Every 2 Weeks', monthly: 'Monthly', quarterly: 'Quarterly', annually: 'Annually' };
+
             if (recurring) {
-                var labels = { weekly: 'Weekly', biweekly: 'Every 2 Weeks', monthly: 'Monthly', quarterly: 'Quarterly', annually: 'Annually' };
-                document.getElementById('r-recurring').textContent = labels[recurring] || recurring;
+                var freqLabel = labels[recurring] || recurring;
+                if (isInstallment) {
+                    document.getElementById('recurring-label').textContent = 'Installments';
+                    document.getElementById('r-recurring').textContent = freqLabel + (totalPayments ? ' × ' + totalPayments + ' payments' : '');
+                    document.getElementById('amount-label').textContent = 'Total Pledge';
+                } else {
+                    document.getElementById('recurring-label').textContent = totalPayments >= 2 ? 'Recurring' : 'Recurring (Ongoing)';
+                    document.getElementById('r-recurring').textContent = freqLabel + (totalPayments >= 2 ? ' × ' + totalPayments + ' payments' : '');
+                }
                 document.getElementById('r-recurring-row').style.display = 'flex';
+
+                // Per-payment row
+                if (perPayment > 0 && isInstallment && totalPayments >= 2) {
+                    document.getElementById('r-perpayment').textContent = '$' + perPayment.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                    document.getElementById('r-perpayment-row').style.display = 'flex';
+                }
             }
 
+            // Deferred start
+            if (startDate) {
+                var sd = new Date(startDate + 'T00:00:00');
+                document.getElementById('r-startdate').innerHTML =
+                    sd.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) +
+                    ' <span class="deferred-badge">Deferred</span>';
+                document.getElementById('r-startdate-row').style.display = 'flex';
+                document.getElementById('header-subtitle').textContent = 'Your payment schedule has been set up successfully.';
+            }
+
+            // Date
             var now = new Date();
             document.getElementById('r-date').textContent = (now.getMonth() + 1) + '/' + now.getDate() + '/' + now.getFullYear();
+
+            // Build schedule table if recurring/installment with payments
+            if (recurring && (totalPayments >= 2 || startDate)) {
+                var tbody = document.getElementById('schedule-tbody');
+                var freqMap = { weekly:{d:7,m:0,y:0}, biweekly:{d:14,m:0,y:0}, monthly:{d:0,m:1,y:0}, quarterly:{d:0,m:3,y:0}, annually:{d:0,m:0,y:1} };
+                var interval = freqMap[recurring] || freqMap.monthly;
+                var numToShow = totalPayments >= 2 ? totalPayments : 12;
+                var payAmt = perPayment > 0 ? perPayment : parseFloat(amount) || 0;
+                var isDeferredStart = !!startDate;
+                var baseDate = startDate ? new Date(startDate + 'T00:00:00') : new Date();
+                baseDate.setHours(0,0,0,0);
+                var today = new Date();
+                today.setHours(0,0,0,0);
+
+                document.getElementById('schedule-title').textContent =
+                    isInstallment ? 'Installment Schedule' : 'Payment Schedule' +
+                    (totalPayments < 2 ? ' (next 12 projected)' : '');
+
+                for (var i = 0; i < numToShow; i++) {
+                    var dueDate;
+                    if (isDeferredStart) {
+                        dueDate = new Date(baseDate);
+                        if (interval.d) dueDate.setDate(dueDate.getDate() + interval.d * i);
+                        if (interval.m) dueDate.setMonth(dueDate.getMonth() + interval.m * i);
+                        if (interval.y) dueDate.setFullYear(dueDate.getFullYear() + interval.y * i);
+                    } else if (i === 0) {
+                        dueDate = new Date(today);
+                    } else {
+                        dueDate = new Date(today);
+                        if (interval.d) dueDate.setDate(dueDate.getDate() + interval.d * i);
+                        if (interval.m) dueDate.setMonth(dueDate.getMonth() + interval.m * i);
+                        if (interval.y) dueDate.setFullYear(dueDate.getFullYear() + interval.y * i);
+                    }
+                    adjustForShabbat(dueDate);
+
+                    var status = isDeferredStart ? 'Scheduled' : (i === 0 ? 'Paid' : 'Scheduled');
+                    var statusClass = status === 'Paid' ? 'status-paid' : 'status-scheduled';
+
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td>' + (i + 1) + '</td>' +
+                        '<td>' + dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</td>' +
+                        '<td>$' + payAmt.toLocaleString('en-US', { minimumFractionDigits: 2 }) + '</td>' +
+                        '<td class="' + statusClass + '">' + status + '</td>';
+                    tbody.appendChild(tr);
+                }
+
+                document.getElementById('schedule-section').style.display = 'block';
+            }
         })();
     </script>
 

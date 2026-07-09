@@ -490,7 +490,8 @@
         // ============================================================
         // Success Redirect
         // ============================================================
-        function redirectToSuccess(amount, email, refNum, firstName, lastName, phone, street, city, state, zip, anonymous, frequency) {
+        function redirectToSuccess(amount, email, refNum, firstName, lastName, phone, street, city, state, zip, anonymous, frequency, opts) {
+            opts = opts || {};
             var params = new URLSearchParams();
             params.set('amount', amount);
             params.set('campaign', CAMPAIGN_NAME);
@@ -506,6 +507,10 @@
             else if (zip) addrParts.push(zip);
             if (addrParts.length) params.set('address', addrParts.join(', '));
             if (frequency) params.set('recurring', frequency);
+            if (opts.isInstallment) params.set('installment', '1');
+            if (opts.totalPayments) params.set('payments', opts.totalPayments);
+            if (opts.perPayment) params.set('perPayment', opts.perPayment);
+            if (opts.deferStart && opts.startDate) params.set('startDate', opts.startDate);
             window.location.href = 'donation-success.html?' + params.toString();
         }
 
@@ -620,7 +625,14 @@
                                 document.getElementById('donor-state').value.trim(),
                                 document.getElementById('donor-zip').value.trim(),
                                 document.getElementById('anonymous-check').checked,
-                                isRecurring ? frequency : null
+                                isRecurring ? frequency : null,
+                                {
+                                    isInstallment: isInstallment,
+                                    totalPayments: totalPayments,
+                                    perPayment: isInstallment && totalPayments >= 2 ? Math.round((amount / totalPayments) * 100) / 100 : amount,
+                                    deferStart: isDeferredStart,
+                                    startDate: startDateVal
+                                }
                             );
                             return;
                         } else if (data.status === 'declined') {
