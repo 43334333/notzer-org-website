@@ -447,17 +447,29 @@
             if (!recurringCheck.checked || !amt || !freq) { summary.style.display = 'none'; previewBtn.style.display = 'none'; return; }
 
             if (count >= 2) {
+                var initialAmt = parseFloat(document.getElementById('initial-amount').value) || 0;
                 if (isInst) {
-                    var perPayment = (amt / count).toFixed(2);
-                    summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' each';
+                    var perPayment;
+                    if (initialAmt > 0 && count > 1) {
+                        perPayment = ((amt - initialAmt) / (count - 1)).toFixed(2);
+                        summary.innerHTML = count + ' ' + (freqLabels[freq] || freq) + ' payments: 1st payment of <strong>$' + Number(initialAmt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong>, followed by ' + (count - 1) + ' payments of <strong>$' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> each (total pledge: $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+                    } else {
+                        perPayment = (amt / count).toFixed(2);
+                        summary.innerHTML = count + ' ' + (freqLabels[freq] || freq) + ' payments of <strong>$' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> each (total pledge: $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+                    }
                 } else {
-                    var total = (amt * count).toFixed(2);
-                    summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+                    var total;
+                    if (initialAmt > 0 && count > 1) {
+                        total = (initialAmt + amt * (count - 1)).toFixed(2);
+                        summary.innerHTML = count + ' ' + (freqLabels[freq] || freq) + ' payments: 1st payment of <strong>$' + Number(initialAmt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong>, followed by ' + (count - 1) + ' payments of <strong>$' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+                    } else {
+                        total = (amt * count).toFixed(2);
+                        summary.innerHTML = count + ' ' + (freqLabels[freq] || freq) + ' payments of <strong>$' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+                    }
                 }
                 summary.style.display = 'block';
                 previewBtn.style.display = 'block';
             } else {
-                // Ongoing (no count) — still show preview if freq is set
                 summary.style.display = 'none';
                 previewBtn.style.display = freq ? 'block' : 'none';
             }
@@ -555,15 +567,27 @@
 
             // For deferred start: no immediate charge (will do $0 auth in backend)
             // For initial amount: charge that instead of the per-payment amount
+            // Calculate per-payment amount (recurring payment)
+            var perPayment;
+            if (isInstallment && totalPayments >= 2) {
+                if (initialPaymentAmt > 0 && totalPayments > 1) {
+                    perPayment = Math.round(((amount - initialPaymentAmt) / (totalPayments - 1)) * 100) / 100;
+                } else {
+                    perPayment = Math.round((amount / totalPayments) * 100) / 100;
+                }
+            } else {
+                perPayment = amount;
+            }
+
+            // For deferred start: no immediate charge (will do $0 auth in backend)
+            // For initial amount: charge that instead of the per-payment amount
             let chargeAmount;
             if (isDeferredStart) {
                 chargeAmount = 0; // Backend will do $0 auth
             } else if (initialPaymentAmt > 0) {
                 chargeAmount = initialPaymentAmt;
-            } else if (isInstallment && totalPayments >= 2) {
-                chargeAmount = Math.round((amount / totalPayments) * 100) / 100;
             } else {
-                chargeAmount = amount;
+                chargeAmount = perPayment;
             }
 
             const btn = document.getElementById('donate-btn');
@@ -578,7 +602,7 @@
                     const cvvToken = document.querySelector('[data-ifields-id="cvv-token"]').value;
 
                     const payload = {
-                        amount: isDeferredStart ? ((isInstallment && totalPayments >= 2) ? Math.round((amount / totalPayments) * 100) / 100 : amount) : chargeAmount,
+                        amount: isDeferredStart ? perPayment : chargeAmount,
                         cardToken: cardToken,
                         cvvToken: cvvToken,
                         exp: exp,
@@ -598,6 +622,7 @@
                         totalPayments: totalPayments,
                         isInstallment: isInstallment,
                         totalPledgeAmount: isInstallment ? amount : 0,
+                        recurringAmount: perPayment,
                         startDate: startDateVal,
                         initialAmount: initialPaymentAmt,
                         deferStart: isDeferredStart,
@@ -699,9 +724,18 @@
 
             if (!amt || !freq) return;
 
-            // Calculate per-payment amount
-            var perPayment = isInst && count >= 2 ? Math.round((amt / count) * 100) / 100 : amt;
-            var totalCommitment = isInst ? amt : (count >= 2 ? amt * count : 0);
+            // Calculate per-payment amount (recurring payment)
+            var perPayment;
+            if (isInst && count >= 2) {
+                if (initialAmt > 0 && count > 1) {
+                    perPayment = Math.round(((amt - initialAmt) / (count - 1)) * 100) / 100;
+                } else {
+                    perPayment = Math.round((amt / count) * 100) / 100;
+                }
+            } else {
+                perPayment = amt;
+            }
+            var totalCommitment = isInst ? amt : (count >= 2 ? (initialAmt ? initialAmt + amt * (count - 1) : amt * count) : 0);
             var numToShow = count >= 2 ? count : 12; // show 12 for ongoing
 
             // Determine start date
