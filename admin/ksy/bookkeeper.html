@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Bookkeeper — Keren Shlomo Yechiel</title>
+    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── Reset & Base ──────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ── Utility ───────────────────────────────────── */
+        .accent { color: #4dabf7; }
+
+        /* ── Scrollbar ─────────────────────────────────── */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        /* ── Access Denied ─────────────────────────────── */
+        .access-denied {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 2rem;
+        }
+        .access-denied .lock-icon {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            background: rgba(255, 82, 82, 0.12);
+            border: 2px solid rgba(255, 82, 82, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .access-denied h1 { font-size: 1.5rem; margin-bottom: .5rem; color: #ff5252; }
+        .access-denied p { color: #888; max-width: 360px; font-size: 0.95rem; }
+
+        /* ── Page Wrapper ──────────────────────────────── */
+        .page-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.25rem 6rem;
+        }
+
+        /* ── Header ────────────────────────────────────── */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .page-header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .page-header-left img {
+            height: 40px;
+            width: auto;
+            opacity: 0.9;
+        }
+        .page-header-left h1 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+        .page-header-left .subtitle {
+            font-size: 0.8rem;
+            color: #888;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        .header-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            color: #aaa;
+            font-size: 0.82rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .header-back:hover {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        /* ── Stats Bar ─────────────────────────────────── */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: rgba(30, 30, 50, 0.7);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 1.1rem 1rem;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.12);
+        }
+        .stat-card .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.2;
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-card .stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #888;
+            margin-top: 0.35rem;
+        }
+        .stat-card.overdue-highlight .stat-value { color: #ff5252; }
+        .stat-card.overdue-highlight { border-color: rgba(255, 82, 82, 0.25); }
+
+        /* ── Filter Bar ────────────────────────────────── */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .filter-pills {
+            display: flex;
+            gap: 0.35rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+            padding: 4px;
+        }
+        .filter-pill {
+            padding: 0.4rem 0.9rem;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: #888;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .filter-pill:hover { color: #ccc; background: rgba(255,255,255,0.04); }
+        .filter-pill.active {
+            background: rgba(77, 171, 247, 0.15);
+            color: #4dabf7;
+            font-weight: 600;
+        }
+        .filter-pill .pill-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 9px;
+            background: rgba(255,255,255,0.08);
+            font-size: 0.68rem;
+            font-weight: 600;
+            margin-left: 0.35rem;
+            color: inherit;
+        }
+        .filter-pill.active .pill-count {
+            background: rgba(77, 171, 247, 0.25);
+        }
+        .search-input {
+            flex: 1;
+            min-width: 160px;
+            padding: 0.55rem 0.9rem 0.55rem 2.3rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-input:focus {
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.12);
+        }
+        .search-input::placeholder { color: #555; }
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 160px;
+        }
+        .search-wrapper .search-icon {
+            position: absolute;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #555;
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+        .refresh-btn {
+            padding: 0.55rem 0.9rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #aaa;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .refresh-btn:hover {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border-color: rgba(255,255,255,0.18);
+        }
+        .refresh-btn.spinning .refresh-icon {
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* ── Data Table ────────────────────────────────── */
+        .table-card {
+            background: rgba(30, 30, 50, 0.7);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            overflow: hidden;
+        }
+        .table-scroll {
+            overflow-x: auto;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table thead th {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #888;
+            padding: 0.85rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.02);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            user-select: none;
+        }
+        .data-table thead th.sortable {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .data-table thead th.sortable:hover { color: #4dabf7; }
+        .data-table thead th.sorted { color: #4dabf7; }
+        .data-table thead th .sort-arrow {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 0.6rem;
+            opacity: 0.5;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .data-table thead th.sorted .sort-arrow { opacity: 1; }
+        .data-table thead th.sorted.desc .sort-arrow { transform: rotate(180deg); }
+
+        .data-table tbody tr {
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            transition: background 0.15s;
+            animation: rowFadeIn 0.3s ease both;
+        }
+        .data-table tbody tr:last-child { border-bottom: none; }
+        .data-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+        .data-table tbody tr.selected { background: rgba(77, 171, 247, 0.06); }
+        .data-table tbody tr.row-overdue {
+            background: rgba(255, 82, 82, 0.04);
+        }
+        .data-table tbody tr.row-overdue:hover {
+            background: rgba(255, 82, 82, 0.08);
+        }
+
+        .data-table td {
+            padding: 0.75rem;
+            font-size: 0.85rem;
+            color: #ccc;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+        .data-table td.donor-name {
+            color: #fff;
+            font-weight: 500;
+        }
+        .data-table td.amount-cell {
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        @keyframes rowFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Stagger animation delay via JS with inline style */
+
+        /* ── Custom Checkbox ───────────────────────────── */
+        .custom-checkbox {
+            position: relative;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .custom-checkbox input {
+            position: absolute;
+            opacity: 0;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            margin: 0;
+            z-index: 1;
+        }
+        .custom-checkbox .checkmark {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.06);
+            border: 1.5px solid rgba(255,255,255,0.15);
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+        .custom-checkbox input:hover + .checkmark {
+            border-color: rgba(77, 171, 247, 0.5);
+            background: rgba(77, 171, 247, 0.08);
+        }
+        .custom-checkbox input:checked + .checkmark {
+            background: #4dabf7;
+            border-color: #4dabf7;
+        }
+        .custom-checkbox input:checked + .checkmark::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 2px;
+            width: 5px;
+            height: 9px;
+            border: solid #fff;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        /* ── Status Badges ─────────────────────────────── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+        .badge-scheduled {
+            background: rgba(77, 171, 247, 0.12);
+            color: #74c0fc;
+            border: 1px solid rgba(77, 171, 247, 0.2);
+        }
+        .badge-overdue {
+            background: rgba(255, 82, 82, 0.12);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 82, 82, 0.2);
+        }
+        .badge-paid {
+            background: rgba(52, 211, 153, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+        }
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .badge-scheduled .badge-dot { background: #74c0fc; }
+        .badge-overdue .badge-dot { background: #ff6b6b; }
+        .badge-paid .badge-dot { background: #34d399; }
+
+        /* ── Empty State ───────────────────────────────── */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+        .empty-state .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #888;
+            margin-bottom: 0.4rem;
+        }
+        .empty-state p {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* ── Loading Spinner ───────────────────────────── */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3.5rem 1.5rem;
+            gap: 1rem;
+        }
+        .table-spinner {
+            width: 32px; height: 32px;
+            border: 3px solid rgba(77, 171, 247, 0.15);
+            border-top-color: #4dabf7;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        .loading-state p {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ── Action Panel (Fixed Bottom) ───────────────── */
+        .action-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(20, 20, 35, 0.95);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+        }
+        .action-panel.visible {
+            transform: translateY(0);
+        }
+        .action-panel-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .action-summary {
+            font-size: 0.85rem;
+            color: #ccc;
+            flex-shrink: 0;
+        }
+        .action-summary .highlight {
+            color: #4dabf7;
+            font-weight: 600;
+        }
+        .action-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+        .fee-input-group {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .fee-input-group .fee-prefix {
+            padding: 0.5rem 0.6rem;
+            color: #888;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(255,255,255,0.03);
+            border-right: 1px solid rgba(255,255,255,0.08);
+        }
+        .fee-input-group .fee-label {
+            padding: 0.5rem 0.6rem;
+            color: #666;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            white-space: nowrap;
+        }
+        .fee-input-group input {
+            width: 70px;
+            padding: 0.5rem 0.6rem;
+            background: transparent;
+            border: none;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            outline: none;
+            font-variant-numeric: tabular-nums;
+        }
+        .method-select {
+            padding: 0.5rem 2rem 0.5rem 0.7rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.6rem center;
+            transition: border-color 0.2s;
+        }
+        .method-select:focus { border-color: #4dabf7; }
+        .method-select option { background: #1e1e2e; color: #e0e0e0; }
+
+        .process-btn {
+            padding: 0.55rem 1.4rem;
+            background: linear-gradient(135deg, #4dabf7, #339af0);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.25s, opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+        .process-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(77, 171, 247, 0.35);
+        }
+        .process-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .process-btn .btn-spinner {
+            display: none;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        .process-btn.loading .btn-spinner { display: block; }
+        .process-btn.loading .btn-text { display: none; }
+
+        /* ── Modal ──────────────────────────────────────── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+        }
+        .modal-overlay.visible { display: flex; }
+
+        .modal-card {
+            background: #1a1a2e;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+            animation: modalScaleIn 0.25s ease;
+        }
+        @keyframes modalScaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .modal-header h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.4);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+        .modal-close:hover { color: #fff; background: rgba(255,255,255,0.08); }
+
+        .modal-body {
+            padding: 1.25rem 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-summary {
+            font-size: 0.9rem;
+            color: #ccc;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        .modal-summary strong { color: #4dabf7; }
+        .modal-list {
+            list-style: none;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        .modal-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 0.83rem;
+        }
+        .modal-list li:last-child { border-bottom: none; }
+        .modal-list .ml-donor { color: #e0e0e0; font-weight: 500; }
+        .modal-list .ml-detail { color: #888; font-size: 0.78rem; }
+        .modal-list .ml-amount { color: #fff; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+        .modal-footer {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            padding: 1rem 1.5rem 1.25rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .modal-btn {
+            padding: 0.6rem 1.4rem;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-btn-cancel {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #ccc;
+        }
+        .modal-btn-cancel:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, #4dabf7, #339af0);
+            border: none;
+            color: #fff;
+        }
+        .modal-btn-confirm:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 16px rgba(77, 171, 247, 0.3);
+        }
+
+        /* ── Toast Notifications ───────────────────────── */
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.8rem 1.2rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #fff;
+            pointer-events: auto;
+            animation: toastSlideIn 0.35s ease, toastFadeOut 0.35s ease 3.65s forwards;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            max-width: 360px;
+        }
+        .toast-success {
+            background: rgba(30, 60, 45, 0.95);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+        .toast-success .toast-icon { color: #34d399; }
+        .toast-error {
+            background: rgba(60, 25, 25, 0.95);
+            border: 1px solid rgba(255, 82, 82, 0.3);
+        }
+        .toast-error .toast-icon { color: #ff5252; }
+
+        @keyframes toastSlideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toastFadeOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(30%); }
+        }
+
+        /* ── Progress Bar (batch processing) ───────────── */
+        .progress-bar-wrapper {
+            width: 100%;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .progress-bar-wrapper.visible { display: block; }
+        .progress-track {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4dabf7, #74c0fc);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        .progress-text {
+            font-size: 0.72rem;
+            color: #888;
+            margin-top: 0.3rem;
+            text-align: center;
+        }
+
+        /* ── Responsive ────────────────────────────────── */
+        @media (max-width: 768px) {
+            .page-wrapper { padding: 1.25rem 1rem 6rem; }
+            .page-header { flex-direction: column; gap: 1rem; text-align: center; }
+            .page-header-left { flex-direction: column; gap: 0.5rem; text-align: center; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+            .filter-pills { justify-content: center; }
+            .action-panel-inner { flex-direction: column; align-items: stretch; text-align: center; }
+            .action-controls { margin-left: 0; justify-content: center; }
+            .data-table td, .data-table th { padding: 0.6rem 0.5rem; font-size: 0.78rem; }
+            .modal-card { margin: 1rem; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-bar { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+            .stat-card { padding: 0.8rem 0.6rem; }
+            .stat-card .stat-value { font-size: 1.3rem; }
+            .action-controls { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ Access Denied Screen ═══ -->
+<div class="access-denied" id="accessDenied" style="display:none;">
+    <div class="lock-icon">🔒</div>
+    <h1>Access Denied</h1>
+    <p>This page requires an authorization key. Please use the link provided by your administrator.</p>
+</div>
+
+<!-- ═══ Main App ═══ -->
+<div class="page-wrapper" id="appMain" style="display:none;">
+
+    <!-- Header -->
+    <header class="page-header">
+        <div class="page-header-left">
+            <img src="../../NC_Logo_03.png" alt="Notzer Chesed">
+            <div>
+                <h1>Bookkeeper — Scheduled Payments</h1>
+                <p class="subtitle">Keren Shlomo Yechiel Campaign</p>
+            </div>
+        </div>
+        <a class="header-back" id="backLink" href="#">
+            ← Back to Admin
+        </a>
+    </header>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-value" id="statTotal">—</div>
+            <div class="stat-label">Total Scheduled</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statDueWeek">—</div>
+            <div class="stat-label">Due This Week</div>
+        </div>
+        <div class="stat-card" id="statOverdueCard">
+            <div class="stat-value" id="statOverdue">—</div>
+            <div class="stat-label">Overdue</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="statOutstanding">—</div>
+            <div class="stat-label">Total Outstanding</div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="filter-pills" id="filterPills">
+            <button class="filter-pill active" data-filter="all">
+                All<span class="pill-count" id="countAll">0</span>
+            </button>
+            <button class="filter-pill" data-filter="scheduled">
+                Scheduled<span class="pill-count" id="countScheduled">0</span>
+            </button>
+            <button class="filter-pill" data-filter="overdue">
+                Overdue<span class="pill-count" id="countOverdue">0</span>
+            </button>
+        </div>
+        <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search by donor name…">
+        </div>
+        <button class="refresh-btn" id="refreshBtn" onclick="loadPayments()">
+            <span class="refresh-icon">↻</span> Refresh
+        </button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-card">
+        <div class="table-scroll">
+            <table class="data-table" id="paymentsTable">
+                <thead>
+                    <tr>
+                        <th style="width:40px;">
+                            <label class="custom-checkbox">
+                                <input type="checkbox" id="selectAll">
+                                <span class="checkmark"></span>
+                            </label>
+                        </th>
+                        <th class="sortable sorted" data-sort="dueDate">
+                            Due Date <span class="sort-arrow">▲</span>
+                        </th>
+                        <th>Donor</th>
+                        <th>Amount</th>
+                        <th>Total Pledge</th>
+                        <th>Payment #</th>
+                        <th>Frequency</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Rows injected by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-state" id="loadingState" style="display:none;">
+            <div class="table-spinner"></div>
+            <p>Loading scheduled payments…</p>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display:none;">
+            <div class="empty-icon">📭</div>
+            <h3>No scheduled payments found</h3>
+            <p>There are no payments matching your current filters.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Action Panel ═══ -->
+<div class="action-panel" id="actionPanel">
+    <div class="action-panel-inner">
+        <div class="action-summary">
+            <span class="highlight" id="selectedCount">0</span> payments selected · <span class="highlight" id="selectedTotal">$0.00</span> total
+        </div>
+        <div class="action-controls">
+            <div class="fee-input-group">
+                <span class="fee-label">Fee</span>
+                <span class="fee-prefix">$</span>
+                <input type="number" id="feeInput" value="0.00" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <select class="method-select" id="methodSelect">
+                <option value="Check">Check</option>
+                <option value="Cash">Cash</option>
+                <option value="Wire">Wire</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Other">Other</option>
+            </select>
+            <button class="process-btn" id="processBtn" onclick="openConfirmModal()">
+                <span class="btn-text">Process Selected</span>
+                <span class="btn-spinner"></span>
+            </button>
+        </div>
+        <div class="progress-bar-wrapper" id="progressWrapper">
+            <div class="progress-track">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Processing 0 / 0</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Confirmation Modal ═══ -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Confirm Payment Processing</h3>
+            <button class="modal-close" onclick="closeConfirmModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <p class="modal-summary" id="modalSummary"></p>
+            <ul class="modal-list" id="modalList">
+                <!-- Items injected by JS -->
+            </ul>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+            <button class="modal-btn modal-btn-confirm" id="modalConfirmBtn" onclick="processSelectedPayments()">Confirm & Process</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Toast Container ═══ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ── Configuration ──────────────────────────────────
+const CONFIG = {
+    apiUrl: 'https://script.google.com/macros/s/AKfycbzpxIaoeZewC6uMC8wrbXqytzq3FfTQXg2Yx10PGy6BJEMOM9hTg1HDUg3-C-4TkUhnnQ/exec',
+    key: new URLSearchParams(window.location.search).get('key')
+};
+
+// ── State ──────────────────────────────────────────
+let allPayments = [];
+let filteredPayments = [];
+let selectedIds = new Set();
+let currentFilter = 'all';
+let sortField = 'dueDate';
+let sortAsc = true;
+
+// ── Initialization ─────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    if (!CONFIG.key) {
+        document.getElementById('accessDenied').style.display = 'flex';
+        return;
+    }
+    document.getElementById('appMain').style.display = 'block';
+    document.getElementById('backLink').href = 'index.html?key=' + encodeURIComponent(CONFIG.key);
+    setupEventListeners();
+    loadPayments();
+});
+
+function setupEventListeners() {
+    // Select all checkbox
+    document.getElementById('selectAll').addEventListener('change', (e) => {
+        const checked = e.target.checked;
+        filteredPayments.forEach(p => {
+            const id = paymentUid(p);
+            if (checked) selectedIds.add(id);
+            else selectedIds.delete(id);
+        });
+        renderTable();
+        updateActionPanel();
+    });
+
+    // Search input
+    document.getElementById('searchInput').addEventListener('input', debounce(() => {
+        applyFilters();
+    }, 200));
+
+    // Filter pills
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            currentFilter = pill.dataset.filter;
+            applyFilters();
+        });
+    });
+
+    // Sortable headers
+    document.querySelectorAll('.data-table thead th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const field = th.dataset.sort;
+            if (sortField === field) {
+                sortAsc = !sortAsc;
+            } else {
+                sortField = field;
+                sortAsc = true;
+            }
+            updateSortIndicators();
+            applyFilters();
+        });
+    });
+}
+
+// ── API ────────────────────────────────────────────
+async function loadPayments() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    const loadingState = document.getElementById('loadingState');
+    const tableBody = document.getElementById('tableBody');
+    const emptyState = document.getElementById('emptyState');
+
+    refreshBtn.classList.add('spinning');
+    tableBody.innerHTML = '';
+    emptyState.style.display = 'none';
+    loadingState.style.display = 'flex';
+
+    try {
+        const resp = await fetch(`${CONFIG.apiUrl}?action=getScheduledForBookkeeper&key=${encodeURIComponent(CONFIG.key)}`);
+        const data = await resp.json();
+
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        allPayments = data.payments || [];
+        selectedIds.clear();
+        applyFilters();
+        updateStats();
+        showToast('success', `Loaded ${allPayments.length} scheduled payments`);
+    } catch (err) {
+        showToast('error', 'Failed to load payments: ' + err.message);
+        allPayments = [];
+        applyFilters();
+    } finally {
+        refreshBtn.classList.remove('spinning');
+        loadingState.style.display = 'none';
+    }
+}
+
+async function processPayment(payment, fee, method) {
+    const resp = await fetch(CONFIG.apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+            action: 'processBookkeeperPayment',
+            key: CONFIG.key,
+            pledgeId: payment.pledgeId,
+            scheduleId: payment.scheduleId,
+            paymentNum: payment.paymentNum,
+            amount: payment.amount,
+            fee: fee,
+            method: method
+        })
+    });
+    return await resp.json();
+}
+
+// ── Filtering & Sorting ────────────────────────────
+function applyFilters() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+
+    filteredPayments = allPayments.filter(p => {
+        // Status filter
+        if (currentFilter === 'scheduled' && getStatus(p) !== 'Scheduled') return false;
+        if (currentFilter === 'overdue' && getStatus(p) !== 'Overdue') return false;
+
+        // Search filter
+        if (searchTerm) {
+            const donor = (p.donorName || p.firstName + ' ' + p.lastName || '').toLowerCase();
+            if (!donor.includes(searchTerm)) return false;
+        }
+
+        return true;
+    });
+
+    // Sort
+    filteredPayments.sort((a, b) => {
+        let va, vb;
+        if (sortField === 'dueDate') {
+            va = new Date(a.dueDate || 0).getTime();
+            vb = new Date(b.dueDate || 0).getTime();
+        } else if (sortField === 'amount') {
+            va = parseFloat(a.amount) || 0;
+            vb = parseFloat(b.amount) || 0;
+        } else {
+            va = a[sortField] || '';
+            vb = b[sortField] || '';
+        }
+        if (va < vb) return sortAsc ? -1 : 1;
+        if (va > vb) return sortAsc ? 1 : -1;
+        return 0;
+    });
+
+    renderTable();
+    updateActionPanel();
+    updateFilterCounts();
+}
+
+function getStatus(payment) {
+    if (payment.status && payment.status.toLowerCase() === 'paid') return 'Paid';
+    const due = new Date(payment.dueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (due < today) return 'Overdue';
+    return 'Scheduled';
+}
+
+function paymentUid(p) {
+    return `${p.pledgeId}_${p.scheduleId}_${p.paymentNum}`;
+}
+
+// ── Rendering ──────────────────────────────────────
+function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    const emptyState = document.getElementById('emptyState');
+
+    if (filteredPayments.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    emptyState.style.display = 'none';
+    tbody.innerHTML = filteredPayments.map((p, i) => {
+        const uid = paymentUid(p);
+        const status = getStatus(p);
+        const isSelected = selectedIds.has(uid);
+        const isOverdue = status === 'Overdue';
+        const donor = p.donorName || ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || 'Unknown';
+        const amount = parseFloat(p.amount) || 0;
+        const totalPledge = parseFloat(p.totalPledge || p.pledgeAmount) || 0;
+        const dueDate = formatDate(p.dueDate);
+        const payNum = p.paymentNum || '—';
+        const totalPay = p.totalPayments || '—';
+        const freq = capitalize(p.frequency || '—');
+
+        const badgeClass = status === 'Overdue' ? 'badge-overdue' : status === 'Paid' ? 'badge-paid' : 'badge-scheduled';
+
+        return `<tr class="${isSelected ? 'selected' : ''} ${isOverdue ? 'row-overdue' : ''}" 
+                    data-uid="${uid}" 
+                    style="animation-delay: ${i * 0.03}s"
+                    onclick="toggleRow(event, '${uid}')">
+            <td>
+                <label class="custom-checkbox" onclick="event.stopPropagation()">
+                    <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="togglePayment('${uid}')">
+                    <span class="checkmark"></span>
+                </label>
+            </td>
+            <td>${dueDate}</td>
+            <td class="donor-name">${escapeHtml(donor)}</td>
+            <td class="amount-cell">$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+            <td>$${totalPledge.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+            <td>${payNum}${totalPay !== '—' ? ' / ' + totalPay : ''}</td>
+            <td>${freq}</td>
+            <td><span class="badge ${badgeClass}"><span class="badge-dot"></span>${status}</span></td>
+        </tr>`;
+    }).join('');
+
+    // Update select-all checkbox
+    const selectAll = document.getElementById('selectAll');
+    const allChecked = filteredPayments.length > 0 && filteredPayments.every(p => selectedIds.has(paymentUid(p)));
+    const someChecked = filteredPayments.some(p => selectedIds.has(paymentUid(p)));
+    selectAll.checked = allChecked;
+    selectAll.indeterminate = someChecked && !allChecked;
+}
+
+function toggleRow(event, uid) {
+    // Don't toggle if clicking checkbox directly
+    if (event.target.closest('.custom-checkbox')) return;
+    togglePayment(uid);
+}
+
+function togglePayment(uid) {
+    if (selectedIds.has(uid)) {
+        selectedIds.delete(uid);
+    } else {
+        selectedIds.add(uid);
+    }
+    renderTable();
+    updateActionPanel();
+}
+
+function updateActionPanel() {
+    const panel = document.getElementById('actionPanel');
+    const selected = getSelectedPayments();
+
+    if (selected.length === 0) {
+        panel.classList.remove('visible');
+        return;
+    }
+
+    panel.classList.add('visible');
+
+    const totalAmount = selected.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    document.getElementById('selectedCount').textContent = selected.length;
+    document.getElementById('selectedTotal').textContent = '$' + totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 });
+}
+
+function getSelectedPayments() {
+    return allPayments.filter(p => selectedIds.has(paymentUid(p)));
+}
+
+function updateStats() {
+    const total = allPayments.length;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    // End of this week (Sunday)
+    const endOfWeek = new Date(now);
+    endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()));
+
+    let dueThisWeek = 0;
+    let overdue = 0;
+    let outstanding = 0;
+
+    allPayments.forEach(p => {
+        const due = new Date(p.dueDate);
+        const amount = parseFloat(p.amount) || 0;
+        const status = getStatus(p);
+
+        if (status === 'Overdue') overdue++;
+        if (due >= now && due <= endOfWeek && status !== 'Paid') dueThisWeek++;
+        if (status !== 'Paid') outstanding += amount;
+    });
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statDueWeek').textContent = dueThisWeek;
+    document.getElementById('statOverdue').textContent = overdue;
+    document.getElementById('statOutstanding').textContent = '$' + outstanding.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+    const overdueCard = document.getElementById('statOverdueCard');
+    if (overdue > 0) {
+        overdueCard.classList.add('overdue-highlight');
+    } else {
+        overdueCard.classList.remove('overdue-highlight');
+    }
+}
+
+function updateFilterCounts() {
+    const allCount = allPayments.length;
+    const scheduledCount = allPayments.filter(p => getStatus(p) === 'Scheduled').length;
+    const overdueCount = allPayments.filter(p => getStatus(p) === 'Overdue').length;
+
+    document.getElementById('countAll').textContent = allCount;
+    document.getElementById('countScheduled').textContent = scheduledCount;
+    document.getElementById('countOverdue').textContent = overdueCount;
+}
+
+function updateSortIndicators() {
+    document.querySelectorAll('.data-table thead th.sortable').forEach(th => {
+        const field = th.dataset.sort;
+        th.classList.toggle('sorted', field === sortField);
+        th.classList.toggle('desc', field === sortField && !sortAsc);
+        const arrow = th.querySelector('.sort-arrow');
+        if (arrow) arrow.textContent = (field === sortField && !sortAsc) ? '▼' : '▲';
+    });
+}
+
+// ── Modal ──────────────────────────────────────────
+function openConfirmModal() {
+    const selected = getSelectedPayments();
+    if (selected.length === 0) return;
+
+    const fee = parseFloat(document.getElementById('feeInput').value) || 0;
+    const method = document.getElementById('methodSelect').value;
+    const totalAmount = selected.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+    const feeText = fee > 0 ? ` with $${fee.toLocaleString('en-US', { minimumFractionDigits: 2 })} fee` : '';
+    document.getElementById('modalSummary').innerHTML = 
+        `Process <strong>${selected.length} payment${selected.length > 1 ? 's' : ''}</strong> for 
+         <strong>$${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>${feeText} 
+         via <strong>${method}</strong>?`;
+
+    const list = document.getElementById('modalList');
+    list.innerHTML = selected.map(p => {
+        const donor = p.donorName || ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || 'Unknown';
+        const amount = parseFloat(p.amount) || 0;
+        return `<li>
+            <div>
+                <div class="ml-donor">${escapeHtml(donor)}</div>
+                <div class="ml-detail">Due ${formatDate(p.dueDate)} · Payment #${p.paymentNum || '—'}</div>
+            </div>
+            <div class="ml-amount">$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+        </li>`;
+    }).join('');
+
+    document.getElementById('confirmModal').classList.add('visible');
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('visible');
+}
+
+// ── Process Payments ───────────────────────────────
+async function processSelectedPayments() {
+    const selected = getSelectedPayments();
+    if (selected.length === 0) return;
+
+    const fee = parseFloat(document.getElementById('feeInput').value) || 0;
+    const method = document.getElementById('methodSelect').value;
+
+    // Disable UI
+    closeConfirmModal();
+    const processBtn = document.getElementById('processBtn');
+    processBtn.classList.add('loading');
+    processBtn.disabled = true;
+
+    const progressWrapper = document.getElementById('progressWrapper');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    progressWrapper.classList.add('visible');
+
+    let successCount = 0;
+    let failCount = 0;
+
+    // Process sequentially to avoid race conditions
+    for (let i = 0; i < selected.length; i++) {
+        const payment = selected[i];
+        const donor = payment.donorName || ((payment.firstName || '') + ' ' + (payment.lastName || '')).trim() || 'Unknown';
+
+        progressFill.style.width = `${((i) / selected.length) * 100}%`;
+        progressText.textContent = `Processing ${i + 1} / ${selected.length} — ${donor}`;
+
+        try {
+            const result = await processPayment(payment, fee, method);
+            if (result.error) {
+                throw new Error(result.error);
+            }
+            successCount++;
+            selectedIds.delete(paymentUid(payment));
+        } catch (err) {
+            failCount++;
+            showToast('error', `Failed: ${donor} — ${err.message}`);
+        }
+    }
+
+    // Complete
+    progressFill.style.width = '100%';
+
+    if (successCount > 0) {
+        showToast('success', `Successfully processed ${successCount} payment${successCount > 1 ? 's' : ''}`);
+    }
+    if (failCount > 0 && successCount > 0) {
+        showToast('error', `${failCount} payment${failCount > 1 ? 's' : ''} failed`);
+    }
+
+    // Reset UI
+    processBtn.classList.remove('loading');
+    processBtn.disabled = false;
+    setTimeout(() => {
+        progressWrapper.classList.remove('visible');
+        progressFill.style.width = '0%';
+    }, 1000);
+
+    // Reload data
+    await loadPayments();
+}
+
+// ── Toast Notifications ────────────────────────────
+function showToast(type, message) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <span class="toast-icon">${type === 'success' ? '✓' : '✕'}</span>
+        <span>${escapeHtml(message)}</span>
+    `;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+    }, 4000);
+}
+
+// ── Utility Functions ──────────────────────────────
+function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+        return dateStr;
+    }
+}
+
+function capitalize(str) {
+    if (!str || str === '—') return str;
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function debounce(fn, ms) {
+    let timer;
+    return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), ms);
+    };
+}
+</script>
+</body>
+</html>

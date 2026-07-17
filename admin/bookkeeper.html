@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Bookkeeper Portal | Notzer Chesed</title>
+    <meta name="description" content="Manage scheduled donation payments for Notzer Chesed campaigns">
+    <link rel="icon" type="image/png" href="../NC_Logo_03.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+/* ═══════════════════════════════════════════════════════════
+   BOOKKEEPER PORTAL — Notzer Chesed
+   Premium dark theme with glassmorphism, floating orbs
+   ═══════════════════════════════════════════════════════════ */
+
+/* --- Reset & Variables --- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    --bg-dark: #0a0a0f;
+    --bg-card: rgba(25, 25, 40, 0.7);
+    --bg-input: #1a1a2e;
+    --bg-input-hover: rgba(255, 255, 255, 0.055);
+    --bg-input-focus: rgba(255, 255, 255, 0.1);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-focus: rgba(108, 99, 255, 0.5);
+    --text-primary: #f0f0f5;
+    --text-secondary: #9a9ab0;
+    --text-muted: #6b6b80;
+    --accent: #6c63ff;
+    --accent-light: #8b83ff;
+    --accent-dark: #5548d9;
+    --accent-glow: rgba(108, 99, 255, 0.25);
+    --success: #34d399;
+    --success-glow: rgba(52, 211, 153, 0.2);
+    --error: #ff5252;
+    --error-glow: rgba(255, 82, 82, 0.15);
+    --warning: #fbbf24;
+    --warning-glow: rgba(251, 191, 36, 0.15);
+    --info: #4dabf7;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+    font-family: var(--font);
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* --- Animated Background --- */
+body::before {
+    content: '';
+    position: fixed;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background:
+        radial-gradient(ellipse at 20% 50%, rgba(108, 99, 255, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+    animation: bgDrift 20s ease-in-out infinite alternate;
+    z-index: 0; pointer-events: none;
+}
+@keyframes bgDrift {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-2%, 1%) rotate(1deg); }
+    100% { transform: translate(1%, -1%) rotate(-1deg); }
+}
+
+.bg-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+}
+.bg-orb-1 {
+    width: 400px; height: 400px;
+    background: var(--accent);
+    top: -10%; right: -5%;
+    animation: orbFloat1 15s ease-in-out infinite;
+}
+.bg-orb-2 {
+    width: 280px; height: 280px;
+    background: #4f46e5;
+    bottom: -5%; left: -4%;
+    animation: orbFloat2 18s ease-in-out infinite;
+}
+.bg-orb-3 {
+    width: 200px; height: 200px;
+    background: #7c3aed;
+    top: 45%; left: 25%;
+    animation: orbFloat3 12s ease-in-out infinite;
+}
+@keyframes orbFloat1 { 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(-30px,40px); } }
+@keyframes orbFloat2 { 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(40px,-30px); } }
+@keyframes orbFloat3 { 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(-20px,-25px); } }
+
+/* --- Layout Container --- */
+.page-wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 120px;
+}
+
+/* --- Header Bar --- */
+.header-bar {
+    position: sticky; top: 0;
+    z-index: 50;
+    background: rgba(15, 15, 25, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-subtle);
+    margin: 0 -24px;
+    padding: 0 24px;
+}
+.header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.header-left { display: flex; align-items: center; gap: 16px; }
+.header-back {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: color var(--transition);
+    white-space: nowrap;
+}
+.header-back:hover { color: var(--accent-light); }
+.header-divider {
+    width: 1px; height: 24px;
+    background: var(--border-subtle);
+}
+.header-brand { display: flex; flex-direction: column; }
+.header-title {
+    font-size: 1.05rem; font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+.header-subtitle {
+    font-size: 0.68rem; font-weight: 400;
+    color: var(--text-muted);
+}
+
+.header-right { display: flex; align-items: center; gap: 16px; }
+.user-info { display: flex; align-items: center; gap: 10px; }
+.user-name { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+.role-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    background: rgba(108, 99, 255, 0.15);
+    border: 1px solid rgba(108, 99, 255, 0.3);
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--accent-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.signout-btn {
+    padding: 6px 14px;
+    background: rgba(255, 82, 82, 0.1);
+    border: 1px solid rgba(255, 82, 82, 0.2);
+    border-radius: var(--radius-sm);
+    color: var(--error);
+    font-family: var(--font);
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.signout-btn:hover { background: rgba(255, 82, 82, 0.2); border-color: rgba(255, 82, 82, 0.4); }
+
+/* --- Section Title --- */
+.page-title-section { margin: 28px 0 24px; }
+.section-title {
+    font-size: 1.35rem; font-weight: 700; color: var(--text-primary);
+    letter-spacing: -0.02em; margin-bottom: 4px;
+}
+.section-subtitle { font-size: 0.85rem; color: var(--text-muted); }
+
+/* --- Glass Card --- */
+.glass-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 20px 60px rgba(0,0,0,0.15);
+}
+
+/* --- Campaign Filter --- */
+.campaign-filter {
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.campaign-filter label {
+    font-size: 0.8rem; font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.campaign-filter select {
+    flex: 1; min-width: 200px; max-width: 400px;
+    padding: 9px 36px 9px 14px;
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: all var(--transition);
+}
+.campaign-filter select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.campaign-filter select option { background: #1e1e1e; color: var(--text-primary); }
+
+/* --- Stats Grid --- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.stat-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex; align-items: center; gap: 16px;
+    transition: all var(--transition);
+}
+.stat-card:hover {
+    border-color: rgba(108, 99, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.stat-card.highlight-red { border-color: rgba(255, 82, 82, 0.25); }
+.stat-card.highlight-red:hover { border-color: rgba(255, 82, 82, 0.4); }
+.stat-icon {
+    font-size: 1.8rem; width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.stat-icon.purple { background: rgba(108, 99, 255, 0.12); }
+.stat-icon.blue { background: rgba(77, 171, 247, 0.12); }
+.stat-icon.red { background: rgba(255, 82, 82, 0.12); }
+.stat-icon.green { background: rgba(52, 211, 153, 0.12); }
+.stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+.stat-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-top: 2px; }
+
+/* --- Filter Bar --- */
+.filter-bar {
+    padding: 16px 20px;
+    display: flex; align-items: center; gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.filter-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.78rem; font-weight: 500;
+    cursor: pointer;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    transition: all var(--transition);
+    user-select: none;
+}
+.pill:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.pill.active {
+    background: rgba(108, 99, 255, 0.15);
+    border-color: rgba(108, 99, 255, 0.3);
+    color: var(--accent-light);
+}
+
+.search-input {
+    flex: 1; min-width: 180px;
+    padding: 8px 14px 8px 36px;
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 0.82rem;
+    outline: none;
+    transition: all var(--transition);
+}
+.search-input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-wrapper {
+    position: relative; flex: 1; min-width: 180px;
+}
+.search-icon {
+    position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted); font-size: 0.85rem;
+    pointer-events: none;
+}
+
+.btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 0.82rem; font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    border: none; outline: none;
+    white-space: nowrap;
+}
+.btn-secondary {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+.btn-secondary:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: #fff;
+}
+.btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px var(--accent-glow); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+.btn.loading { color: transparent; pointer-events: none; position: relative; }
+.btn.loading::after {
+    content: ''; position: absolute;
+    width: 16px; height: 16px; top: 50%; left: 50%;
+    margin: -8px 0 0 -8px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- Data Table --- */
+.table-wrapper {
+    overflow-x: auto;
+    position: relative;
+}
+.data-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.83rem;
+}
+.data-table th {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-subtle);
+    white-space: nowrap;
+    position: sticky; top: 0;
+    background: rgba(20, 20, 35, 0.95);
+}
+.data-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+.data-table tbody tr { transition: background var(--transition); cursor: pointer; }
+.data-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+.data-table tbody tr.selected { background: rgba(108, 99, 255, 0.08); }
+.data-table tbody tr.overdue-row { background: rgba(255, 82, 82, 0.05); }
+.data-table tbody tr.overdue-row:hover { background: rgba(255, 82, 82, 0.08); }
+.data-table tbody tr.overdue-row.selected { background: rgba(108, 99, 255, 0.1); }
+
+.data-table input[type="checkbox"] {
+    width: 16px; height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.donor-name { font-weight: 600; color: var(--text-primary); }
+.campaign-tag {
+    font-size: 0.72rem;
+    color: var(--info);
+    background: rgba(77, 171, 247, 0.08);
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+.payment-num { font-weight: 600; color: var(--text-secondary); }
+.amount-cell { font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+/* --- Badges --- */
+.badge {
+    display: inline-block; padding: 3px 10px;
+    border-radius: 20px; font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+.badge-scheduled { background: rgba(251,191,36,0.12); color: var(--warning); border: 1px solid rgba(251,191,36,0.25); }
+.badge-overdue { background: var(--error-glow); color: var(--error); border: 1px solid rgba(255,82,82,0.25); }
+.badge-paid { background: rgba(52,211,153,0.12); color: var(--success); border: 1px solid rgba(52,211,153,0.25); }
+
+/* --- Pagination --- */
+.pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-subtle);
+}
+.pagination-info { font-size: 0.8rem; color: var(--text-muted); }
+.pagination-btns { display: flex; gap: 8px; align-items: center; }
+.pagination-btns .page-info {
+    font-size: 0.82rem; color: var(--text-secondary);
+    padding: 0 8px;
+}
+
+/* --- Empty State --- */
+.empty-state {
+    text-align: center; padding: 64px 24px;
+    color: var(--text-muted); font-size: 0.9rem;
+}
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.4; }
+.empty-state p { max-width: 360px; margin: 0 auto; line-height: 1.6; }
+
+/* --- Loading --- */
+.loading-overlay {
+    display: none; position: absolute; inset: 0;
+    background: rgba(10, 10, 15, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 10;
+    justify-content: center; align-items: center;
+    border-radius: var(--radius);
+}
+.loading-overlay.visible { display: flex; }
+.loading-spinner {
+    width: 36px; height: 36px;
+    border: 3px solid rgba(108,99,255,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+/* --- Action Panel (fixed bottom) --- */
+.action-panel {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    z-index: 60;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.action-panel.visible { transform: translateY(0); }
+.action-panel-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    background: rgba(20, 20, 40, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid rgba(108, 99, 255, 0.2);
+    display: flex; align-items: center; gap: 16px;
+    flex-wrap: wrap;
+}
+.action-summary {
+    flex: 1; min-width: 200px;
+    font-size: 0.88rem; color: var(--text-secondary);
+}
+.action-summary strong { color: var(--text-primary); font-weight: 600; }
+.action-summary .action-amount {
+    color: var(--accent-light); font-weight: 700;
+}
+
+.action-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.fee-wrapper {
+    display: flex; align-items: center; gap: 6px;
+}
+.fee-wrapper label {
+    font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;
+}
+.fee-input-group {
+    position: relative;
+    display: flex; align-items: center;
+}
+.fee-prefix {
+    position: absolute; left: 10px;
+    color: var(--text-muted); font-weight: 600; font-size: 0.85rem;
+    pointer-events: none;
+}
+.fee-input {
+    width: 90px; padding: 8px 10px 8px 22px;
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 0.85rem; font-weight: 600;
+    outline: none;
+    transition: all var(--transition);
+}
+.fee-input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.method-select {
+    padding: 8px 32px 8px 12px;
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 0.82rem;
+    outline: none; cursor: pointer;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: all var(--transition);
+}
+.method-select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.method-select option { background: #1e1e1e; color: var(--text-primary); }
+
+/* --- Modal --- */
+.modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    justify-content: center; align-items: center;
+    padding: 1.5rem;
+    animation: fadeInFast 0.2s ease;
+}
+.modal-overlay.visible { display: flex; }
+@keyframes fadeInFast { from { opacity: 0; } to { opacity: 1; } }
+.modal-card {
+    background: #1a1a2e;
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 0;
+    max-width: 520px; width: 100%;
+    animation: slideUp 0.3s ease;
+    max-height: 85vh; overflow-y: auto;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.modal-title { font-size: 1.05rem; font-weight: 600; color: var(--text-primary); }
+.modal-close {
+    background: none; border: none;
+    color: var(--text-muted); font-size: 1.3rem;
+    cursor: pointer; padding: 4px;
+    transition: color var(--transition);
+}
+.modal-close:hover { color: var(--text-primary); }
+.modal-body { padding: 24px; }
+.modal-body .confirm-summary {
+    font-size: 0.85rem; color: var(--text-secondary);
+    line-height: 1.7; margin-bottom: 16px;
+}
+.modal-body .confirm-summary strong { color: var(--text-primary); }
+.modal-body .confirm-list {
+    max-height: 200px; overflow-y: auto;
+    margin: 12px 0; padding: 0;
+    list-style: none;
+}
+.modal-body .confirm-list li {
+    display: flex; justify-content: space-between;
+    padding: 8px 12px;
+    font-size: 0.82rem; color: var(--text-secondary);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.modal-body .confirm-list li:last-child { border-bottom: none; }
+.modal-body .confirm-list .li-donor { color: var(--text-primary); font-weight: 500; }
+.modal-body .confirm-list .li-amount { color: var(--accent-light); font-weight: 600; }
+.modal-body .confirm-total {
+    display: flex; justify-content: space-between;
+    padding: 10px 12px;
+    margin-top: 4px;
+    background: rgba(108, 99, 255, 0.06);
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem; font-weight: 600;
+}
+.modal-body .confirm-total .ct-label { color: var(--text-secondary); }
+.modal-body .confirm-total .ct-value { color: var(--accent-light); }
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-subtle);
+    display: flex; gap: 10px; justify-content: flex-end;
+}
+
+/* --- Toast --- */
+.toast-container {
+    position: fixed; bottom: 24px; right: 24px;
+    z-index: 2000; display: flex;
+    flex-direction: column-reverse; gap: 8px;
+}
+.toast {
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 0.84rem; font-weight: 500;
+    display: flex; align-items: center; gap: 10px;
+    min-width: 280px; max-width: 420px;
+    animation: toastIn 0.35s ease;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.toast.removing { animation: toastOut 0.3s ease forwards; }
+@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+.toast-success { background: rgba(15, 50, 35, 0.95); border: 1px solid rgba(52,211,153,0.3); color: var(--success); }
+.toast-error { background: rgba(50, 15, 15, 0.95); border: 1px solid rgba(255,82,82,0.3); color: var(--error); }
+
+/* --- Animations --- */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.4s ease-out; }
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .page-wrapper { padding: 0 16px 140px; }
+    .header-bar { margin: 0 -16px; padding: 0 16px; }
+    .header-back { display: none; }
+    .header-divider { display: none; }
+    .header-inner { height: 56px; }
+    .user-name { display: none; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-card { padding: 14px; gap: 10px; }
+    .stat-icon { width: 40px; height: 40px; font-size: 1.4rem; }
+    .stat-value { font-size: 1.2rem; }
+    .filter-bar { padding: 12px 16px; }
+    .campaign-filter { padding: 12px 16px; }
+    .data-table th, .data-table td { padding: 10px 10px; }
+    .action-panel-inner { padding: 12px 16px; }
+    .action-summary { min-width: 100%; margin-bottom: 4px; }
+    .toast-container { bottom: 80px; right: 16px; left: 16px; }
+    .toast { min-width: unset; }
+}
+@media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .section-title { font-size: 1.15rem; }
+}
+    </style>
+</head>
+<body>
+
+<!-- Background Orbs -->
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+<div class="bg-orb bg-orb-3"></div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Header Bar -->
+<header class="header-bar">
+    <div class="header-inner">
+        <div class="header-left">
+            <a href="/admin/" class="header-back">← Admin Dashboard</a>
+            <div class="header-divider"></div>
+            <div class="header-brand">
+                <span class="header-title">Bookkeeper Portal</span>
+                <span class="header-subtitle">Notzer Chesed</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="user-info">
+                <span class="user-name" id="userName">Loading...</span>
+                <span class="role-badge" id="userRole">—</span>
+            </div>
+            <button class="signout-btn" id="signOutBtn">Sign Out</button>
+        </div>
+    </div>
+</header>
+
+<div class="page-wrapper">
+
+    <!-- Page Title -->
+    <div class="page-title-section fade-in">
+        <h1 class="section-title">Scheduled Payments</h1>
+        <p class="section-subtitle">Review and process scheduled donation payments across campaigns</p>
+    </div>
+
+    <!-- Campaign Filter -->
+    <div class="glass-card campaign-filter fade-in" id="campaignFilterCard">
+        <label for="campaignSelect">🏛️ Campaign</label>
+        <select id="campaignSelect">
+            <option value="">All Campaigns</option>
+        </select>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid fade-in" id="statsGrid">
+        <div class="stat-card">
+            <div class="stat-icon purple">📋</div>
+            <div>
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-label">Total Scheduled</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue">📅</div>
+            <div>
+                <div class="stat-value" id="statDueWeek">0</div>
+                <div class="stat-label">Due This Week</div>
+            </div>
+        </div>
+        <div class="stat-card highlight-red" id="statOverdueCard">
+            <div class="stat-icon red">⚠️</div>
+            <div>
+                <div class="stat-value" id="statOverdue">0</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green">💰</div>
+            <div>
+                <div class="stat-value" id="statOutstanding">$0.00</div>
+                <div class="stat-label">Total Outstanding</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payments Table Card -->
+    <div class="glass-card fade-in" style="position:relative;">
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-pills" id="filterPills">
+                <span class="pill active" data-filter="all">All</span>
+                <span class="pill" data-filter="Scheduled">Scheduled</span>
+                <span class="pill" data-filter="Overdue">Overdue</span>
+            </div>
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="Search donor name...">
+            </div>
+            <button class="btn btn-secondary" id="refreshBtn" title="Refresh data">↻ Refresh</button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrapper">
+            <table class="data-table" id="paymentsTable">
+                <thead>
+                    <tr>
+                        <th style="width:40px;"><input type="checkbox" id="selectAll" title="Select all"></th>
+                        <th>Due Date</th>
+                        <th>Donor</th>
+                        <th>Campaign</th>
+                        <th>Amount</th>
+                        <th>Total Pledge</th>
+                        <th>Payment #</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display:none;">
+            <div class="empty-icon">📭</div>
+            <p>No scheduled payments found. Adjust your filters or select a different campaign.</p>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="tableLoading">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="paginationBar">
+            <span class="pagination-info" id="paginationInfo">Showing 0 payments</span>
+            <div class="pagination-btns">
+                <button class="btn btn-secondary" id="prevPageBtn" disabled>← Prev</button>
+                <span class="page-info" id="pageInfo">Page 1 of 1</span>
+                <button class="btn btn-secondary" id="nextPageBtn" disabled>Next →</button>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /page-wrapper -->
+
+<!-- Action Panel (fixed bottom) -->
+<div class="action-panel" id="actionPanel">
+    <div class="action-panel-inner">
+        <div class="action-summary">
+            <strong id="selectedCount">0</strong> payments selected · <span class="action-amount" id="selectedTotal">$0.00</span> total
+        </div>
+        <div class="action-controls">
+            <div class="fee-wrapper">
+                <label for="feeInput">Fee:</label>
+                <div class="fee-input-group">
+                    <span class="fee-prefix">$</span>
+                    <input type="number" class="fee-input" id="feeInput" value="0.00" min="0" step="0.01">
+                </div>
+            </div>
+            <select class="method-select" id="methodSelect">
+                <option value="Check">Check</option>
+                <option value="Cash">Cash</option>
+                <option value="Wire">Wire</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Other">Other</option>
+            </select>
+            <button class="btn btn-primary" id="processBtn">✓ Process Selected</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <span class="modal-title">Confirm Payment Processing</span>
+            <button class="modal-close" id="modalCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <!-- Populated by JS -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="modalCancelBtn">Cancel</button>
+            <button class="btn btn-primary" id="modalConfirmBtn">✓ Confirm & Process</button>
+        </div>
+    </div>
+</div>
+
+<!-- Auth Script -->
+<script src="../js/auth.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   BOOKKEEPER PORTAL — Application Logic
+   ═══════════════════════════════════════════════════════════ */
+
+// ── State ──
+const STATE = {
+    payments: [],       // raw from API
+    filtered: [],       // after status + search filter
+    selected: new Set(),// set of scheduleId
+    campaigns: [],
+    page: 1,
+    pageSize: 25,
+    totalPages: 1,
+    statusFilter: 'all',
+    searchQuery: '',
+    campaignId: '',
+    loading: false,
+};
+
+// ── Utility ──
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+function formatCurrency(n) {
+    return (n || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
+}
+
+function formatDate(d) {
+    if (!d) return '—';
+    const dt = new Date(d);
+    if (isNaN(dt)) return d;
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function isOverdue(dateStr) {
+    if (!dateStr) return false;
+    const due = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return due < today;
+}
+
+function isDueThisWeek(dateStr) {
+    if (!dateStr) return false;
+    const due = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(today);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    return due >= today && due <= weekEnd;
+}
+
+function getStatusBadge(status, dueDate) {
+    const s = (status || '').toLowerCase();
+    if (s === 'scheduled' && isOverdue(dueDate)) {
+        return '<span class="badge badge-overdue">Overdue</span>';
+    }
+    const map = {
+        scheduled: 'badge-scheduled',
+        overdue: 'badge-overdue',
+        paid: 'badge-paid',
+    };
+    return `<span class="badge ${map[s] || 'badge-scheduled'}">${status || '—'}</span>`;
+}
+
+// ── Toast ──
+function showToast(message, type = 'success') {
+    const container = $('#toastContainer');
+    const icons = { success: '✓', error: '✕' };
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span>${icons[type] || '✓'}</span><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.classList.add('removing'); setTimeout(() => toast.remove(), 300); }, 4000);
+}
+
+// ── Loading ──
+function setLoading(visible) {
+    STATE.loading = visible;
+    const overlay = $('#tableLoading');
+    if (visible) overlay.classList.add('visible');
+    else overlay.classList.remove('visible');
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', async () => {
+    await requireAuth('bookkeeper');
+    const user = getCurrentUser();
+    if (!user) return;
+
+    // Set user info in header
+    $('#userName').textContent = user.name || user.email;
+    $('#userRole').textContent = (user.role || 'viewer').replace(/_/g, ' ');
+
+    // Wire up events
+    initEventListeners();
+
+    // Load campaigns and payments
+    await loadCampaigns();
+    await loadPayments();
+});
+
+$('#signOutBtn').addEventListener('click', () => signOut());
+
+// ── Event Listeners ──
+function initEventListeners() {
+    // Campaign filter
+    $('#campaignSelect').addEventListener('change', async () => {
+        STATE.campaignId = $('#campaignSelect').value;
+        STATE.page = 1;
+        STATE.selected.clear();
+        updateActionPanel();
+        await loadPayments();
+    });
+
+    // Status pills
+    $$('.pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+            $$('.pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            STATE.statusFilter = pill.dataset.filter;
+            STATE.page = 1;
+            applyFilters();
+        });
+    });
+
+    // Search
+    let searchTimeout;
+    $('#searchInput').addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            STATE.searchQuery = $('#searchInput').value.trim().toLowerCase();
+            STATE.page = 1;
+            applyFilters();
+        }, 250);
+    });
+
+    // Refresh
+    $('#refreshBtn').addEventListener('click', async () => {
+        STATE.selected.clear();
+        updateActionPanel();
+        await loadPayments();
+    });
+
+    // Select all
+    $('#selectAll').addEventListener('change', (e) => {
+        const checked = e.target.checked;
+        const visible = getPagedData();
+        visible.forEach(p => {
+            if (checked) STATE.selected.add(p.scheduleId);
+            else STATE.selected.delete(p.scheduleId);
+        });
+        renderTable();
+        updateActionPanel();
+    });
+
+    // Pagination
+    $('#prevPageBtn').addEventListener('click', () => {
+        if (STATE.page > 1) { STATE.page--; renderTable(); }
+    });
+    $('#nextPageBtn').addEventListener('click', () => {
+        if (STATE.page < STATE.totalPages) { STATE.page++; renderTable(); }
+    });
+
+    // Process button
+    $('#processBtn').addEventListener('click', openConfirmModal);
+
+    // Modal buttons
+    $('#modalCloseBtn').addEventListener('click', closeModal);
+    $('#modalCancelBtn').addEventListener('click', closeModal);
+    $('#confirmModal').addEventListener('click', (e) => { if (e.target === $('#confirmModal')) closeModal(); });
+    $('#modalConfirmBtn').addEventListener('click', processPayments);
+}
+
+// ── Load Campaigns ──
+async function loadCampaigns() {
+    try {
+        const data = await authGet('getCampaigns');
+        if (data.status === 'success' && data.campaigns) {
+            STATE.campaigns = data.campaigns;
+            const select = $('#campaignSelect');
+            data.campaigns.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id || c.campaignId;
+                opt.textContent = c.name || c.campaignName;
+                select.appendChild(opt);
+            });
+        }
+    } catch (err) {
+        console.error('Failed to load campaigns:', err);
+    }
+}
+
+// ── Load Payments ──
+async function loadPayments() {
+    setLoading(true);
+    try {
+        const params = { status: 'Scheduled' };
+        if (STATE.campaignId) params.campaignId = STATE.campaignId;
+
+        const data = await authGet('getScheduledPayments', params);
+        if (data.status === 'success' || data.payments) {
+            STATE.payments = data.payments || [];
+        } else {
+            STATE.payments = [];
+            if (data.message) showToast(data.message, 'error');
+        }
+    } catch (err) {
+        console.error('Failed to load payments:', err);
+        showToast('Failed to load payments. Please try again.', 'error');
+        STATE.payments = [];
+    }
+    applyFilters();
+    setLoading(false);
+}
+
+// ── Filter & Render ──
+function applyFilters() {
+    let data = [...STATE.payments];
+
+    // Status filter
+    if (STATE.statusFilter === 'Scheduled') {
+        data = data.filter(p => !isOverdue(p.dueDate));
+    } else if (STATE.statusFilter === 'Overdue') {
+        data = data.filter(p => isOverdue(p.dueDate));
+    }
+
+    // Search filter
+    if (STATE.searchQuery) {
+        data = data.filter(p =>
+            (p.donor || '').toLowerCase().includes(STATE.searchQuery) ||
+            (p.customerId || '').toLowerCase().includes(STATE.searchQuery)
+        );
+    }
+
+    STATE.filtered = data;
+    STATE.totalPages = Math.max(1, Math.ceil(data.length / STATE.pageSize));
+    if (STATE.page > STATE.totalPages) STATE.page = STATE.totalPages;
+
+    updateStats();
+    renderTable();
+}
+
+function getPagedData() {
+    const start = (STATE.page - 1) * STATE.pageSize;
+    return STATE.filtered.slice(start, start + STATE.pageSize);
+}
+
+function renderTable() {
+    const tbody = $('#tableBody');
+    const paged = getPagedData();
+    const empty = $('#emptyState');
+
+    if (STATE.filtered.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = '';
+        $('#paginationBar').style.display = 'none';
+        return;
+    }
+
+    empty.style.display = 'none';
+    $('#paginationBar').style.display = '';
+
+    tbody.innerHTML = paged.map(p => {
+        const overdue = isOverdue(p.dueDate);
+        const isSelected = STATE.selected.has(p.scheduleId);
+        const rowClass = [
+            overdue ? 'overdue-row' : '',
+            isSelected ? 'selected' : ''
+        ].filter(Boolean).join(' ');
+
+        const displayStatus = overdue && (p.status || '').toLowerCase() === 'scheduled' ? 'Overdue' : (p.status || 'Scheduled');
+
+        return `
+        <tr class="${rowClass}" data-id="${p.scheduleId}">
+            <td><input type="checkbox" class="row-check" data-id="${p.scheduleId}" ${isSelected ? 'checked' : ''}></td>
+            <td>${formatDate(p.dueDate)}</td>
+            <td><span class="donor-name">${escapeHtml(p.donor || '—')}</span></td>
+            <td><span class="campaign-tag">${escapeHtml(p.campaignName || '—')}</span></td>
+            <td class="amount-cell">${formatCurrency(p.amount)}</td>
+            <td>${formatCurrency(p.totalPledge)}</td>
+            <td><span class="payment-num">${p.paymentNum || '—'} / ${p.totalPayments || '—'}</span></td>
+            <td>${getStatusBadge(displayStatus, p.dueDate)}</td>
+        </tr>`;
+    }).join('');
+
+    // Checkbox events
+    $$('.row-check').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const id = cb.dataset.id;
+            if (cb.checked) STATE.selected.add(id);
+            else STATE.selected.delete(id);
+            renderTable();
+            updateActionPanel();
+        });
+    });
+
+    // Row click to toggle
+    $$('#tableBody tr').forEach(tr => {
+        tr.addEventListener('click', (e) => {
+            if (e.target.type === 'checkbox') return;
+            const id = tr.dataset.id;
+            if (STATE.selected.has(id)) STATE.selected.delete(id);
+            else STATE.selected.add(id);
+            renderTable();
+            updateActionPanel();
+        });
+    });
+
+    // Update select all
+    const allOnPage = paged.every(p => STATE.selected.has(p.scheduleId));
+    $('#selectAll').checked = paged.length > 0 && allOnPage;
+
+    // Pagination
+    $('#paginationInfo').textContent = `Showing ${paged.length} of ${STATE.filtered.length} payments`;
+    $('#pageInfo').textContent = `Page ${STATE.page} of ${STATE.totalPages}`;
+    $('#prevPageBtn').disabled = STATE.page <= 1;
+    $('#nextPageBtn').disabled = STATE.page >= STATE.totalPages;
+}
+
+function escapeHtml(s) {
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+}
+
+// ── Stats ──
+function updateStats() {
+    const all = STATE.payments;
+    const totalCount = all.length;
+    const overdueCount = all.filter(p => isOverdue(p.dueDate)).length;
+    const dueWeekCount = all.filter(p => isDueThisWeek(p.dueDate)).length;
+    const totalAmount = all.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+    $('#statTotal').textContent = totalCount.toLocaleString();
+    $('#statDueWeek').textContent = dueWeekCount.toLocaleString();
+    $('#statOverdue').textContent = overdueCount.toLocaleString();
+    $('#statOutstanding').textContent = formatCurrency(totalAmount);
+
+    // Highlight overdue card
+    const card = $('#statOverdueCard');
+    if (overdueCount > 0) card.classList.add('highlight-red');
+    else card.classList.remove('highlight-red');
+}
+
+// ── Action Panel ──
+function updateActionPanel() {
+    const panel = $('#actionPanel');
+    const count = STATE.selected.size;
+
+    if (count === 0) {
+        panel.classList.remove('visible');
+        return;
+    }
+
+    panel.classList.add('visible');
+    const total = STATE.payments
+        .filter(p => STATE.selected.has(p.scheduleId))
+        .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+    $('#selectedCount').textContent = count;
+    $('#selectedTotal').textContent = formatCurrency(total);
+}
+
+// ── Modal ──
+function openConfirmModal() {
+    if (STATE.selected.size === 0) return;
+
+    const selectedPayments = STATE.payments.filter(p => STATE.selected.has(p.scheduleId));
+    const totalAmount = selectedPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const fee = parseFloat($('#feeInput').value) || 0;
+    const method = $('#methodSelect').value;
+
+    const listHtml = selectedPayments.map(p => `
+        <li>
+            <span class="li-donor">${escapeHtml(p.donor || '—')}</span>
+            <span class="li-amount">${formatCurrency(p.amount)}</span>
+        </li>
+    `).join('');
+
+    $('#modalBody').innerHTML = `
+        <div class="confirm-summary">
+            You are about to process <strong>${selectedPayments.length} payment${selectedPayments.length > 1 ? 's' : ''}</strong>
+            via <strong>${method}</strong>${fee > 0 ? ` with a fee of <strong>${formatCurrency(fee)}</strong> per payment` : ''}.
+        </div>
+        <ul class="confirm-list">${listHtml}</ul>
+        <div class="confirm-total">
+            <span class="ct-label">Total Amount</span>
+            <span class="ct-value">${formatCurrency(totalAmount)}</span>
+        </div>
+    `;
+
+    $('#confirmModal').classList.add('visible');
+}
+
+function closeModal() {
+    $('#confirmModal').classList.remove('visible');
+}
+
+// ── Process Payments ──
+async function processPayments() {
+    const confirmBtn = $('#modalConfirmBtn');
+    if (confirmBtn.classList.contains('loading')) return;
+
+    confirmBtn.classList.add('loading');
+    confirmBtn.disabled = true;
+
+    const selectedPayments = STATE.payments.filter(p => STATE.selected.has(p.scheduleId));
+    const fee = parseFloat($('#feeInput').value) || 0;
+    const method = $('#methodSelect').value;
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const payment of selectedPayments) {
+        try {
+            const result = await authPost('processBookkeeperPayment', {
+                campaignId: payment.campaignId,
+                pledgeId: payment.pledgeId,
+                scheduleId: payment.scheduleId,
+                paymentNum: payment.paymentNum,
+                amount: payment.amount,
+                fee: fee,
+                method: method,
+            });
+
+            if (result.status === 'success') {
+                successCount++;
+            } else {
+                failCount++;
+                console.error('Payment failed:', payment.scheduleId, result.message);
+            }
+        } catch (err) {
+            failCount++;
+            console.error('Payment error:', payment.scheduleId, err);
+        }
+    }
+
+    confirmBtn.classList.remove('loading');
+    confirmBtn.disabled = false;
+    closeModal();
+
+    if (successCount > 0) {
+        showToast(`Successfully processed ${successCount} payment${successCount > 1 ? 's' : ''}`, 'success');
+    }
+    if (failCount > 0) {
+        showToast(`${failCount} payment${failCount > 1 ? 's' : ''} failed to process`, 'error');
+    }
+
+    // Reload data
+    STATE.selected.clear();
+    updateActionPanel();
+    await loadPayments();
+}
+</script>
+</body>
+</html>
