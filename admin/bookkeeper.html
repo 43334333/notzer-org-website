@@ -55,6 +55,12 @@ body {
     overflow-x: hidden;
 }
 
+/* --- Scrollbar --- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
 /* --- Animated Background --- */
 body::before {
     content: '';
@@ -104,15 +110,6 @@ body::before {
 @keyframes orbFloat2 { 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(40px,-30px); } }
 @keyframes orbFloat3 { 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(-20px,-25px); } }
 
-/* --- Layout Container --- */
-.page-wrapper {
-    position: relative;
-    z-index: 1;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 24px 120px;
-}
-
 /* --- Header Bar --- */
 .header-bar {
     position: sticky; top: 0;
@@ -121,11 +118,10 @@ body::before {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border-subtle);
-    margin: 0 -24px;
     padding: 0 24px;
 }
 .header-inner {
-    max-width: 1100px;
+    max-width: 1400px;
     margin: 0 auto;
     height: 64px;
     display: flex;
@@ -188,8 +184,23 @@ body::before {
 }
 .signout-btn:hover { background: rgba(255, 82, 82, 0.2); border-color: rgba(255, 82, 82, 0.4); }
 
+/* --- App Layout (Split Panel) --- */
+.app-layout {
+    display: flex;
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 24px 2rem;
+    position: relative;
+    z-index: 1;
+}
+.main-content {
+    flex: 1;
+    min-width: 0;
+}
+
 /* --- Section Title --- */
-.page-title-section { margin: 28px 0 24px; }
+.page-title-section { margin-bottom: 24px; }
 .section-title {
     font-size: 1.35rem; font-weight: 700; color: var(--text-primary);
     letter-spacing: -0.02em; margin-bottom: 4px;
@@ -306,6 +317,23 @@ body::before {
     border-color: rgba(108, 99, 255, 0.3);
     color: var(--accent-light);
 }
+.pill .pill-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: rgba(255,255,255,0.08);
+    font-size: 0.68rem;
+    font-weight: 600;
+    margin-left: 0.35rem;
+    color: inherit;
+}
+.pill.active .pill-count {
+    background: rgba(108, 99, 255, 0.25);
+}
 
 .search-input {
     flex: 1; min-width: 180px;
@@ -357,15 +385,7 @@ body::before {
 }
 .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px var(--accent-glow); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
-.btn.loading { color: transparent; pointer-events: none; position: relative; }
-.btn.loading::after {
-    content: ''; position: absolute;
-    width: 16px; height: 16px; top: 50%; left: 50%;
-    margin: -8px 0 0 -8px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: #fff; border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-}
+
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* --- Data Table --- */
@@ -395,8 +415,13 @@ body::before {
     border-bottom: 1px solid rgba(255,255,255,0.04);
     color: var(--text-secondary);
     vertical-align: middle;
+    font-variant-numeric: tabular-nums;
 }
-.data-table tbody tr { transition: background var(--transition); cursor: pointer; }
+.data-table tbody tr {
+    transition: background var(--transition);
+    cursor: pointer;
+    animation: fadeIn 0.3s ease both;
+}
 .data-table tbody tr:hover { background: rgba(255,255,255,0.03); }
 .data-table tbody tr.selected { background: rgba(108, 99, 255, 0.08); }
 .data-table tbody tr.overdue-row { background: rgba(255, 82, 82, 0.05); }
@@ -445,6 +470,330 @@ body::before {
     padding: 0 8px;
 }
 
+/* --- Batch Panel --- */
+.batch-panel {
+    width: 320px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+.batch-panel-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 20px 60px rgba(0,0,0,0.15);
+}
+.batch-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+.batch-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.batch-header h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.batch-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 11px;
+    background: rgba(108, 99, 255, 0.15);
+    color: var(--accent-light);
+    font-size: 0.72rem;
+    font-weight: 700;
+    transition: all 0.25s;
+}
+.batch-count-badge.empty {
+    background: rgba(255,255,255,0.06);
+    color: var(--text-muted);
+}
+.batch-clear-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+.batch-clear-btn:hover {
+    color: var(--error);
+    background: rgba(255, 82, 82, 0.08);
+}
+.batch-clear-btn.hidden { display: none; }
+
+.batch-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+    min-height: 80px;
+}
+
+.batch-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    text-align: center;
+    gap: 0.5rem;
+}
+.batch-empty-state .batch-empty-icon {
+    font-size: 1.8rem;
+    opacity: 0.35;
+}
+.batch-empty-state p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    max-width: 220px;
+}
+
+/* --- Batch Cards --- */
+.batch-card {
+    background: rgba(25, 25, 40, 0.6);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    animation: slideInRight 0.25s ease;
+}
+.batch-card.removing {
+    animation: slideOutRight 0.2s ease forwards;
+}
+.batch-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.4rem;
+}
+.batch-card .card-donor-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+.batch-card .remove-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.2rem;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+.batch-card .remove-btn:hover {
+    color: var(--error);
+    background: rgba(255, 82, 82, 0.1);
+}
+.batch-card .card-details {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+.batch-card .card-details .detail-amount {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+.batch-card .card-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+.batch-card .card-controls input,
+.batch-card .card-controls select {
+    flex: 1;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.75rem;
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.2s;
+}
+.batch-card .card-controls input:focus,
+.batch-card .card-controls select:focus {
+    border-color: var(--accent);
+}
+.batch-card .card-controls select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.4rem center;
+    padding-right: 1.4rem;
+    cursor: pointer;
+}
+.batch-card .card-controls select option {
+    background: #1e1e2e;
+    color: var(--text-primary);
+}
+.batch-card .fee-group {
+    display: flex;
+    align-items: center;
+    background: var(--bg-input);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    overflow: hidden;
+    flex: 0.8;
+    transition: border-color 0.2s;
+}
+.batch-card .fee-group:focus-within {
+    border-color: var(--accent);
+}
+.batch-card .fee-group .fee-symbol {
+    padding: 0.35rem 0.3rem 0.35rem 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+.batch-card .fee-group input {
+    border: none;
+    background: transparent;
+    padding: 0.35rem 0.4rem 0.35rem 0;
+    flex: 1;
+    min-width: 0;
+}
+.batch-card .fee-group input:focus {
+    border-color: transparent;
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOutRight {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(16px); }
+}
+
+/* --- Batch Footer --- */
+.batch-footer {
+    border-top: 1px solid var(--border-subtle);
+    padding: 0.75rem 1rem;
+    flex-shrink: 0;
+}
+.batch-footer.hidden { display: none; }
+.batch-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 0.75rem;
+}
+.batch-summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+.batch-summary-row.total {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid var(--border-subtle);
+    margin-top: 0.1rem;
+}
+.batch-summary-row .amount {
+    font-variant-numeric: tabular-nums;
+}
+
+.batch-process-btn {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.25s, opacity 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+.batch-process-btn:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px var(--accent-glow);
+}
+.batch-process-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+.batch-process-btn .btn-spinner {
+    display: none;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+.batch-process-btn.loading .btn-spinner { display: block; }
+.batch-process-btn.loading .btn-text { display: none; }
+
+/* --- Progress Bar --- */
+.progress-bar-wrapper {
+    width: 100%;
+    margin-top: 0.5rem;
+    display: none;
+}
+.progress-bar-wrapper.visible { display: block; }
+.progress-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+.progress-text {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    margin-top: 0.3rem;
+    text-align: center;
+}
+
 /* --- Empty State --- */
 .empty-state {
     text-align: center; padding: 64px 24px;
@@ -471,88 +820,6 @@ body::before {
     animation: spin 0.7s linear infinite;
 }
 
-/* --- Action Panel (fixed bottom) --- */
-.action-panel {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    z-index: 60;
-    transform: translateY(100%);
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.action-panel.visible { transform: translateY(0); }
-.action-panel-inner {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 14px 24px;
-    background: rgba(20, 20, 40, 0.95);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border-top: 1px solid rgba(108, 99, 255, 0.2);
-    display: flex; align-items: center; gap: 16px;
-    flex-wrap: wrap;
-}
-.action-summary {
-    flex: 1; min-width: 200px;
-    font-size: 0.88rem; color: var(--text-secondary);
-}
-.action-summary strong { color: var(--text-primary); font-weight: 600; }
-.action-summary .action-amount {
-    color: var(--accent-light); font-weight: 700;
-}
-
-.action-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-
-.fee-wrapper {
-    display: flex; align-items: center; gap: 6px;
-}
-.fee-wrapper label {
-    font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;
-}
-.fee-input-group {
-    position: relative;
-    display: flex; align-items: center;
-}
-.fee-prefix {
-    position: absolute; left: 10px;
-    color: var(--text-muted); font-weight: 600; font-size: 0.85rem;
-    pointer-events: none;
-}
-.fee-input {
-    width: 90px; padding: 8px 10px 8px 22px;
-    background: var(--bg-input);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    font-family: var(--font);
-    font-size: 0.85rem; font-weight: 600;
-    outline: none;
-    transition: all var(--transition);
-}
-.fee-input:focus {
-    border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-.method-select {
-    padding: 8px 32px 8px 12px;
-    background: var(--bg-input);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    font-family: var(--font);
-    font-size: 0.82rem;
-    outline: none; cursor: pointer;
-    appearance: none; -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    transition: all var(--transition);
-}
-.method-select:focus {
-    border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px var(--accent-glow);
-}
-.method-select option { background: #1e1e1e; color: var(--text-primary); }
-
 /* --- Modal --- */
 .modal-overlay {
     display: none; position: fixed; inset: 0;
@@ -570,9 +837,12 @@ body::before {
     border: 1px solid var(--border-subtle);
     border-radius: 16px;
     padding: 0;
-    max-width: 520px; width: 100%;
+    max-width: 580px; width: 100%;
     animation: slideUp 0.3s ease;
-    max-height: 85vh; overflow-y: auto;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
 }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .modal-header {
@@ -588,26 +858,29 @@ body::before {
     transition: color var(--transition);
 }
 .modal-close:hover { color: var(--text-primary); }
-.modal-body { padding: 24px; }
+.modal-body { padding: 24px; overflow-y: auto; flex: 1; }
 .modal-body .confirm-summary {
     font-size: 0.85rem; color: var(--text-secondary);
     line-height: 1.7; margin-bottom: 16px;
 }
-.modal-body .confirm-summary strong { color: var(--text-primary); }
+.modal-body .confirm-summary strong { color: var(--accent-light); }
 .modal-body .confirm-list {
-    max-height: 200px; overflow-y: auto;
+    max-height: 300px; overflow-y: auto;
     margin: 12px 0; padding: 0;
     list-style: none;
 }
 .modal-body .confirm-list li {
-    display: flex; justify-content: space-between;
+    display: flex; justify-content: space-between; align-items: center;
     padding: 8px 12px;
     font-size: 0.82rem; color: var(--text-secondary);
     border-bottom: 1px solid rgba(255,255,255,0.04);
+    gap: 0.75rem;
 }
 .modal-body .confirm-list li:last-child { border-bottom: none; }
 .modal-body .confirm-list .li-donor { color: var(--text-primary); font-weight: 500; }
-.modal-body .confirm-list .li-amount { color: var(--accent-light); font-weight: 600; }
+.modal-body .confirm-list .li-detail { color: var(--text-muted); font-size: 0.75rem; }
+.modal-body .confirm-list .li-fee { color: var(--text-muted); font-size: 0.72rem; }
+.modal-body .confirm-list .li-amount { color: var(--accent-light); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .modal-body .confirm-total {
     display: flex; justify-content: space-between;
     padding: 10px 12px;
@@ -650,9 +923,22 @@ body::before {
 .fade-in { animation: fadeIn 0.4s ease-out; }
 
 /* --- Responsive --- */
+@media (max-width: 960px) {
+    .app-layout {
+        flex-direction: column;
+    }
+    .batch-panel {
+        width: 100%;
+        position: static;
+        max-height: none;
+    }
+    .batch-panel-card {
+        max-height: 50vh;
+    }
+}
 @media (max-width: 768px) {
-    .page-wrapper { padding: 0 16px 140px; }
-    .header-bar { margin: 0 -16px; padding: 0 16px; }
+    .app-layout { padding: 16px 16px 2rem; }
+    .header-bar { padding: 0 16px; }
     .header-back { display: none; }
     .header-divider { display: none; }
     .header-inner { height: 56px; }
@@ -664,9 +950,7 @@ body::before {
     .filter-bar { padding: 12px 16px; }
     .campaign-filter { padding: 12px 16px; }
     .data-table th, .data-table td { padding: 10px 10px; }
-    .action-panel-inner { padding: 12px 16px; }
-    .action-summary { min-width: 100%; margin-bottom: 4px; }
-    .toast-container { bottom: 80px; right: 16px; left: 16px; }
+    .toast-container { bottom: 24px; right: 16px; left: 16px; }
     .toast { min-width: unset; }
 }
 @media (max-width: 480px) {
@@ -706,139 +990,166 @@ body::before {
     </div>
 </header>
 
-<div class="page-wrapper">
+<!-- App Layout (Split Panel) -->
+<div class="app-layout" id="appMain">
 
-    <!-- Page Title -->
-    <div class="page-title-section fade-in">
-        <h1 class="section-title">Scheduled Payments</h1>
-        <p class="section-subtitle">Review and process scheduled donation payments across campaigns</p>
-    </div>
+    <!-- Left: Main Content -->
+    <div class="main-content">
 
-    <!-- Campaign Filter -->
-    <div class="glass-card campaign-filter fade-in" id="campaignFilterCard">
-        <label for="campaignSelect">🏛️ Campaign</label>
-        <select id="campaignSelect">
-            <option value="">All Campaigns</option>
-        </select>
-    </div>
-
-    <!-- Stats Grid -->
-    <div class="stats-grid fade-in" id="statsGrid">
-        <div class="stat-card">
-            <div class="stat-icon purple">📋</div>
-            <div>
-                <div class="stat-value" id="statTotal">0</div>
-                <div class="stat-label">Total Scheduled</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon blue">📅</div>
-            <div>
-                <div class="stat-value" id="statDueWeek">0</div>
-                <div class="stat-label">Due This Week</div>
-            </div>
-        </div>
-        <div class="stat-card highlight-red" id="statOverdueCard">
-            <div class="stat-icon red">⚠️</div>
-            <div>
-                <div class="stat-value" id="statOverdue">0</div>
-                <div class="stat-label">Overdue</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon green">💰</div>
-            <div>
-                <div class="stat-value" id="statOutstanding">$0.00</div>
-                <div class="stat-label">Total Outstanding</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Payments Table Card -->
-    <div class="glass-card fade-in" style="position:relative;">
-        <!-- Filter Bar -->
-        <div class="filter-bar">
-            <div class="filter-pills" id="filterPills">
-                <span class="pill active" data-filter="all">All</span>
-                <span class="pill" data-filter="Scheduled">Scheduled</span>
-                <span class="pill" data-filter="Overdue">Overdue</span>
-            </div>
-            <div class="search-wrapper">
-                <span class="search-icon">🔍</span>
-                <input type="text" class="search-input" id="searchInput" placeholder="Search donor name...">
-            </div>
-            <button class="btn btn-secondary" id="refreshBtn" title="Refresh data">↻ Refresh</button>
+        <!-- Page Title -->
+        <div class="page-title-section fade-in">
+            <h1 class="section-title">Scheduled Payments</h1>
+            <p class="section-subtitle">Review and process scheduled donation payments across campaigns</p>
         </div>
 
-        <!-- Table -->
-        <div class="table-wrapper">
-            <table class="data-table" id="paymentsTable">
-                <thead>
-                    <tr>
-                        <th style="width:40px;"><input type="checkbox" id="selectAll" title="Select all"></th>
-                        <th>Due Date</th>
-                        <th>Donor</th>
-                        <th>Campaign</th>
-                        <th>Amount</th>
-                        <th>Total Pledge</th>
-                        <th>Payment #</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                </tbody>
-            </table>
+        <!-- Campaign Filter -->
+        <div class="glass-card campaign-filter fade-in" id="campaignFilterCard">
+            <label for="campaignSelect">🏛️ Campaign</label>
+            <select id="campaignSelect">
+                <option value="">All Campaigns</option>
+            </select>
         </div>
 
-        <!-- Empty State -->
-        <div class="empty-state" id="emptyState" style="display:none;">
-            <div class="empty-icon">📭</div>
-            <p>No scheduled payments found. Adjust your filters or select a different campaign.</p>
-        </div>
-
-        <!-- Loading Overlay -->
-        <div class="loading-overlay" id="tableLoading">
-            <div class="loading-spinner"></div>
-        </div>
-
-        <!-- Pagination -->
-        <div class="pagination" id="paginationBar">
-            <span class="pagination-info" id="paginationInfo">Showing 0 payments</span>
-            <div class="pagination-btns">
-                <button class="btn btn-secondary" id="prevPageBtn" disabled>← Prev</button>
-                <span class="page-info" id="pageInfo">Page 1 of 1</span>
-                <button class="btn btn-secondary" id="nextPageBtn" disabled>Next →</button>
-            </div>
-        </div>
-    </div>
-
-</div><!-- /page-wrapper -->
-
-<!-- Action Panel (fixed bottom) -->
-<div class="action-panel" id="actionPanel">
-    <div class="action-panel-inner">
-        <div class="action-summary">
-            <strong id="selectedCount">0</strong> payments selected · <span class="action-amount" id="selectedTotal">$0.00</span> total
-        </div>
-        <div class="action-controls">
-            <div class="fee-wrapper">
-                <label for="feeInput">Fee:</label>
-                <div class="fee-input-group">
-                    <span class="fee-prefix">$</span>
-                    <input type="number" class="fee-input" id="feeInput" value="0.00" min="0" step="0.01">
+        <!-- Stats Grid -->
+        <div class="stats-grid fade-in" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-icon purple">📋</div>
+                <div>
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total Scheduled</div>
                 </div>
             </div>
-            <select class="method-select" id="methodSelect">
-                <option value="Check">Check</option>
-                <option value="Cash">Cash</option>
-                <option value="Wire">Wire</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="Other">Other</option>
-            </select>
-            <button class="btn btn-primary" id="processBtn">✓ Process Selected</button>
+            <div class="stat-card">
+                <div class="stat-icon blue">📅</div>
+                <div>
+                    <div class="stat-value" id="statDueWeek">0</div>
+                    <div class="stat-label">Due This Week</div>
+                </div>
+            </div>
+            <div class="stat-card highlight-red" id="statOverdueCard">
+                <div class="stat-icon red">⚠️</div>
+                <div>
+                    <div class="stat-value" id="statOverdue">0</div>
+                    <div class="stat-label">Overdue</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">💰</div>
+                <div>
+                    <div class="stat-value" id="statOutstanding">$0.00</div>
+                    <div class="stat-label">Total Outstanding</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments Table Card -->
+        <div class="glass-card fade-in" style="position:relative;">
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-pills" id="filterPills">
+                    <span class="pill active" data-filter="all">All<span class="pill-count" id="countAll">0</span></span>
+                    <span class="pill" data-filter="Scheduled">Scheduled<span class="pill-count" id="countScheduled">0</span></span>
+                    <span class="pill" data-filter="Overdue">Overdue<span class="pill-count" id="countOverdue">0</span></span>
+                </div>
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search donor name...">
+                </div>
+                <button class="btn btn-secondary" id="refreshBtn" title="Refresh data">↻ Refresh</button>
+            </div>
+
+            <!-- Table -->
+            <div class="table-wrapper">
+                <table class="data-table" id="paymentsTable">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"><input type="checkbox" id="selectAll" title="Select all"></th>
+                            <th>Due Date</th>
+                            <th>Donor</th>
+                            <th>Campaign</th>
+                            <th>Amount</th>
+                            <th>Total Pledge</th>
+                            <th>Payment #</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <div class="empty-icon">📭</div>
+                <p>No scheduled payments found. Adjust your filters or select a different campaign.</p>
+            </div>
+
+            <!-- Loading Overlay -->
+            <div class="loading-overlay" id="tableLoading">
+                <div class="loading-spinner"></div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="paginationBar">
+                <span class="pagination-info" id="paginationInfo">Showing 0 payments</span>
+                <div class="pagination-btns">
+                    <button class="btn btn-secondary" id="prevPageBtn" disabled>← Prev</button>
+                    <span class="page-info" id="pageInfo">Page 1 of 1</span>
+                    <button class="btn btn-secondary" id="nextPageBtn" disabled>Next →</button>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- Right: Batch Panel -->
+    <aside class="batch-panel" id="batchPanel">
+        <div class="batch-panel-card">
+            <div class="batch-header">
+                <div class="batch-header-left">
+                    <h3>Batch Queue</h3>
+                    <span class="batch-count-badge empty" id="batchCountBadge">0</span>
+                </div>
+                <button class="batch-clear-btn hidden" id="batchClearBtn">Clear All</button>
+            </div>
+
+            <div class="batch-items" id="batchItems">
+                <div class="batch-empty-state" id="batchEmptyState">
+                    <div class="batch-empty-icon">📋</div>
+                    <p>Select payments from the table to add them here</p>
+                </div>
+            </div>
+
+            <div class="batch-footer hidden" id="batchFooter">
+                <div class="batch-summary">
+                    <div class="batch-summary-row">
+                        <span>Subtotal</span>
+                        <span class="amount" id="batchSubtotal">$0.00</span>
+                    </div>
+                    <div class="batch-summary-row">
+                        <span>Total Fees</span>
+                        <span class="amount" id="batchFees">$0.00</span>
+                    </div>
+                    <div class="batch-summary-row total">
+                        <span>Net Total</span>
+                        <span class="amount" id="batchNet">$0.00</span>
+                    </div>
+                </div>
+                <button class="batch-process-btn" id="batchProcessBtn">
+                    <span class="btn-text">Process 0 Payments</span>
+                    <span class="btn-spinner"></span>
+                </button>
+                <div class="progress-bar-wrapper" id="progressWrapper">
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Processing 0 / 0</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+</div><!-- /app-layout -->
 
 <!-- Confirmation Modal -->
 <div class="modal-overlay" id="confirmModal">
@@ -865,6 +1176,9 @@ body::before {
    BOOKKEEPER PORTAL — Application Logic
    ═══════════════════════════════════════════════════════════ */
 
+// ── Constants ──
+const METHOD_OPTIONS = ['Credit Card', 'Check', 'Cash', 'Wire', 'Bank Transfer', 'DAF', 'Other'];
+
 // ── State ──
 const STATE = {
     payments: [],       // raw from API
@@ -885,19 +1199,42 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
 function formatCurrency(n) {
-    return (n || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
+    return '$' + (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Parse yyyy-MM-dd as local date (avoids UTC timezone shift that causes -1 day)
+function parseLocalDate(dateStr) {
+    if (!dateStr) return new Date(0);
+    const parts = String(dateStr).split('T')[0].split('-');
+    if (parts.length === 3) {
+        return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+    return new Date(dateStr);
 }
 
 function formatDate(d) {
     if (!d) return '—';
-    const dt = new Date(d);
-    if (isNaN(dt)) return d;
-    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    try {
+        // Parse yyyy-MM-dd as local date to avoid timezone shift
+        const parts = String(d).split('T')[0].split('-');
+        if (parts.length === 3) {
+            const dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            if (!isNaN(dt.getTime())) {
+                return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            }
+        }
+        // Fallback
+        const dt = new Date(d);
+        if (isNaN(dt)) return d;
+        return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+    } catch {
+        return d;
+    }
 }
 
 function isOverdue(dateStr) {
     if (!dateStr) return false;
-    const due = new Date(dateStr);
+    const due = parseLocalDate(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return due < today;
@@ -905,7 +1242,7 @@ function isOverdue(dateStr) {
 
 function isDueThisWeek(dateStr) {
     if (!dateStr) return false;
-    const due = new Date(dateStr);
+    const due = parseLocalDate(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const weekEnd = new Date(today);
@@ -913,17 +1250,26 @@ function isDueThisWeek(dateStr) {
     return due >= today && due <= weekEnd;
 }
 
-function getStatusBadge(status, dueDate) {
-    const s = (status || '').toLowerCase();
-    if (s === 'scheduled' && isOverdue(dueDate)) {
-        return '<span class="badge badge-overdue">Overdue</span>';
-    }
+function getStatus(payment) {
+    if (payment.status && payment.status.toLowerCase() === 'paid') return 'Paid';
+    const due = parseLocalDate(payment.dueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (due < today) return 'Overdue';
+    return 'Scheduled';
+}
+
+function getStatusBadge(status) {
     const map = {
-        scheduled: 'badge-scheduled',
-        overdue: 'badge-overdue',
-        paid: 'badge-paid',
+        'Scheduled': 'badge-scheduled',
+        'Overdue': 'badge-overdue',
+        'Paid': 'badge-paid',
     };
-    return `<span class="badge ${map[s] || 'badge-scheduled'}">${status || '—'}</span>`;
+    return `<span class="badge ${map[status] || 'badge-scheduled'}">${status || '—'}</span>`;
+}
+
+function paymentUid(p) {
+    return p.scheduleId || `${p.pledgeId}_${p.paymentNum}`;
 }
 
 // ── Toast ──
@@ -972,7 +1318,7 @@ function initEventListeners() {
         STATE.campaignId = $('#campaignSelect').value;
         STATE.page = 1;
         STATE.selected.clear();
-        updateActionPanel();
+        updateBatchPanel();
         await loadPayments();
     });
 
@@ -1001,7 +1347,7 @@ function initEventListeners() {
     // Refresh
     $('#refreshBtn').addEventListener('click', async () => {
         STATE.selected.clear();
-        updateActionPanel();
+        updateBatchPanel();
         await loadPayments();
     });
 
@@ -1010,11 +1356,12 @@ function initEventListeners() {
         const checked = e.target.checked;
         const visible = getPagedData();
         visible.forEach(p => {
-            if (checked) STATE.selected.add(p.scheduleId);
-            else STATE.selected.delete(p.scheduleId);
+            const uid = paymentUid(p);
+            if (checked) STATE.selected.add(uid);
+            else STATE.selected.delete(uid);
         });
         renderTable();
-        updateActionPanel();
+        updateBatchPanel();
     });
 
     // Pagination
@@ -1025,8 +1372,11 @@ function initEventListeners() {
         if (STATE.page < STATE.totalPages) { STATE.page++; renderTable(); }
     });
 
-    // Process button
-    $('#processBtn').addEventListener('click', openConfirmModal);
+    // Process button (batch panel)
+    $('#batchProcessBtn').addEventListener('click', openConfirmModal);
+
+    // Clear all batch
+    $('#batchClearBtn').addEventListener('click', clearAllBatch);
 
     // Modal buttons
     $('#modalCloseBtn').addEventListener('click', closeModal);
@@ -1096,11 +1446,19 @@ function applyFilters() {
         );
     }
 
+    // Sort by dueDate ascending by default
+    data.sort((a, b) => {
+        const va = parseLocalDate(a.dueDate).getTime();
+        const vb = parseLocalDate(b.dueDate).getTime();
+        return va - vb;
+    });
+
     STATE.filtered = data;
     STATE.totalPages = Math.max(1, Math.ceil(data.length / STATE.pageSize));
     if (STATE.page > STATE.totalPages) STATE.page = STATE.totalPages;
 
     updateStats();
+    updateFilterCounts();
     renderTable();
 }
 
@@ -1124,26 +1482,27 @@ function renderTable() {
     empty.style.display = 'none';
     $('#paginationBar').style.display = '';
 
-    tbody.innerHTML = paged.map(p => {
-        const overdue = isOverdue(p.dueDate);
-        const isSelected = STATE.selected.has(p.scheduleId);
+    tbody.innerHTML = paged.map((p, i) => {
+        const status = getStatus(p);
+        const uid = paymentUid(p);
+        const isSelected = STATE.selected.has(uid);
+        const isOD = status === 'Overdue';
         const rowClass = [
-            overdue ? 'overdue-row' : '',
+            isOD ? 'overdue-row' : '',
             isSelected ? 'selected' : ''
         ].filter(Boolean).join(' ');
 
-        const displayStatus = overdue && (p.status || '').toLowerCase() === 'scheduled' ? 'Overdue' : (p.status || 'Scheduled');
-
         return `
-        <tr class="${rowClass}" data-id="${p.scheduleId}">
-            <td><input type="checkbox" class="row-check" data-id="${p.scheduleId}" ${isSelected ? 'checked' : ''}></td>
+        <tr class="${rowClass}" data-uid="${uid}" style="animation-delay: ${i * 0.03}s">
+            <td><input type="checkbox" class="row-check" data-uid="${uid}" ${isSelected ? 'checked' : ''}></td>
             <td>${formatDate(p.dueDate)}</td>
             <td><span class="donor-name">${escapeHtml(p.donor || '—')}</span></td>
             <td><span class="campaign-tag">${escapeHtml(p.campaignName || '—')}</span></td>
             <td class="amount-cell">${formatCurrency(p.amount)}</td>
             <td>${formatCurrency(p.totalPledge)}</td>
             <td><span class="payment-num">${p.paymentNum || '—'} / ${p.totalPayments || '—'}</span></td>
-            <td>${getStatusBadge(displayStatus, p.dueDate)}</td>
+            <td>${escapeHtml(p.method || '—')}</td>
+            <td>${getStatusBadge(status)}</td>
         </tr>`;
     }).join('');
 
@@ -1151,11 +1510,11 @@ function renderTable() {
     $$('.row-check').forEach(cb => {
         cb.addEventListener('change', (e) => {
             e.stopPropagation();
-            const id = cb.dataset.id;
-            if (cb.checked) STATE.selected.add(id);
-            else STATE.selected.delete(id);
+            const uid = cb.dataset.uid;
+            if (cb.checked) STATE.selected.add(uid);
+            else STATE.selected.delete(uid);
             renderTable();
-            updateActionPanel();
+            updateBatchPanel();
         });
     });
 
@@ -1163,17 +1522,19 @@ function renderTable() {
     $$('#tableBody tr').forEach(tr => {
         tr.addEventListener('click', (e) => {
             if (e.target.type === 'checkbox') return;
-            const id = tr.dataset.id;
-            if (STATE.selected.has(id)) STATE.selected.delete(id);
-            else STATE.selected.add(id);
+            const uid = tr.dataset.uid;
+            if (STATE.selected.has(uid)) STATE.selected.delete(uid);
+            else STATE.selected.add(uid);
             renderTable();
-            updateActionPanel();
+            updateBatchPanel();
         });
     });
 
     // Update select all
-    const allOnPage = paged.every(p => STATE.selected.has(p.scheduleId));
+    const allOnPage = paged.every(p => STATE.selected.has(paymentUid(p)));
+    const someOnPage = paged.some(p => STATE.selected.has(paymentUid(p)));
     $('#selectAll').checked = paged.length > 0 && allOnPage;
+    $('#selectAll').indeterminate = someOnPage && !allOnPage;
 
     // Pagination
     $('#paginationInfo').textContent = `Showing ${paged.length} of ${STATE.filtered.length} payments`;
@@ -1191,10 +1552,26 @@ function escapeHtml(s) {
 // ── Stats ──
 function updateStats() {
     const all = STATE.payments;
-    const totalCount = all.length;
-    const overdueCount = all.filter(p => isOverdue(p.dueDate)).length;
-    const dueWeekCount = all.filter(p => isDueThisWeek(p.dueDate)).length;
-    const totalAmount = all.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(now);
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+    let totalCount = all.length;
+    let overdueCount = 0;
+    let dueWeekCount = 0;
+    let totalAmount = 0;
+
+    all.forEach(p => {
+        const due = parseLocalDate(p.dueDate);
+        const amount = parseFloat(p.amount) || 0;
+        const status = getStatus(p);
+
+        if (status === 'Overdue') overdueCount++;
+        if (due >= now && due <= endOfWeek && status !== 'Paid') dueWeekCount++;
+        if (status !== 'Paid') totalAmount += amount;
+    });
 
     $('#statTotal').textContent = totalCount.toLocaleString();
     $('#statDueWeek').textContent = dueWeekCount.toLocaleString();
@@ -1207,50 +1584,241 @@ function updateStats() {
     else card.classList.remove('highlight-red');
 }
 
-// ── Action Panel ──
-function updateActionPanel() {
-    const panel = $('#actionPanel');
-    const count = STATE.selected.size;
+function updateFilterCounts() {
+    const all = STATE.payments;
+    const scheduledCount = all.filter(p => getStatus(p) === 'Scheduled').length;
+    const overdueCount = all.filter(p => getStatus(p) === 'Overdue').length;
 
-    if (count === 0) {
-        panel.classList.remove('visible');
+    $('#countAll').textContent = all.length;
+    $('#countScheduled').textContent = scheduledCount;
+    $('#countOverdue').textContent = overdueCount;
+}
+
+// ── Batch Panel ──
+function getSelectedPayments() {
+    return STATE.payments.filter(p => STATE.selected.has(paymentUid(p)));
+}
+
+function updateBatchPanel() {
+    const selected = getSelectedPayments();
+    const batchItems = $('#batchItems');
+    const batchEmptyState = $('#batchEmptyState');
+    const batchFooter = $('#batchFooter');
+    const batchClearBtn = $('#batchClearBtn');
+    const batchCountBadge = $('#batchCountBadge');
+
+    batchCountBadge.textContent = selected.length;
+    batchCountBadge.classList.toggle('empty', selected.length === 0);
+
+    if (selected.length === 0) {
+        batchEmptyState.style.display = 'flex';
+        batchFooter.classList.add('hidden');
+        batchClearBtn.classList.add('hidden');
+        // Remove all cards
+        batchItems.querySelectorAll('.batch-card').forEach(c => c.remove());
+        updateBatchSummary();
         return;
     }
 
-    panel.classList.add('visible');
-    const total = STATE.payments
-        .filter(p => STATE.selected.has(p.scheduleId))
-        .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    batchEmptyState.style.display = 'none';
+    batchFooter.classList.remove('hidden');
+    batchClearBtn.classList.remove('hidden');
 
-    $('#selectedCount').textContent = count;
-    $('#selectedTotal').textContent = formatCurrency(total);
+    // Get currently rendered card UIDs
+    const existingCards = batchItems.querySelectorAll('.batch-card');
+    const existingUids = new Set();
+    existingCards.forEach(c => existingUids.add(c.dataset.uid));
+
+    // Build set of selected UIDs
+    const selectedUids = new Set(selected.map(p => paymentUid(p)));
+
+    // Remove cards for deselected payments
+    existingCards.forEach(card => {
+        if (!selectedUids.has(card.dataset.uid)) {
+            card.classList.add('removing');
+            setTimeout(() => card.remove(), 200);
+        }
+    });
+
+    // Add cards for newly selected payments
+    selected.forEach(p => {
+        const uid = paymentUid(p);
+        if (!existingUids.has(uid)) {
+            const cardEl = createBatchCard(p);
+            batchItems.appendChild(cardEl);
+        }
+    });
+
+    updateBatchSummary();
+}
+
+function createBatchCard(payment) {
+    const uid = paymentUid(payment);
+    const donor = payment.donor || 'Unknown';
+    const amount = parseFloat(payment.amount) || 0;
+    const dueDate = formatDate(payment.dueDate);
+    const payNum = payment.paymentNum || '—';
+    const totalPay = payment.totalPayments || '—';
+    const defaultMethod = payment.method || 'Credit Card';
+
+    const card = document.createElement('div');
+    card.className = 'batch-card';
+    card.dataset.uid = uid;
+    card.dataset.amount = amount;
+
+    const methodOptions = METHOD_OPTIONS.map(m =>
+        `<option value="${m}" ${m === defaultMethod ? 'selected' : ''}>${m}</option>`
+    ).join('');
+
+    card.innerHTML = `
+        <div class="card-header">
+            <span class="card-donor-name">${escapeHtml(donor)}</span>
+            <button class="remove-btn" title="Remove">×</button>
+        </div>
+        <div class="card-details">
+            Due: ${dueDate}  ·  <span class="detail-amount">${formatCurrency(amount)}</span><br>
+            Pmt #${payNum}${totalPay !== '—' ? ' of ' + totalPay : ''}
+        </div>
+        <div class="card-controls">
+            <div class="fee-group">
+                <span class="fee-symbol">$</span>
+                <input type="number" class="batch-fee-input" value="0.00" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <select class="batch-method-select" title="Payment method">
+                ${methodOptions}
+            </select>
+        </div>
+    `;
+
+    // Wire up remove button
+    card.querySelector('.remove-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeBatchCard(uid);
+    });
+
+    // Wire up fee input to update summary
+    card.querySelector('.batch-fee-input').addEventListener('input', updateBatchSummary);
+
+    return card;
+}
+
+function removeBatchCard(uid) {
+    STATE.selected.delete(uid);
+    const card = document.querySelector(`.batch-card[data-uid="${uid}"]`);
+    if (card) {
+        card.classList.add('removing');
+        setTimeout(() => {
+            card.remove();
+            updateBatchSummary();
+        }, 200);
+    }
+    renderTable();
+    // Update header badge/footer after removal
+    const selected = getSelectedPayments();
+    const batchCountBadge = $('#batchCountBadge');
+    batchCountBadge.textContent = selected.length;
+    batchCountBadge.classList.toggle('empty', selected.length === 0);
+    if (selected.length === 0) {
+        $('#batchEmptyState').style.display = 'flex';
+        $('#batchFooter').classList.add('hidden');
+        $('#batchClearBtn').classList.add('hidden');
+    }
+}
+
+function clearAllBatch() {
+    STATE.selected.clear();
+    renderTable();
+    updateBatchPanel();
+}
+
+function updateBatchSummary() {
+    const cards = document.querySelectorAll('.batch-card:not(.removing)');
+    let subtotal = 0;
+    let totalFees = 0;
+
+    cards.forEach(card => {
+        subtotal += parseFloat(card.dataset.amount) || 0;
+        const feeInput = card.querySelector('.batch-fee-input');
+        totalFees += parseFloat(feeInput?.value) || 0;
+    });
+
+    const net = subtotal - totalFees;
+
+    $('#batchSubtotal').textContent = formatCurrency(subtotal);
+    $('#batchFees').textContent = formatCurrency(totalFees);
+    $('#batchNet').textContent = formatCurrency(net);
+
+    const btnText = document.querySelector('#batchProcessBtn .btn-text');
+    if (btnText) {
+        btnText.textContent = `Process ${cards.length} Payment${cards.length !== 1 ? 's' : ''}`;
+    }
+}
+
+// ── Read batch card details ──
+function getBatchItemDetails() {
+    const cards = document.querySelectorAll('.batch-card:not(.removing)');
+    const items = [];
+
+    cards.forEach(card => {
+        const uid = card.dataset.uid;
+        const payment = STATE.payments.find(p => paymentUid(p) === uid);
+        if (!payment) return;
+
+        const donor = payment.donor || 'Unknown';
+        const amount = parseFloat(payment.amount) || 0;
+        const fee = parseFloat(card.querySelector('.batch-fee-input')?.value) || 0;
+        const method = card.querySelector('.batch-method-select')?.value || payment.method || 'Credit Card';
+
+        items.push({
+            uid,
+            payment,
+            donor,
+            amount,
+            fee,
+            method,
+            dueDate: formatDate(payment.dueDate),
+            payNum: payment.paymentNum || '—'
+        });
+    });
+
+    return items;
 }
 
 // ── Modal ──
 function openConfirmModal() {
     if (STATE.selected.size === 0) return;
 
-    const selectedPayments = STATE.payments.filter(p => STATE.selected.has(p.scheduleId));
-    const totalAmount = selectedPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    const fee = parseFloat($('#feeInput').value) || 0;
-    const method = $('#methodSelect').value;
+    // Gather per-item details from batch cards
+    const items = getBatchItemDetails();
+    const totalAmount = items.reduce((sum, it) => sum + it.amount, 0);
+    const totalFees = items.reduce((sum, it) => sum + it.fee, 0);
 
-    const listHtml = selectedPayments.map(p => `
+    const feeText = totalFees > 0
+        ? ` with <strong>${formatCurrency(totalFees)}</strong> in total fees`
+        : '';
+
+    const listHtml = items.map(it => {
+        const feeStr = it.fee > 0 ? `Fee: ${formatCurrency(it.fee)}` : 'No fee';
+        return `
         <li>
-            <span class="li-donor">${escapeHtml(p.donor || '—')}</span>
-            <span class="li-amount">${formatCurrency(p.amount)}</span>
-        </li>
-    `).join('');
+            <div>
+                <div class="li-donor">${escapeHtml(it.donor)}</div>
+                <div class="li-detail">Due ${it.dueDate} · Pmt #${it.payNum} · ${escapeHtml(it.method)}</div>
+                <div class="li-fee">${feeStr}</div>
+            </div>
+            <span class="li-amount">${formatCurrency(it.amount)}</span>
+        </li>`;
+    }).join('');
 
     $('#modalBody').innerHTML = `
         <div class="confirm-summary">
-            You are about to process <strong>${selectedPayments.length} payment${selectedPayments.length > 1 ? 's' : ''}</strong>
-            via <strong>${method}</strong>${fee > 0 ? ` with a fee of <strong>${formatCurrency(fee)}</strong> per payment` : ''}.
+            You are about to process <strong>${items.length} payment${items.length > 1 ? 's' : ''}</strong>
+            for <strong>${formatCurrency(totalAmount)}</strong>${feeText}.
         </div>
         <ul class="confirm-list">${listHtml}</ul>
         <div class="confirm-total">
-            <span class="ct-label">Total Amount</span>
-            <span class="ct-value">${formatCurrency(totalAmount)}</span>
+            <span class="ct-label">Net Total</span>
+            <span class="ct-value">${formatCurrency(totalAmount - totalFees)}</span>
         </div>
     `;
 
@@ -1266,55 +1834,76 @@ async function processPayments() {
     const confirmBtn = $('#modalConfirmBtn');
     if (confirmBtn.classList.contains('loading')) return;
 
-    confirmBtn.classList.add('loading');
-    confirmBtn.disabled = true;
+    const items = getBatchItemDetails();
+    if (items.length === 0) return;
 
-    const selectedPayments = STATE.payments.filter(p => STATE.selected.has(p.scheduleId));
-    const fee = parseFloat($('#feeInput').value) || 0;
-    const method = $('#methodSelect').value;
+    // Close modal, show progress in batch panel
+    closeModal();
+    const processBtn = $('#batchProcessBtn');
+    processBtn.classList.add('loading');
+    processBtn.disabled = true;
+
+    const progressWrapper = $('#progressWrapper');
+    const progressFill = $('#progressFill');
+    const progressText = $('#progressText');
+    progressWrapper.classList.add('visible');
 
     let successCount = 0;
     let failCount = 0;
 
-    for (const payment of selectedPayments) {
+    // Process sequentially to avoid race conditions
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+
+        progressFill.style.width = `${((i) / items.length) * 100}%`;
+        progressText.textContent = `Processing ${i + 1} / ${items.length} — ${item.donor}`;
+
         try {
             const result = await authPost('processBookkeeperPayment', {
-                campaignId: payment.campaignId,
-                pledgeId: payment.pledgeId,
-                scheduleId: payment.scheduleId,
-                paymentNum: payment.paymentNum,
-                amount: payment.amount,
-                fee: fee,
-                method: method,
+                campaignId: item.payment.campaignId,
+                pledgeId: item.payment.pledgeId,
+                scheduleId: item.payment.scheduleId,
+                paymentNum: item.payment.paymentNum,
+                amount: item.payment.amount,
+                fee: item.fee,
+                method: item.method,
             });
 
             if (result.status === 'success') {
                 successCount++;
+                STATE.selected.delete(item.uid);
             } else {
                 failCount++;
-                console.error('Payment failed:', payment.scheduleId, result.message);
+                console.error('Payment failed:', item.uid, result.message);
             }
         } catch (err) {
             failCount++;
-            console.error('Payment error:', payment.scheduleId, err);
+            console.error('Payment error:', item.uid, err);
+            showToast(`Failed: ${item.donor} — ${err.message || 'Unknown error'}`, 'error');
         }
     }
 
-    confirmBtn.classList.remove('loading');
-    confirmBtn.disabled = false;
-    closeModal();
+    // Complete
+    progressFill.style.width = '100%';
 
     if (successCount > 0) {
         showToast(`Successfully processed ${successCount} payment${successCount > 1 ? 's' : ''}`, 'success');
     }
-    if (failCount > 0) {
+    if (failCount > 0 && successCount > 0) {
         showToast(`${failCount} payment${failCount > 1 ? 's' : ''} failed to process`, 'error');
     }
 
+    // Reset UI
+    processBtn.classList.remove('loading');
+    processBtn.disabled = false;
+    setTimeout(() => {
+        progressWrapper.classList.remove('visible');
+        progressFill.style.width = '0%';
+    }, 1000);
+
     // Reload data
-    STATE.selected.clear();
-    updateActionPanel();
     await loadPayments();
+    updateBatchPanel();
 }
 </script>
 </body>

@@ -52,11 +52,27 @@
         .access-denied h1 { font-size: 1.5rem; margin-bottom: .5rem; color: #ff5252; }
         .access-denied p { color: #888; max-width: 360px; font-size: 0.95rem; }
 
-        /* ── Page Wrapper ──────────────────────────────── */
-        .page-wrapper {
-            max-width: 900px;
+        /* ── App Layout (Split Panel) ─────────────────── */
+        .app-layout {
+            display: flex;
+            gap: 1.5rem;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 2rem 1.25rem 6rem;
+            padding: 2rem 1.25rem 2rem;
+        }
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .batch-panel {
+            width: 320px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1rem;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
         /* ── Header ────────────────────────────────────── */
@@ -341,8 +357,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Stagger animation delay via JS with inline style */
-
         /* ── Custom Checkbox ───────────────────────────── */
         .custom-checkbox {
             position: relative;
@@ -470,108 +484,256 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ── Action Panel (Fixed Bottom) ───────────────── */
-        .action-panel {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background: rgba(20, 20, 35, 0.95);
-            border-top: 1px solid rgba(255,255,255,0.08);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            transform: translateY(100%);
-            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+        /* ── Batch Panel ──────────────────────────────── */
+        .batch-panel-card {
+            background: rgba(30, 30, 50, 0.7);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+            min-height: 0;
         }
-        .action-panel.visible {
-            transform: translateY(0);
-        }
-        .action-panel-inner {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 1rem 1.25rem;
+        .batch-header {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        .action-summary {
-            font-size: 0.85rem;
-            color: #ccc;
+            justify-content: space-between;
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
             flex-shrink: 0;
         }
-        .action-summary .highlight {
+        .batch-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .batch-header h3 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .batch-count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            padding: 0 6px;
+            border-radius: 11px;
+            background: rgba(77, 171, 247, 0.15);
             color: #4dabf7;
-            font-weight: 600;
+            font-size: 0.72rem;
+            font-weight: 700;
+            transition: all 0.25s;
         }
-        .action-controls {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-left: auto;
-            flex-wrap: wrap;
-        }
-        .fee-input-group {
-            display: flex;
-            align-items: center;
-            gap: 0;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .fee-input-group .fee-prefix {
-            padding: 0.5rem 0.6rem;
-            color: #888;
-            font-size: 0.85rem;
-            font-weight: 600;
-            background: rgba(255,255,255,0.03);
-            border-right: 1px solid rgba(255,255,255,0.08);
-        }
-        .fee-input-group .fee-label {
-            padding: 0.5rem 0.6rem;
+        .batch-count-badge.empty {
+            background: rgba(255,255,255,0.06);
             color: #666;
+        }
+        .batch-clear-btn {
+            background: none;
+            border: none;
+            color: #666;
+            font-family: 'Inter', sans-serif;
             font-size: 0.75rem;
             font-weight: 500;
-            border-right: 1px solid rgba(255,255,255,0.08);
-            white-space: nowrap;
-        }
-        .fee-input-group input {
-            width: 70px;
-            padding: 0.5rem 0.6rem;
-            background: transparent;
-            border: none;
-            color: #e0e0e0;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.85rem;
-            font-weight: 600;
-            outline: none;
-            font-variant-numeric: tabular-nums;
-        }
-        .method-select {
-            padding: 0.5rem 2rem 0.5rem 0.7rem;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            color: #e0e0e0;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.82rem;
             cursor: pointer;
-            appearance: none;
-            -webkit-appearance: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .batch-clear-btn:hover {
+            color: #ff5252;
+            background: rgba(255, 82, 82, 0.08);
+        }
+        .batch-clear-btn.hidden { display: none; }
+
+        .batch-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+            min-height: 80px;
+        }
+
+        .batch-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            text-align: center;
+            gap: 0.5rem;
+        }
+        .batch-empty-state .batch-empty-icon {
+            font-size: 1.8rem;
+            opacity: 0.35;
+        }
+        .batch-empty-state p {
+            font-size: 0.78rem;
+            color: #555;
+            line-height: 1.5;
+            max-width: 220px;
+        }
+
+        /* ── Batch Cards ──────────────────────────────── */
+        .batch-card {
+            background: rgba(30, 30, 50, 0.6);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            animation: slideInRight 0.25s ease;
+        }
+        .batch-card.removing {
+            animation: slideOutRight 0.2s ease forwards;
+        }
+        .batch-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.4rem;
+        }
+        .batch-card .donor-name {
+            font-weight: 600;
+            color: #fff;
+            font-size: 0.85rem;
+        }
+        .batch-card .remove-btn {
+            background: none;
+            border: none;
+            color: #555;
+            font-size: 1.1rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0 0.2rem;
+            border-radius: 4px;
+            transition: all 0.15s;
+        }
+        .batch-card .remove-btn:hover {
+            color: #ff5252;
+            background: rgba(255, 82, 82, 0.1);
+        }
+        .batch-card .card-details {
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+        .batch-card .card-details .detail-amount {
+            color: #e0e0e0;
+            font-weight: 600;
+        }
+        .batch-card .card-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .batch-card .card-controls input,
+        .batch-card .card-controls select {
+            flex: 1;
+            padding: 0.35rem 0.5rem;
+            font-size: 0.75rem;
+            background: #2a2a3e;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
             outline: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.6rem center;
             transition: border-color 0.2s;
         }
-        .method-select:focus { border-color: #4dabf7; }
-        .method-select option { background: #1e1e2e; color: #e0e0e0; }
+        .batch-card .card-controls input:focus,
+        .batch-card .card-controls select:focus {
+            border-color: #4dabf7;
+        }
+        .batch-card .card-controls select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.4rem center;
+            padding-right: 1.4rem;
+            cursor: pointer;
+        }
+        .batch-card .card-controls select option {
+            background: #1e1e2e;
+            color: #e0e0e0;
+        }
+        .batch-card .fee-group {
+            display: flex;
+            align-items: center;
+            background: #2a2a3e;
+            border: 1px solid #444;
+            border-radius: 6px;
+            overflow: hidden;
+            flex: 0.8;
+            transition: border-color 0.2s;
+        }
+        .batch-card .fee-group:focus-within {
+            border-color: #4dabf7;
+        }
+        .batch-card .fee-group .fee-symbol {
+            padding: 0.35rem 0.3rem 0.35rem 0.5rem;
+            color: #666;
+            font-size: 0.75rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .batch-card .fee-group input {
+            border: none;
+            background: transparent;
+            padding: 0.35rem 0.4rem 0.35rem 0;
+            flex: 1;
+            min-width: 0;
+        }
+        .batch-card .fee-group input:focus {
+            border-color: transparent;
+        }
 
-        .process-btn {
-            padding: 0.55rem 1.4rem;
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(16px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(16px); }
+        }
+
+        /* ── Batch Footer ─────────────────────────────── */
+        .batch-footer {
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 0.75rem 1rem;
+            flex-shrink: 0;
+        }
+        .batch-footer.hidden { display: none; }
+        .batch-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            margin-bottom: 0.75rem;
+        }
+        .batch-summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: #888;
+        }
+        .batch-summary-row.total {
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding-top: 0.35rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            margin-top: 0.1rem;
+        }
+        .batch-summary-row .amount {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .batch-process-btn {
+            width: 100%;
+            padding: 0.6rem 1rem;
             background: linear-gradient(135deg, #4dabf7, #339af0);
             color: #fff;
             border: none;
@@ -583,20 +745,20 @@
             transition: transform 0.15s, box-shadow 0.25s, opacity 0.2s;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 0.5rem;
-            white-space: nowrap;
         }
-        .process-btn:hover:not(:disabled) {
+        .batch-process-btn:hover:not(:disabled) {
             transform: scale(1.02);
             box-shadow: 0 4px 20px rgba(77, 171, 247, 0.35);
         }
-        .process-btn:disabled {
+        .batch-process-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
-        .process-btn .btn-spinner {
+        .batch-process-btn .btn-spinner {
             display: none;
             width: 16px; height: 16px;
             border: 2px solid rgba(255,255,255,0.3);
@@ -604,8 +766,36 @@
             border-radius: 50%;
             animation: spin 0.6s linear infinite;
         }
-        .process-btn.loading .btn-spinner { display: block; }
-        .process-btn.loading .btn-text { display: none; }
+        .batch-process-btn.loading .btn-spinner { display: block; }
+        .batch-process-btn.loading .btn-text { display: none; }
+
+        /* ── Progress Bar (batch processing) ───────────── */
+        .progress-bar-wrapper {
+            width: 100%;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .progress-bar-wrapper.visible { display: block; }
+        .progress-track {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4dabf7, #74c0fc);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        .progress-text {
+            font-size: 0.72rem;
+            color: #888;
+            margin-top: 0.3rem;
+            text-align: center;
+        }
 
         /* ── Modal ──────────────────────────────────────── */
         .modal-overlay {
@@ -627,7 +817,7 @@
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 16px;
             width: 100%;
-            max-width: 520px;
+            max-width: 580px;
             max-height: 85vh;
             display: flex;
             flex-direction: column;
@@ -677,7 +867,7 @@
         .modal-summary strong { color: #4dabf7; }
         .modal-list {
             list-style: none;
-            max-height: 240px;
+            max-height: 300px;
             overflow-y: auto;
         }
         .modal-list li {
@@ -687,11 +877,13 @@
             padding: 0.6rem 0.75rem;
             border-bottom: 1px solid rgba(255,255,255,0.04);
             font-size: 0.83rem;
+            gap: 0.75rem;
         }
         .modal-list li:last-child { border-bottom: none; }
         .modal-list .ml-donor { color: #e0e0e0; font-weight: 500; }
         .modal-list .ml-detail { color: #888; font-size: 0.78rem; }
-        .modal-list .ml-amount { color: #fff; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .modal-list .ml-amount { color: #fff; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .modal-list .ml-fee { color: #888; font-size: 0.72rem; }
 
         .modal-footer {
             display: flex;
@@ -770,44 +962,28 @@
             to { opacity: 0; transform: translateX(30%); }
         }
 
-        /* ── Progress Bar (batch processing) ───────────── */
-        .progress-bar-wrapper {
-            width: 100%;
-            margin-top: 0.5rem;
-            display: none;
-        }
-        .progress-bar-wrapper.visible { display: block; }
-        .progress-track {
-            width: 100%;
-            height: 4px;
-            background: rgba(255,255,255,0.08);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4dabf7, #74c0fc);
-            border-radius: 2px;
-            transition: width 0.3s ease;
-            width: 0%;
-        }
-        .progress-text {
-            font-size: 0.72rem;
-            color: #888;
-            margin-top: 0.3rem;
-            text-align: center;
+        /* ── Responsive ────────────────────────────────── */
+        @media (max-width: 960px) {
+            .app-layout {
+                flex-direction: column;
+            }
+            .batch-panel {
+                width: 100%;
+                position: static;
+                max-height: none;
+            }
+            .batch-panel-card {
+                max-height: 50vh;
+            }
         }
 
-        /* ── Responsive ────────────────────────────────── */
         @media (max-width: 768px) {
-            .page-wrapper { padding: 1.25rem 1rem 6rem; }
+            .app-layout { padding: 1.25rem 1rem 2rem; }
             .page-header { flex-direction: column; gap: 1rem; text-align: center; }
             .page-header-left { flex-direction: column; gap: 0.5rem; text-align: center; }
             .stats-bar { grid-template-columns: repeat(2, 1fr); }
             .filter-bar { flex-direction: column; align-items: stretch; }
             .filter-pills { justify-content: center; }
-            .action-panel-inner { flex-direction: column; align-items: stretch; text-align: center; }
-            .action-controls { margin-left: 0; justify-content: center; }
             .data-table td, .data-table th { padding: 0.6rem 0.5rem; font-size: 0.78rem; }
             .modal-card { margin: 1rem; }
         }
@@ -816,7 +992,6 @@
             .stats-bar { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
             .stat-card { padding: 0.8rem 0.6rem; }
             .stat-card .stat-value { font-size: 1.3rem; }
-            .action-controls { flex-direction: column; }
         }
     </style>
 </head>
@@ -830,139 +1005,158 @@
 </div>
 
 <!-- ═══ Main App ═══ -->
-<div class="page-wrapper" id="appMain" style="display:none;">
+<div class="app-layout" id="appMain" style="display:none;">
 
-    <!-- Header -->
-    <header class="page-header">
-        <div class="page-header-left">
-            <img src="../../NC_Logo_03.png" alt="Notzer Chesed">
-            <div>
-                <h1>Bookkeeper — Scheduled Payments</h1>
-                <p class="subtitle">Keren Shlomo Yechiel Campaign</p>
+    <!-- ── Left: Main Content ── -->
+    <div class="main-content">
+
+        <!-- Header -->
+        <header class="page-header">
+            <div class="page-header-left">
+                <img src="../../NC_Logo_03.png" alt="Notzer Chesed">
+                <div>
+                    <h1>Bookkeeper — Scheduled Payments</h1>
+                    <p class="subtitle">Keren Shlomo Yechiel Campaign</p>
+                </div>
+            </div>
+            <a class="header-back" id="backLink" href="#">
+                ← Back to Admin
+            </a>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-value" id="statTotal">—</div>
+                <div class="stat-label">Total Scheduled</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statDueWeek">—</div>
+                <div class="stat-label">Due This Week</div>
+            </div>
+            <div class="stat-card" id="statOverdueCard">
+                <div class="stat-value" id="statOverdue">—</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statOutstanding">—</div>
+                <div class="stat-label">Total Outstanding</div>
             </div>
         </div>
-        <a class="header-back" id="backLink" href="#">
-            ← Back to Admin
-        </a>
-    </header>
 
-    <!-- Stats Bar -->
-    <div class="stats-bar">
-        <div class="stat-card">
-            <div class="stat-value" id="statTotal">—</div>
-            <div class="stat-label">Total Scheduled</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="statDueWeek">—</div>
-            <div class="stat-label">Due This Week</div>
-        </div>
-        <div class="stat-card" id="statOverdueCard">
-            <div class="stat-value" id="statOverdue">—</div>
-            <div class="stat-label">Overdue</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="statOutstanding">—</div>
-            <div class="stat-label">Total Outstanding</div>
-        </div>
-    </div>
-
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-        <div class="filter-pills" id="filterPills">
-            <button class="filter-pill active" data-filter="all">
-                All<span class="pill-count" id="countAll">0</span>
-            </button>
-            <button class="filter-pill" data-filter="scheduled">
-                Scheduled<span class="pill-count" id="countScheduled">0</span>
-            </button>
-            <button class="filter-pill" data-filter="overdue">
-                Overdue<span class="pill-count" id="countOverdue">0</span>
-            </button>
-        </div>
-        <div class="search-wrapper">
-            <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="searchInput" placeholder="Search by donor name…">
-        </div>
-        <button class="refresh-btn" id="refreshBtn" onclick="loadPayments()">
-            <span class="refresh-icon">↻</span> Refresh
-        </button>
-    </div>
-
-    <!-- Data Table -->
-    <div class="table-card">
-        <div class="table-scroll">
-            <table class="data-table" id="paymentsTable">
-                <thead>
-                    <tr>
-                        <th style="width:40px;">
-                            <label class="custom-checkbox">
-                                <input type="checkbox" id="selectAll">
-                                <span class="checkmark"></span>
-                            </label>
-                        </th>
-                        <th class="sortable sorted" data-sort="dueDate">
-                            Due Date <span class="sort-arrow">▲</span>
-                        </th>
-                        <th>Donor</th>
-                        <th>Amount</th>
-                        <th>Total Pledge</th>
-                        <th>Payment #</th>
-                        <th>Frequency</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <!-- Rows injected by JS -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Loading State -->
-        <div class="loading-state" id="loadingState" style="display:none;">
-            <div class="table-spinner"></div>
-            <p>Loading scheduled payments…</p>
-        </div>
-
-        <!-- Empty State -->
-        <div class="empty-state" id="emptyState" style="display:none;">
-            <div class="empty-icon">📭</div>
-            <h3>No scheduled payments found</h3>
-            <p>There are no payments matching your current filters.</p>
-        </div>
-    </div>
-</div>
-
-<!-- ═══ Action Panel ═══ -->
-<div class="action-panel" id="actionPanel">
-    <div class="action-panel-inner">
-        <div class="action-summary">
-            <span class="highlight" id="selectedCount">0</span> payments selected · <span class="highlight" id="selectedTotal">$0.00</span> total
-        </div>
-        <div class="action-controls">
-            <div class="fee-input-group">
-                <span class="fee-label">Fee</span>
-                <span class="fee-prefix">$</span>
-                <input type="number" id="feeInput" value="0.00" min="0" step="0.01" placeholder="0.00">
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-pills" id="filterPills">
+                <button class="filter-pill active" data-filter="all">
+                    All<span class="pill-count" id="countAll">0</span>
+                </button>
+                <button class="filter-pill" data-filter="scheduled">
+                    Scheduled<span class="pill-count" id="countScheduled">0</span>
+                </button>
+                <button class="filter-pill" data-filter="overdue">
+                    Overdue<span class="pill-count" id="countOverdue">0</span>
+                </button>
             </div>
-            <select class="method-select" id="methodSelect">
-                <option value="Check">Check</option>
-                <option value="Cash">Cash</option>
-                <option value="Wire">Wire</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="Other">Other</option>
-            </select>
-            <button class="process-btn" id="processBtn" onclick="openConfirmModal()">
-                <span class="btn-text">Process Selected</span>
-                <span class="btn-spinner"></span>
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="Search by donor name…">
+            </div>
+            <button class="refresh-btn" id="refreshBtn" onclick="loadPayments()">
+                <span class="refresh-icon">↻</span> Refresh
             </button>
         </div>
-        <div class="progress-bar-wrapper" id="progressWrapper">
-            <div class="progress-track">
-                <div class="progress-fill" id="progressFill"></div>
+
+        <!-- Data Table -->
+        <div class="table-card">
+            <div class="table-scroll">
+                <table class="data-table" id="paymentsTable">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;">
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" id="selectAll">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </th>
+                            <th class="sortable sorted" data-sort="dueDate">
+                                Due Date <span class="sort-arrow">▲</span>
+                            </th>
+                            <th>Donor</th>
+                            <th>Amount</th>
+                            <th>Total Pledge</th>
+                            <th>Payment #</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
             </div>
-            <div class="progress-text" id="progressText">Processing 0 / 0</div>
+
+            <!-- Loading State -->
+            <div class="loading-state" id="loadingState" style="display:none;">
+                <div class="table-spinner"></div>
+                <p>Loading scheduled payments…</p>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <div class="empty-icon">📭</div>
+                <h3>No scheduled payments found</h3>
+                <p>There are no payments matching your current filters.</p>
+            </div>
         </div>
     </div>
+
+    <!-- ── Right: Batch Panel ── -->
+    <aside class="batch-panel" id="batchPanel">
+        <div class="batch-panel-card">
+            <div class="batch-header">
+                <div class="batch-header-left">
+                    <h3>Batch Queue</h3>
+                    <span class="batch-count-badge empty" id="batchCountBadge">0</span>
+                </div>
+                <button class="batch-clear-btn hidden" id="batchClearBtn" onclick="clearAllBatch()">Clear All</button>
+            </div>
+
+            <div class="batch-items" id="batchItems">
+                <div class="batch-empty-state" id="batchEmptyState">
+                    <div class="batch-empty-icon">📋</div>
+                    <p>Select payments from the table to add them here</p>
+                </div>
+            </div>
+
+            <div class="batch-footer hidden" id="batchFooter">
+                <div class="batch-summary">
+                    <div class="batch-summary-row">
+                        <span>Subtotal</span>
+                        <span class="amount" id="batchSubtotal">$0.00</span>
+                    </div>
+                    <div class="batch-summary-row">
+                        <span>Total Fees</span>
+                        <span class="amount" id="batchFees">$0.00</span>
+                    </div>
+                    <div class="batch-summary-row total">
+                        <span>Net Total</span>
+                        <span class="amount" id="batchNet">$0.00</span>
+                    </div>
+                </div>
+                <button class="batch-process-btn" id="batchProcessBtn" onclick="openConfirmModal()">
+                    <span class="btn-text">Process 0 Payments</span>
+                    <span class="btn-spinner"></span>
+                </button>
+                <div class="progress-bar-wrapper" id="progressWrapper">
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Processing 0 / 0</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
 </div>
 
 <!-- ═══ Confirmation Modal ═══ -->
@@ -995,6 +1189,8 @@ const CONFIG = {
     key: new URLSearchParams(window.location.search).get('key')
 };
 
+const METHOD_OPTIONS = ['Credit Card', 'Check', 'Cash', 'Wire', 'Bank Transfer', 'DAF', 'Other'];
+
 // ── State ──────────────────────────────────────────
 let allPayments = [];
 let filteredPayments = [];
@@ -1009,7 +1205,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('accessDenied').style.display = 'flex';
         return;
     }
-    document.getElementById('appMain').style.display = 'block';
+    document.getElementById('appMain').style.display = 'flex';
     document.getElementById('backLink').href = 'index.html?key=' + encodeURIComponent(CONFIG.key);
     setupEventListeners();
     loadPayments();
@@ -1025,7 +1221,7 @@ function setupEventListeners() {
             else selectedIds.delete(id);
         });
         renderTable();
-        updateActionPanel();
+        updateBatchPanel();
     });
 
     // Search input
@@ -1083,11 +1279,13 @@ async function loadPayments() {
         selectedIds.clear();
         applyFilters();
         updateStats();
+        updateBatchPanel();
         showToast('success', `Loaded ${allPayments.length} scheduled payments`);
     } catch (err) {
         showToast('error', 'Failed to load payments: ' + err.message);
         allPayments = [];
         applyFilters();
+        updateBatchPanel();
     } finally {
         refreshBtn.classList.remove('spinning');
         loadingState.style.display = 'none';
@@ -1134,8 +1332,8 @@ function applyFilters() {
     filteredPayments.sort((a, b) => {
         let va, vb;
         if (sortField === 'dueDate') {
-            va = new Date(a.dueDate || 0).getTime();
-            vb = new Date(b.dueDate || 0).getTime();
+            va = parseLocalDate(a.dueDate).getTime();
+            vb = parseLocalDate(b.dueDate).getTime();
         } else if (sortField === 'amount') {
             va = parseFloat(a.amount) || 0;
             vb = parseFloat(b.amount) || 0;
@@ -1149,13 +1347,12 @@ function applyFilters() {
     });
 
     renderTable();
-    updateActionPanel();
     updateFilterCounts();
 }
 
 function getStatus(payment) {
     if (payment.status && payment.status.toLowerCase() === 'paid') return 'Paid';
-    const due = new Date(payment.dueDate);
+    const due = parseLocalDate(payment.dueDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (due < today) return 'Overdue';
@@ -1189,7 +1386,7 @@ function renderTable() {
         const dueDate = formatDate(p.dueDate);
         const payNum = p.paymentNum || '—';
         const totalPay = p.totalPayments || '—';
-        const freq = capitalize(p.frequency || '—');
+        const pmtMethod = p.method || '—';
 
         const badgeClass = status === 'Overdue' ? 'badge-overdue' : status === 'Paid' ? 'badge-paid' : 'badge-scheduled';
 
@@ -1208,7 +1405,7 @@ function renderTable() {
             <td class="amount-cell">$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
             <td>$${totalPledge.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
             <td>${payNum}${totalPay !== '—' ? ' / ' + totalPay : ''}</td>
-            <td>${freq}</td>
+            <td>${pmtMethod}</td>
             <td><span class="badge ${badgeClass}"><span class="badge-dot"></span>${status}</span></td>
         </tr>`;
     }).join('');
@@ -1222,7 +1419,6 @@ function renderTable() {
 }
 
 function toggleRow(event, uid) {
-    // Don't toggle if clicking checkbox directly
     if (event.target.closest('.custom-checkbox')) return;
     togglePayment(uid);
 }
@@ -1234,23 +1430,155 @@ function togglePayment(uid) {
         selectedIds.add(uid);
     }
     renderTable();
-    updateActionPanel();
+    updateBatchPanel();
 }
 
-function updateActionPanel() {
-    const panel = document.getElementById('actionPanel');
+// ── Batch Panel ────────────────────────────────────
+function updateBatchPanel() {
     const selected = getSelectedPayments();
+    const batchItems = document.getElementById('batchItems');
+    const batchEmptyState = document.getElementById('batchEmptyState');
+    const batchFooter = document.getElementById('batchFooter');
+    const batchClearBtn = document.getElementById('batchClearBtn');
+    const batchCountBadge = document.getElementById('batchCountBadge');
+
+    batchCountBadge.textContent = selected.length;
+    batchCountBadge.classList.toggle('empty', selected.length === 0);
 
     if (selected.length === 0) {
-        panel.classList.remove('visible');
+        batchEmptyState.style.display = 'flex';
+        batchFooter.classList.add('hidden');
+        batchClearBtn.classList.add('hidden');
+        // Remove all cards
+        batchItems.querySelectorAll('.batch-card').forEach(c => c.remove());
+        updateBatchSummary();
         return;
     }
 
-    panel.classList.add('visible');
+    batchEmptyState.style.display = 'none';
+    batchFooter.classList.remove('hidden');
+    batchClearBtn.classList.remove('hidden');
 
-    const totalAmount = selected.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    document.getElementById('selectedCount').textContent = selected.length;
-    document.getElementById('selectedTotal').textContent = '$' + totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 });
+    // Get currently rendered card UIDs
+    const existingCards = batchItems.querySelectorAll('.batch-card');
+    const existingUids = new Set();
+    existingCards.forEach(c => existingUids.add(c.dataset.uid));
+
+    // Build set of selected UIDs
+    const selectedUids = new Set(selected.map(p => paymentUid(p)));
+
+    // Remove cards for deselected payments
+    existingCards.forEach(card => {
+        if (!selectedUids.has(card.dataset.uid)) {
+            card.classList.add('removing');
+            setTimeout(() => card.remove(), 200);
+        }
+    });
+
+    // Add cards for newly selected payments
+    selected.forEach(p => {
+        const uid = paymentUid(p);
+        if (!existingUids.has(uid)) {
+            const cardEl = createBatchCard(p);
+            batchItems.appendChild(cardEl);
+        }
+    });
+
+    updateBatchSummary();
+}
+
+function createBatchCard(payment) {
+    const uid = paymentUid(payment);
+    const donor = payment.donorName || ((payment.firstName || '') + ' ' + (payment.lastName || '')).trim() || 'Unknown';
+    const amount = parseFloat(payment.amount) || 0;
+    const dueDate = formatDate(payment.dueDate);
+    const payNum = payment.paymentNum || '—';
+    const totalPay = payment.totalPayments || '—';
+    const defaultMethod = payment.method || 'Credit Card';
+
+    const card = document.createElement('div');
+    card.className = 'batch-card';
+    card.dataset.uid = uid;
+    card.dataset.amount = amount;
+
+    const methodOptions = METHOD_OPTIONS.map(m =>
+        `<option value="${m}" ${m === defaultMethod ? 'selected' : ''}>${m}</option>`
+    ).join('');
+
+    card.innerHTML = `
+        <div class="card-header">
+            <span class="donor-name">${escapeHtml(donor)}</span>
+            <button class="remove-btn" onclick="removeBatchCard('${uid}')" title="Remove">×</button>
+        </div>
+        <div class="card-details">
+            Due: ${dueDate}  ·  <span class="detail-amount">$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span><br>
+            Pmt #${payNum}${totalPay !== '—' ? ' of ' + totalPay : ''}
+        </div>
+        <div class="card-controls">
+            <div class="fee-group">
+                <span class="fee-symbol">$</span>
+                <input type="number" class="batch-fee-input" value="0.00" min="0" step="0.01" placeholder="0.00" 
+                       oninput="updateBatchSummary()">
+            </div>
+            <select class="batch-method-select" title="Payment method">
+                ${methodOptions}
+            </select>
+        </div>
+    `;
+
+    return card;
+}
+
+function removeBatchCard(uid) {
+    selectedIds.delete(uid);
+    const card = document.querySelector(`.batch-card[data-uid="${uid}"]`);
+    if (card) {
+        card.classList.add('removing');
+        setTimeout(() => {
+            card.remove();
+            updateBatchSummary();
+        }, 200);
+    }
+    renderTable();
+    // Update header badge/footer after removal
+    const selected = getSelectedPayments();
+    const batchCountBadge = document.getElementById('batchCountBadge');
+    batchCountBadge.textContent = selected.length;
+    batchCountBadge.classList.toggle('empty', selected.length === 0);
+    if (selected.length === 0) {
+        document.getElementById('batchEmptyState').style.display = 'flex';
+        document.getElementById('batchFooter').classList.add('hidden');
+        document.getElementById('batchClearBtn').classList.add('hidden');
+    }
+}
+
+function clearAllBatch() {
+    selectedIds.clear();
+    renderTable();
+    updateBatchPanel();
+}
+
+function updateBatchSummary() {
+    const cards = document.querySelectorAll('.batch-card:not(.removing)');
+    let subtotal = 0;
+    let totalFees = 0;
+
+    cards.forEach(card => {
+        subtotal += parseFloat(card.dataset.amount) || 0;
+        const feeInput = card.querySelector('.batch-fee-input');
+        totalFees += parseFloat(feeInput?.value) || 0;
+    });
+
+    const net = subtotal - totalFees;
+
+    document.getElementById('batchSubtotal').textContent = '$' + subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 });
+    document.getElementById('batchFees').textContent = '$' + totalFees.toLocaleString('en-US', { minimumFractionDigits: 2 });
+    document.getElementById('batchNet').textContent = '$' + net.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+    const btnText = document.querySelector('#batchProcessBtn .btn-text');
+    if (btnText) {
+        btnText.textContent = `Process ${cards.length} Payment${cards.length !== 1 ? 's' : ''}`;
+    }
 }
 
 function getSelectedPayments() {
@@ -1271,7 +1599,7 @@ function updateStats() {
     let outstanding = 0;
 
     allPayments.forEach(p => {
-        const due = new Date(p.dueDate);
+        const due = parseLocalDate(p.dueDate);
         const amount = parseFloat(p.amount) || 0;
         const status = getStatus(p);
 
@@ -1318,26 +1646,30 @@ function openConfirmModal() {
     const selected = getSelectedPayments();
     if (selected.length === 0) return;
 
-    const fee = parseFloat(document.getElementById('feeInput').value) || 0;
-    const method = document.getElementById('methodSelect').value;
-    const totalAmount = selected.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    // Gather per-item details from batch cards
+    const items = getBatchItemDetails();
+    const totalAmount = items.reduce((sum, it) => sum + it.amount, 0);
+    const totalFees = items.reduce((sum, it) => sum + it.fee, 0);
+    const netTotal = totalAmount - totalFees;
 
-    const feeText = fee > 0 ? ` with $${fee.toLocaleString('en-US', { minimumFractionDigits: 2 })} fee` : '';
+    const feeText = totalFees > 0 
+        ? ` with <strong>$${totalFees.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong> in total fees` 
+        : '';
+
     document.getElementById('modalSummary').innerHTML = 
         `Process <strong>${selected.length} payment${selected.length > 1 ? 's' : ''}</strong> for 
-         <strong>$${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>${feeText} 
-         via <strong>${method}</strong>?`;
+         <strong>$${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>${feeText}?`;
 
     const list = document.getElementById('modalList');
-    list.innerHTML = selected.map(p => {
-        const donor = p.donorName || ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || 'Unknown';
-        const amount = parseFloat(p.amount) || 0;
+    list.innerHTML = items.map(it => {
+        const feeStr = it.fee > 0 ? `Fee: $${it.fee.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : 'No fee';
         return `<li>
             <div>
-                <div class="ml-donor">${escapeHtml(donor)}</div>
-                <div class="ml-detail">Due ${formatDate(p.dueDate)} · Payment #${p.paymentNum || '—'}</div>
+                <div class="ml-donor">${escapeHtml(it.donor)}</div>
+                <div class="ml-detail">Due ${it.dueDate} · Pmt #${it.payNum} · ${it.method}</div>
+                <div class="ml-fee">${feeStr}</div>
             </div>
-            <div class="ml-amount">$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+            <div class="ml-amount">$${it.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
         </li>`;
     }).join('');
 
@@ -1348,17 +1680,44 @@ function closeConfirmModal() {
     document.getElementById('confirmModal').classList.remove('visible');
 }
 
+// ── Read batch card details ────────────────────────
+function getBatchItemDetails() {
+    const cards = document.querySelectorAll('.batch-card:not(.removing)');
+    const items = [];
+
+    cards.forEach(card => {
+        const uid = card.dataset.uid;
+        const payment = allPayments.find(p => paymentUid(p) === uid);
+        if (!payment) return;
+
+        const donor = payment.donorName || ((payment.firstName || '') + ' ' + (payment.lastName || '')).trim() || 'Unknown';
+        const amount = parseFloat(payment.amount) || 0;
+        const fee = parseFloat(card.querySelector('.batch-fee-input')?.value) || 0;
+        const method = card.querySelector('.batch-method-select')?.value || payment.method || 'Credit Card';
+
+        items.push({
+            uid,
+            payment,
+            donor,
+            amount,
+            fee,
+            method,
+            dueDate: formatDate(payment.dueDate),
+            payNum: payment.paymentNum || '—'
+        });
+    });
+
+    return items;
+}
+
 // ── Process Payments ───────────────────────────────
 async function processSelectedPayments() {
-    const selected = getSelectedPayments();
-    if (selected.length === 0) return;
-
-    const fee = parseFloat(document.getElementById('feeInput').value) || 0;
-    const method = document.getElementById('methodSelect').value;
+    const items = getBatchItemDetails();
+    if (items.length === 0) return;
 
     // Disable UI
     closeConfirmModal();
-    const processBtn = document.getElementById('processBtn');
+    const processBtn = document.getElementById('batchProcessBtn');
     processBtn.classList.add('loading');
     processBtn.disabled = true;
 
@@ -1371,23 +1730,22 @@ async function processSelectedPayments() {
     let failCount = 0;
 
     // Process sequentially to avoid race conditions
-    for (let i = 0; i < selected.length; i++) {
-        const payment = selected[i];
-        const donor = payment.donorName || ((payment.firstName || '') + ' ' + (payment.lastName || '')).trim() || 'Unknown';
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
 
-        progressFill.style.width = `${((i) / selected.length) * 100}%`;
-        progressText.textContent = `Processing ${i + 1} / ${selected.length} — ${donor}`;
+        progressFill.style.width = `${((i) / items.length) * 100}%`;
+        progressText.textContent = `Processing ${i + 1} / ${items.length} — ${item.donor}`;
 
         try {
-            const result = await processPayment(payment, fee, method);
+            const result = await processPayment(item.payment, item.fee, item.method);
             if (result.error) {
                 throw new Error(result.error);
             }
             successCount++;
-            selectedIds.delete(paymentUid(payment));
+            selectedIds.delete(item.uid);
         } catch (err) {
             failCount++;
-            showToast('error', `Failed: ${donor} — ${err.message}`);
+            showToast('error', `Failed: ${item.donor} — ${err.message}`);
         }
     }
 
@@ -1433,12 +1791,31 @@ function showToast(type, message) {
 function formatDate(dateStr) {
     if (!dateStr) return '—';
     try {
+        // Parse yyyy-MM-dd as local date to avoid timezone shift
+        const parts = String(dateStr).split('T')[0].split('-');
+        if (parts.length === 3) {
+            const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            if (!isNaN(d.getTime())) {
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            }
+        }
+        // Fallback
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return dateStr;
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
     } catch {
         return dateStr;
     }
+}
+
+// Parse yyyy-MM-dd as local date (avoids UTC timezone shift that causes -1 day)
+function parseLocalDate(dateStr) {
+    if (!dateStr) return new Date(0);
+    const parts = String(dateStr).split('T')[0].split('-');
+    if (parts.length === 3) {
+        return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+    return new Date(dateStr);
 }
 
 function capitalize(str) {
