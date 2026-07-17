@@ -1189,7 +1189,65 @@ const CONFIG = {
     key: new URLSearchParams(window.location.search).get('key')
 };
 
-const METHOD_OPTIONS = ['Credit Card', 'Check', 'Cash', 'Wire', 'Bank Transfer', 'DAF', 'Other'];
+// Fee schedule: loaded from Fee_Config sheet via API (populated on init)
+let FEE_SCHEDULE = {
+    'Credit Card':   { rate: 0.029, flat: 0.30 },
+    'Check':         { rate: 0, flat: 0 },
+    'Cash':          { rate: 0, flat: 0 },
+    'Other':         { rate: 0, flat: 0 },
+};
+
+// Calculate fee for a given method and amount
+function calcDefaultFee(method, amount) {
+    // Direct match
+    if (FEE_SCHEDULE[method]) {
+        const s = FEE_SCHEDULE[method];
+        return Math.round((amount * s.rate + s.flat) * 100) / 100;
+    }
+    // Pattern matching
+    const ml = (method || '').toLowerCase();
+    if (ml.startsWith('daf') && FEE_SCHEDULE['DAF']) {
+        const s = FEE_SCHEDULE['DAF'];
+        return Math.round((amount * s.rate + s.flat) * 100) / 100;
+    }
+    if (/^\d/.test(method) || ml.includes('visa') || ml.includes('mastercard') || 
+        ml.includes('amex') || ml.includes('discover') || ml.includes('card')) {
+        const s = FEE_SCHEDULE['Credit Card'];
+        return s ? Math.round((amount * s.rate + s.flat) * 100) / 100 : 0;
+    }
+    if (ml.includes('matbia') && FEE_SCHEDULE['Matbia']) {
+        const s = FEE_SCHEDULE['Matbia'];
+        return Math.round((amount * s.rate + s.flat) * 100) / 100;
+    }
+    return 0;
+}
+
+// Build dropdown options including the item's actual method if not standard
+function buildMethodOptions(actualMethod) {
+    const standardMethods = Object.keys(FEE_SCHEDULE);
+    const options = [...standardMethods];
+    if (actualMethod && !options.includes(actualMethod)) {
+        options.unshift(actualMethod);
+    }
+    return options;
+}
+
+// Load fee config from the Fee_Config sheet via API
+async function loadFeeConfig() {
+    try {
+        const resp = await fetch(CONFIG.baseUrl + '?action=getFeeConfig&key=' + encodeURIComponent(CONFIG.key));
+        const data = await resp.json();
+        if (data.status === 'success' && Array.isArray(data.methods)) {
+            FEE_SCHEDULE = {};
+            data.methods.forEach(m => {
+                FEE_SCHEDULE[m.method] = { rate: m.rate || 0, flat: m.flat || 0 };
+            });
+            console.log('Fee config loaded:', Object.keys(FEE_SCHEDULE).length, 'methods');
+        }
+    } catch (err) {
+        console.warn('Failed to load fee config, using defaults:', err.message);
+    }
+}
 
 // ── State ──────────────────────────────────────────
 let allPayments = [];
@@ -1200,7 +1258,7 @@ let sortField = 'dueDate';
 let sortAsc = true;
 
 // ── Initialization ─────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     if (!CONFIG.key) {
         document.getElementById('accessDenied').style.display = 'flex';
         return;
@@ -1208,6 +1266,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('appMain').style.display = 'flex';
     document.getElementById('backLink').href = 'index.html?key=' + encodeURIComponent(CONFIG.key);
     setupEventListeners();
+    await loadFeeConfig();
     loadPayments();
 });
 
@@ -1495,14 +1554,16 @@ function createBatchCard(payment) {
     const payNum = payment.paymentNum || '—';
     const totalPay = payment.totalPayments || '—';
     const defaultMethod = payment.method || 'Credit Card';
+    const defaultFee = calcDefaultFee(defaultMethod, amount);
 
     const card = document.createElement('div');
     card.className = 'batch-card';
     card.dataset.uid = uid;
     card.dataset.amount = amount;
 
-    const methodOptions = METHOD_OPTIONS.map(m =>
-        `<option value="${m}" ${m === defaultMethod ? 'selected' : ''}>${m}</option>`
+    const options = buildMethodOptions(defaultMethod);
+    const methodOptionsHtml = options.map(m =>
+        `<option value="${escapeHtml(m)}" ${m === defaultMethod ? 'selected' : ''}>${escapeHtml(m)}</option>`
     ).join('');
 
     card.innerHTML = `
@@ -1517,16 +1578,31 @@ function createBatchCard(payment) {
         <div class="card-controls">
             <div class="fee-group">
                 <span class="fee-symbol">$</span>
-                <input type="number" class="batch-fee-input" value="0.00" min="0" step="0.01" placeholder="0.00" 
+                <input type="number" class="batch-fee-input" value="${defaultFee.toFixed(2)}" min="0" step="0.01" placeholder="0.00" 
                        oninput="updateBatchSummary()">
             </div>
-            <select class="batch-method-select" title="Payment method">
-                ${methodOptions}
+            <select class="batch-method-select" title="Payment method"
+                    onchange="onBatchMethodChange(this)">
+                ${methodOptionsHtml}
             </select>
         </div>
     `;
 
     return card;
+}
+
+// When method dropdown changes, recalculate the fee for that card
+function onBatchMethodChange(selectEl) {
+    const card = selectEl.closest('.batch-card');
+    if (!card) return;
+    const amount = parseFloat(card.dataset.amount) || 0;
+    const newMethod = selectEl.value;
+    const newFee = calcDefaultFee(newMethod, amount);
+    const feeInput = card.querySelector('.batch-fee-input');
+    if (feeInput) {
+        feeInput.value = newFee.toFixed(2);
+    }
+    updateBatchSummary();
 }
 
 function removeBatchCard(uid) {

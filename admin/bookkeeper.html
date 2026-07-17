@@ -1177,7 +1177,61 @@ body::before {
    ═══════════════════════════════════════════════════════════ */
 
 // ── Constants ──
-const METHOD_OPTIONS = ['Credit Card', 'Check', 'Cash', 'Wire', 'Bank Transfer', 'DAF', 'Other'];
+// Fee schedule: loaded from campaign's Fee_Config sheet via API (populated on init/campaign change)
+let FEE_SCHEDULE = {
+    'Credit Card':   { rate: 0.029, flat: 0.30 },
+    'Check':         { rate: 0, flat: 0 },
+    'Cash':          { rate: 0, flat: 0 },
+    'Other':         { rate: 0, flat: 0 },
+};
+
+function calcDefaultFee(method, amount) {
+    if (FEE_SCHEDULE[method]) {
+        const s = FEE_SCHEDULE[method];
+        return Math.round((amount * s.rate + s.flat) * 100) / 100;
+    }
+    const ml = (method || '').toLowerCase();
+    if (ml.startsWith('daf') && FEE_SCHEDULE['DAF']) {
+        const s = FEE_SCHEDULE['DAF'];
+        return Math.round((amount * s.rate + s.flat) * 100) / 100;
+    }
+    if (/^\d/.test(method) || ml.includes('visa') || ml.includes('mastercard') || 
+        ml.includes('amex') || ml.includes('discover') || ml.includes('card')) {
+        const s = FEE_SCHEDULE['Credit Card'];
+        return s ? Math.round((amount * s.rate + s.flat) * 100) / 100 : 0;
+    }
+    if (ml.includes('matbia') && FEE_SCHEDULE['Matbia']) {
+        const s = FEE_SCHEDULE['Matbia'];
+        return Math.round((amount * s.rate + s.flat) * 100) / 100;
+    }
+    return 0;
+}
+
+function buildMethodOptions(actualMethod) {
+    const standardMethods = Object.keys(FEE_SCHEDULE);
+    const options = [...standardMethods];
+    if (actualMethod && !options.includes(actualMethod)) {
+        options.unshift(actualMethod);
+    }
+    return options;
+}
+
+// Load fee config for the current campaign from Fee_Config sheet via API
+async function loadFeeConfig(campaignId) {
+    if (!campaignId) return; // No campaign selected yet
+    try {
+        const data = await authGet('getFeeConfig', { campaignId });
+        if (data.status === 'success' && Array.isArray(data.methods)) {
+            FEE_SCHEDULE = {};
+            data.methods.forEach(m => {
+                FEE_SCHEDULE[m.method] = { rate: m.rate || 0, flat: m.flat || 0 };
+            });
+            console.log('Fee config loaded for', campaignId + ':', Object.keys(FEE_SCHEDULE).length, 'methods');
+        }
+    } catch (err) {
+        console.warn('Failed to load fee config, using defaults:', err.message);
+    }
+}
 
 // ── State ──
 const STATE = {
@@ -1319,6 +1373,7 @@ function initEventListeners() {
         STATE.page = 1;
         STATE.selected.clear();
         updateBatchPanel();
+        await loadFeeConfig(STATE.campaignId);
         await loadPayments();
     });
 
@@ -1660,14 +1715,16 @@ function createBatchCard(payment) {
     const payNum = payment.paymentNum || '—';
     const totalPay = payment.totalPayments || '—';
     const defaultMethod = payment.method || 'Credit Card';
+    const defaultFee = calcDefaultFee(defaultMethod, amount);
 
     const card = document.createElement('div');
     card.className = 'batch-card';
     card.dataset.uid = uid;
     card.dataset.amount = amount;
 
-    const methodOptions = METHOD_OPTIONS.map(m =>
-        `<option value="${m}" ${m === defaultMethod ? 'selected' : ''}>${m}</option>`
+    const options = buildMethodOptions(defaultMethod);
+    const methodOptionsHtml = options.map(m =>
+        `<option value="${escapeHtml(m)}" ${m === defaultMethod ? 'selected' : ''}>${escapeHtml(m)}</option>`
     ).join('');
 
     card.innerHTML = `
@@ -1682,10 +1739,10 @@ function createBatchCard(payment) {
         <div class="card-controls">
             <div class="fee-group">
                 <span class="fee-symbol">$</span>
-                <input type="number" class="batch-fee-input" value="0.00" min="0" step="0.01" placeholder="0.00">
+                <input type="number" class="batch-fee-input" value="${defaultFee.toFixed(2)}" min="0" step="0.01" placeholder="0.00">
             </div>
             <select class="batch-method-select" title="Payment method">
-                ${methodOptions}
+                ${methodOptionsHtml}
             </select>
         </div>
     `;
@@ -1698,6 +1755,13 @@ function createBatchCard(payment) {
 
     // Wire up fee input to update summary
     card.querySelector('.batch-fee-input').addEventListener('input', updateBatchSummary);
+
+    // Wire up method change to recalculate fee
+    card.querySelector('.batch-method-select').addEventListener('change', function() {
+        const newFee = calcDefaultFee(this.value, amount);
+        card.querySelector('.batch-fee-input').value = newFee.toFixed(2);
+        updateBatchSummary();
+    });
 
     return card;
 }
