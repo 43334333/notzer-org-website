@@ -1002,18 +1002,7 @@ body::before {
                     </div>
                     <div class="field"><label>Donation Method <span class="req">*</span></label>
                         <select id="donMethod" required>
-                            <option value="" disabled selected>Select method…</option>
-                            <option value="Credit Card">Credit Card</option>
-                            <option value="Check">Check</option>
-                            <option value="Zelle">Zelle</option>
-                            <option value="DAF - The Donors Fund">DAF — The Donors Fund</option>
-                            <option value="DAF - OJCF">DAF — OJCF</option>
-                            <option value="DAF - Pledger">DAF — Pledger</option>
-                            <option value="DAF - Matbia">DAF — Matbia</option>
-                            <option value="PayPal">PayPal</option>
-                            <option value="Wire Transfer">Wire Transfer</option>
-                            <option value="Cash">Cash</option>
-                            <option value="Other">Other</option>
+                            <option value="" disabled selected>Loading methods…</option>
                         </select>
                     </div>
                     <div class="field"><label>Payment Status <span class="req">*</span></label>
@@ -1176,7 +1165,7 @@ body::before {
                         <div class="field"><label>Amount <span class="req">*</span></label><div class="amount-wrapper"><span class="currency">$</span><input type="number" id="rcptAmount" min="0.01" step="0.01" placeholder="0.00" required></div></div>
                         <div class="field"><label>Date <span class="req">*</span></label><input type="date" id="rcptDate" required></div>
                         <div class="field"><label>Payment Method <span class="req">*</span></label>
-                            <select id="rcptMethod" required><option value="" disabled selected>Select method…</option><option value="Credit Card">Credit Card</option><option value="Check">Check</option><option value="Zelle">Zelle</option><option value="DAF - The Donors Fund">DAF — The Donors Fund</option><option value="DAF - OJCF">DAF — OJCF</option><option value="DAF - Pledger">DAF — Pledger</option><option value="DAF - Matbia">DAF — Matbia</option><option value="PayPal">PayPal</option><option value="Wire Transfer">Wire Transfer</option><option value="Cash">Cash</option><option value="Other">Other</option></select>
+                            <select id="rcptMethod" required><option value="" disabled selected>Loading methods…</option></select>
                         </div>
                         <div class="field" style="position:relative;"><label>Campaign</label><div class="chip-selector" id="rcptCampaignSelector"></div></div>
                         <div class="field"><label>Notes</label><textarea id="rcptNotes" placeholder="Optional notes…" style="min-height:60px;"></textarea></div>
@@ -1497,10 +1486,72 @@ document.addEventListener('DOMContentLoaded', async () => {
     APP.donCampaignSelector.load();
     APP.rcptCampaignSelector.load();
 
-    loadDashboard();
+    await loadDashboard();
+    // Load method options for the first available campaign
+    loadAllMethodOptions();
 });
 
 $('#signOutBtn').addEventListener('click', () => signOut());
+
+// ── Dynamic Method Loading from Fee_Config ──
+const METHOD_FALLBACK = ['Credit Card','Matbia','DAF - OJCF','DAF - Pledger','DAF - Matbia',
+    'DAF - The Donors Fund','Check','Zelle','PayPal','Wire Transfer','Cash','Bank Transfer','Other'];
+let _methodCache = {}; // campaignId -> methods array
+
+async function populateMethodSelect(selectId, campaignId, selectedValue) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const methods = await getMethodsForCampaign(campaignId);
+    select.innerHTML = '<option value="" disabled selected>Select method…</option>';
+    methods.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        if (m === selectedValue) opt.selected = true;
+        select.appendChild(opt);
+    });
+}
+
+async function getMethodsForCampaign(campaignId) {
+    if (!campaignId) return METHOD_FALLBACK;
+    if (_methodCache[campaignId]) return _methodCache[campaignId];
+    try {
+        const data = await authGet('getFeeConfig', { campaignId });
+        if (data.status === 'success' && Array.isArray(data.methods) && data.methods.length > 0) {
+            const methods = data.methods.map(m => m.method);
+            _methodCache[campaignId] = methods;
+            return methods;
+        }
+    } catch (err) {
+        console.warn('Failed to load methods for campaign', campaignId, err.message);
+    }
+    return METHOD_FALLBACK;
+}
+
+async function loadAllMethodOptions() {
+    // Load methods for the first campaign and populate static dropdowns
+    if (APP.campaigns && APP.campaigns.length > 0) {
+        const firstCampaignId = APP.campaigns[0].id || APP.campaigns[0].campaignId;
+        await populateMethodSelect('donMethod', firstCampaignId);
+        await populateMethodSelect('rcptMethod', firstCampaignId);
+    } else {
+        // No campaigns loaded yet, use fallback
+        populateMethodSelectFallback('donMethod');
+        populateMethodSelectFallback('rcptMethod');
+    }
+}
+
+function populateMethodSelectFallback(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    select.innerHTML = '<option value="" disabled selected>Select method…</option>';
+    METHOD_FALLBACK.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        select.appendChild(opt);
+    });
+}
 
 // ── Navigation ──
 function initNavigation() {
@@ -2117,7 +2168,7 @@ function openRecordPayment(pledgeId, campaignId, balance) {
     openModal('Record Payment', `
         <div class="field"><label>Amount</label><div class="amount-wrapper"><span class="currency">$</span><input type="number" id="payAmount" value="${balance}" min="0.01" step="0.01"></div></div>
         <div class="field"><label>Payment Method</label>
-            <select id="payMethod"><option value="Check">Check</option><option value="Zelle">Zelle</option><option value="Credit Card">Credit Card</option><option value="Cash">Cash</option><option value="Other">Other</option></select>
+            <select id="payMethod"><option value="" disabled selected>Loading…</option></select>
         </div>
         <div class="field"><label>Date</label><input type="date" id="payDate" value="${getTodayStr()}"></div>
         <div class="field"><label>Notes</label><textarea id="payNotes" placeholder="Optional" style="min-height:60px;"></textarea></div>
@@ -2141,6 +2192,8 @@ function openRecordPayment(pledgeId, campaignId, balance) {
         } catch (e) { showToast('Failed to record payment', 'error'); }
         btn.disabled = false; btn.classList.remove('loading');
     });
+    // Dynamically populate method dropdown for this campaign
+    populateMethodSelect('payMethod', campaignId);
 }
 
 async function sendPledgeReminder(pledgeId, campaignId) {
