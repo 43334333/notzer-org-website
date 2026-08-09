@@ -10,7 +10,7 @@
 // ═══════════════════════════════════════════════════════════
 
 const AUTH_CONFIG = {
-    masterScriptUrl: 'https://script.google.com/macros/s/AKfycbzFHiOjUdK9xwqh_JK_29yA-JPy7AbrlK38s7WdQ7Of6X_EICxRo_7i68Wpm2inrfmd6Q/exec',
+    masterScriptUrl: 'https://script.google.com/macros/s/AKfycbzngv-LEqoOercDK5MfRtB8BpEFhH3sdnq16lyxzq2LN_8W0lUQpa-oUZB4CfGYE28y3g/exec',
     googleClientId: '944834348877-9hd20jii1lkmf7tofionflh2drh20d9j.apps.googleusercontent.com',
     loginPage: '/admin/login.html',
     sessionKey: 'nc_auth_session',  // sessionStorage key
