@@ -186,26 +186,53 @@ function signOut() {
  * @param {string} containerElementId - DOM element ID to render the button into
  */
 function initGoogleSignIn(containerElementId) {
-    if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
-        console.warn('auth.js: Google Identity Services not loaded yet');
+    console.log('[AUTH] initGoogleSignIn called, container:', containerElementId);
+    console.log('[AUTH] Google Client ID:', AUTH_CONFIG.googleClientId);
+    console.log('[AUTH] Master Script URL:', AUTH_CONFIG.masterScriptUrl);
+
+    if (typeof google === 'undefined') {
+        console.error('[AUTH] FAIL: google object is undefined — GIS library not loaded');
+        return;
+    }
+    if (!google.accounts) {
+        console.error('[AUTH] FAIL: google.accounts is undefined');
+        return;
+    }
+    if (!google.accounts.id) {
+        console.error('[AUTH] FAIL: google.accounts.id is undefined');
+        return;
+    }
+    console.log('[AUTH] GIS library loaded OK');
+
+    try {
+        google.accounts.id.initialize({
+            client_id: AUTH_CONFIG.googleClientId,
+            callback: handleGoogleCredential,
+            auto_select: false,
+        });
+        console.log('[AUTH] google.accounts.id.initialize() succeeded');
+    } catch (e) {
+        console.error('[AUTH] google.accounts.id.initialize() FAILED:', e);
         return;
     }
 
-    google.accounts.id.initialize({
-        client_id: AUTH_CONFIG.googleClientId,
-        callback: handleGoogleCredential,
-        auto_select: false,
-    });
+    const container = document.getElementById(containerElementId);
+    if (!container) {
+        console.error('[AUTH] FAIL: Container element not found:', containerElementId);
+        return;
+    }
 
-    google.accounts.id.renderButton(
-        document.getElementById(containerElementId),
-        {
+    try {
+        google.accounts.id.renderButton(container, {
             theme: 'filled_black',
             size: 'large',
             shape: 'rectangular',
             width: 320,
-        }
-    );
+        });
+        console.log('[AUTH] Google button rendered into:', containerElementId);
+    } catch (e) {
+        console.error('[AUTH] renderButton FAILED:', e);
+    }
 }
 
 /**
@@ -214,22 +241,44 @@ function initGoogleSignIn(containerElementId) {
  * @param {Object} response - Google credential response containing { credential: string }
  */
 async function handleGoogleCredential(response) {
+    console.log('[AUTH] handleGoogleCredential called');
+    console.log('[AUTH] Credential (first 50 chars):', (response.credential || '').substring(0, 50) + '...');
+
+    // Decode JWT payload for debug
+    try {
+        const parts = response.credential.split('.');
+        const payload = JSON.parse(atob(parts[1]));
+        console.log('[AUTH] JWT payload:', {
+            iss: payload.iss,
+            aud: payload.aud,
+            email: payload.email,
+            name: payload.name,
+            exp: new Date(payload.exp * 1000).toISOString(),
+        });
+    } catch (e) {
+        console.warn('[AUTH] Could not decode JWT:', e.message);
+    }
+
     _authToken = response.credential;
     _authMethod = 'google';
 
     try {
+        console.log('[AUTH] Validating with server...');
         const result = await validateWithServer(_authToken, _authMethod);
+        console.log('[AUTH] Server response:', JSON.stringify(result));
         if (result.valid) {
             _currentUser = result.user;
             persistSession();
             scheduleGoogleTokenRefresh();
+            console.log('[AUTH] Auth SUCCESS — user:', result.user);
             onAuthSuccess();
         } else {
+            console.warn('[AUTH] Auth DENIED by server:', result.message);
             showAuthError(result.message || 'Account not authorized. Please contact an administrator.');
         }
     } catch (err) {
+        console.error('[AUTH] Auth EXCEPTION:', err);
         showAuthError('Authentication failed. Please try again.');
-        console.error('auth.js: Google auth error', err);
     }
 }
 
@@ -299,15 +348,26 @@ function persistSession() {
  */
 async function validateWithServer(token, method) {
     try {
+        console.log('[AUTH] validateWithServer — method:', method, ', URL:', AUTH_CONFIG.masterScriptUrl);
+        console.log('[AUTH] Sending POST with action=authenticate...');
         const resp = await fetch(AUTH_CONFIG.masterScriptUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'authenticate', method, token })
         });
-        return resp.json();
+        console.log('[AUTH] Server HTTP status:', resp.status, resp.statusText);
+        const text = await resp.text();
+        console.log('[AUTH] Server raw response (first 500 chars):', text.substring(0, 500));
+        try {
+            const json = JSON.parse(text);
+            return json;
+        } catch (parseErr) {
+            console.error('[AUTH] Failed to parse server response as JSON:', parseErr.message);
+            return { valid: false, message: 'Server returned invalid response. Check console for details.' };
+        }
     } catch (err) {
-        console.error('auth.js: Server validation failed', err);
-        return { valid: false, message: 'Unable to reach authentication server.' };
+        console.error('[AUTH] Server validation FETCH failed:', err);
+        return { valid: false, message: 'Unable to reach authentication server. Error: ' + err.message };
     }
 }
 

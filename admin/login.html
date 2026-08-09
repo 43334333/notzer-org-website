@@ -1043,6 +1043,7 @@
 
             // Wait for GIS to load, then render button
             waitForGIS(function() {
+                console.log('[LOGIN] GIS ready, calling initGoogleSignIn...');
                 initGoogleSignIn('google-signin-btn');
             });
         }
@@ -1050,11 +1051,18 @@
         function waitForGIS(callback, attempts) {
             attempts = attempts || 0;
             if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                console.log('[LOGIN] GIS library loaded after', attempts, 'attempts');
                 callback();
             } else if (attempts < 50) {
+                if (attempts % 10 === 0) console.log('[LOGIN] Waiting for GIS library... attempt', attempts);
                 setTimeout(function() { waitForGIS(callback, attempts + 1); }, 200);
             } else {
-                console.warn('Google Identity Services failed to load');
+                console.error('[LOGIN] FAIL: Google Identity Services failed to load after 50 attempts (10 seconds)');
+                var errorEl = document.getElementById('auth-error');
+                if (errorEl) {
+                    errorEl.textContent = 'Google Sign-In library failed to load. Try the Email OTP tab instead.';
+                    errorEl.style.display = 'block';
+                }
             }
         }
 
