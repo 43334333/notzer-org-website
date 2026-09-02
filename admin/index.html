@@ -1045,6 +1045,7 @@ body::before {
     <div class="flex items-center justify-between mb-24 flex-wrap gap-8">
         <div><h1 class="section-title">Campaigns</h1><p class="section-subtitle" style="margin-bottom:0;">Manage fundraising campaigns and build campaign pages</p></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary" id="manageDirectoryBtn">🌐 Directory Show/Hide</button>
             <button class="btn btn-secondary" id="manageTemplatesBtn">📐 Templates Sheet</button>
             <button class="btn btn-primary" id="openPageBuilderBtn">🛠️ Page Builder & Template Chooser</button>
             <button class="btn btn-secondary" id="createCampaignBtn">+ Create Campaign</button>
@@ -2194,9 +2195,20 @@ function renderCampaignTable(campaigns) {
         const isDraft = c.status === 'Draft';
         const isActive = c.status === 'Active';
         const isPublic = c.isPublic !== false;
-        const visibilityBadge = isPublic
-            ? `<span style="display:inline-block;font-size:0.68rem;padding:2px 6px;border-radius:4px;background:rgba(34,197,94,0.15);color:#4ade80;font-weight:600;margin-top:4px;" title="Listed on notzer.org/campaigns">🌐 Public</span>`
-            : `<span style="display:inline-block;font-size:0.68rem;padding:2px 6px;border-radius:4px;background:rgba(239,68,68,0.15);color:#f87171;font-weight:600;margin-top:4px;" title="Hidden from directory (Direct link only)">🔒 Private</span>`;
+        const raisedVal = parseFloat(c.raised !== undefined ? c.raised : (c.totalRaised || 0)) || 0;
+        const goalVal = parseFloat(c.goalAmount || c.goal) || 0;
+        const donorsVal = parseInt(c.donors !== undefined ? c.donors : (c.donorCount || 0)) || 0;
+
+        const visibilityControl = `
+            <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+                <label class="switch" style="width:28px;height:16px;margin:0;" title="Toggle visibility on notzer.org/campaigns.html">
+                    <input type="checkbox" ${isPublic ? 'checked' : ''} onchange="toggleCampaignPublic('${c.id}', this.checked)">
+                    <span class="slider" style="border-radius:16px;"></span>
+                </label>
+                <span style="font-size:0.72rem;font-weight:600;color:${isPublic ? '#4ade80' : '#f87171'};" title="${isPublic ? 'Visible on notzer.org/campaigns' : 'Hidden from notzer.org/campaigns'}">
+                    ${isPublic ? '🌐 Public' : '🔒 Hidden'}
+                </span>
+            </div>`;
 
         const sheetLink = c.sheetId
             ? `<a href="https://docs.google.com/spreadsheets/d/${c.sheetId}/edit" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--accent-light);text-decoration:none;margin-right:6px;" title="Open Google Sheet ID: ${c.sheetId}">📊 Sheet ↗</a>`
@@ -2216,9 +2228,14 @@ function renderCampaignTable(campaigns) {
             </td>
             <td>
                 <div>${getStatusBadge(c.status)}</div>
-                ${visibilityBadge}
+                ${visibilityControl}
             </td>
-            <td>${formatCurrency(c.raised)} / ${c.goalAmount ? formatCurrency(c.goalAmount) : '∞'}</td>
+            <td>
+                <div style="font-weight:600;color:var(--text-primary);">${formatCurrency(raisedVal)} <span style="font-weight:normal;color:var(--text-muted);">/ ${goalVal > 0 ? formatCurrency(goalVal) : '∞'}</span></div>
+                <div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">
+                    ${goalVal > 0 ? `${Math.min(100, Math.round((raisedVal / goalVal) * 100))}% • ` : ''}${donorsVal} donor${donorsVal === 1 ? '' : 's'}
+                </div>
+            </td>
             <td style="text-transform:capitalize;">${c.primaryGateway || '—'}</td>
             <td>
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -2235,6 +2252,84 @@ function renderCampaignTable(campaigns) {
             </td>
         </tr>`;
     }).join('');
+}
+
+async function toggleCampaignPublic(id, isPublic) {
+    try {
+        showToast(`Updating directory visibility for "${id}"...`, 'info');
+        const res = await authPost('toggleCampaignVisibility', { id: id, campaignId: id, isPublic: isPublic });
+        if (res && res.status === 'success') {
+            showToast(res.message || `Campaign is now ${isPublic ? 'Public' : 'Hidden'} on notzer.org/campaigns`, 'success');
+            loadCampaigns();
+        } else {
+            showToast(res?.message || 'Failed to update visibility', 'error');
+            loadCampaigns();
+        }
+    } catch (e) {
+        showToast('Failed to update visibility: ' + (e.message || e), 'error');
+        loadCampaigns();
+    }
+}
+
+function openDirectoryManagerModal() {
+    const camps = APP.campaigns || [];
+    const rowsHtml = camps.map(c => {
+        const isPublic = c.isPublic !== false;
+        const raisedVal = parseFloat(c.raised !== undefined ? c.raised : (c.totalRaised || 0)) || 0;
+        const goalVal = parseFloat(c.goalAmount) || 0;
+        return `
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <td style="padding:10px 8px;">
+                <strong>${c.name || c.id}</strong><br>
+                <span style="font-size:0.75rem;color:var(--text-muted);font-family:monospace;">${c.id}</span>
+            </td>
+            <td style="padding:10px 8px;">${getStatusBadge(c.status)}</td>
+            <td style="padding:10px 8px;font-size:0.85rem;">
+                ${formatCurrency(raisedVal)} / ${goalVal > 0 ? formatCurrency(goalVal) : '∞'}
+            </td>
+            <td style="padding:10px 8px;">
+                <label class="switch" style="vertical-align:middle;margin:0;">
+                    <input type="checkbox" ${isPublic ? 'checked' : ''} onchange="toggleCampaignPublic('${c.id}', this.checked); setTimeout(openDirectoryManagerModal, 600);">
+                    <span class="slider"></span>
+                </label>
+                <span style="font-size:0.8rem;font-weight:600;margin-left:8px;color:${isPublic ? '#4ade80' : '#f87171'};">
+                    ${isPublic ? '🌐 Visible on Directory' : '🔒 Hidden (Direct Link Only)'}
+                </span>
+            </td>
+            <td style="padding:10px 8px;">
+                <a href="${c.pageUrl || `/${c.id}.html`}" target="_blank" style="font-size:0.8rem;color:var(--accent-light);text-decoration:none;">View Page ↗</a>
+            </td>
+        </tr>`;
+    }).join('');
+
+    openModal('🌐 Public Campaigns Directory Manager', `
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">
+            Control which campaigns are publicly visible on the main directory page (<a href="/campaigns.html" target="_blank" style="color:var(--accent-light);font-weight:600;">https://www.notzer.org/campaigns.html ↗</a>). Hidden campaigns remain fully active and accept donations via their direct links.
+        </p>
+        <div class="table-wrapper" style="max-height: 420px; overflow-y: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Campaign</th>
+                        <th>Status</th>
+                        <th>Raised / Goal</th>
+                        <th>Directory Visibility</th>
+                        <th>Direct Link</th>
+                    </tr>
+                </thead>
+                <tbody>${rowsHtml || '<tr><td colspan="5" class="empty-state">No campaigns found.</td></tr>'}</tbody>
+            </table>
+        </div>
+        <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;">
+            <a href="/campaigns.html" target="_blank" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;">
+                🌐 Preview notzer.org/campaigns.html ↗
+            </a>
+        </div>
+    `, `<button class="btn btn-primary" onclick="closeModal()">Done</button>`);
+}
+
+if ($('#manageDirectoryBtn')) {
+    $('#manageDirectoryBtn').addEventListener('click', openDirectoryManagerModal);
 }
 
 function editCampaign(id) {
