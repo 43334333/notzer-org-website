@@ -27,33 +27,83 @@
             <h2 class="section-title">Active Campaigns</h2>
             <p style="text-align: center;">Here you can find and support the causes that are important to our community. Each campaign directly supports a vital initiative.</p>
             
-            <div class="campaign-grid">
+            <div class="campaign-grid" id="campaignsGrid">
 
-                <div class="campaign-card">
+                <div class="campaign-card" data-campaign-id="keren-hk-m-twersky">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <span style="font-size:1.4rem;">👰</span>
+                        <h3 style="margin:0;">Keren Hachnosas Kallah — M. Twersky</h3>
+                    </div>
+                    <p>Dignified bridal and wedding assistance fund to help a young couple build their home with dignity, joy, and peace of mind. Every contribution directly funds essential wedding expenses.</p>
+                    <a href="keren-hk-m-twersky.html" class="cta-button">Learn More & Contribute</a>
+                </div>
+
+                <div class="campaign-card" data-campaign-id="ksy">
                     <h3>Keren Shlomo Yechiel</h3>
                     <p>Raising urgent funds for a family who suddenly lost their beloved father and breadwinner at the young age of 52. Help us support this family through their unimaginable loss.</p>
                     <a href="keren-shlomo-yechiel.html" class="cta-button">Learn More & Contribute</a>
                 </div>
 
-                <div class="campaign-card">
+                <div class="campaign-card" data-campaign-id="pele-yoetz">
                     <h3>Pele Yoetz</h3>
                     <p>Supporting our sister organization in Jerusalem, which provides guidance, social services, marriage counseling, and educational workshops to the community.</p>
                     <a href="pele-yoetz.html" class="cta-button">Learn More & Contribute</a>
                 </div>
-                <div class="campaign-card">
+                <div class="campaign-card" data-campaign-id="matan-beseiser">
                     <h3>Matan Beseiser - SFF</h3>
-                    <p>Through this fund, we provide direct and discreet financial assistance to individuals and families within our community who are facing hardship. Donations support essentials like food for Shabbos, tuition assistance, and help with unexpected expenses </p>
+                    <p>Through this fund, we provide direct and discreet financial assistance to individuals and families within our community who are facing hardship. Donations support essentials like food for Shabbos, tuition assistance, and help with unexpected expenses.</p>
                     <a href="MatanBSFF.html" class="cta-button">Learn More & Contribute</a>
                 </div>
-                </div>
+            </div>
         </section>
     </main>
 
     <footer class="footer">
-        <p>&copy; 2024 Notzer Chesed. All Rights Reserved.</p>
+        <p>&copy; 2024–2026 Notzer Chesed. All Rights Reserved.</p>
     </footer>
 
-</body>
+    <!-- Dynamic Public Campaign Sync from Notzer Master Platform -->
+    <script>
+    (function() {
+        var API_URL = 'https://script.google.com/macros/s/AKfycbzngv-LEqoOercDK5MfRtB8BpEFhH3sdnq16lyxzq2LN_8W0lUQpa-oUZB4CfGYE28y3g/exec?action=getActiveCampaigns';
+        fetch(API_URL)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.status === 'success' && Array.isArray(data.campaigns)) {
+                    var grid = document.getElementById('campaignsGrid');
+                    if (!grid) return;
+                    var existingCards = {};
+                    grid.querySelectorAll('.campaign-card[data-campaign-id]').forEach(function(el) {
+                        existingCards[el.getAttribute('data-campaign-id')] = el;
+                    });
+
+                    data.campaigns.forEach(function(c) {
+                        if (!c.id) return;
+                        var card = existingCards[c.id];
+                        var pageUrl = c.pageUrl || (c.id + '.html');
+                        if (pageUrl.startsWith('/')) pageUrl = pageUrl.substring(1);
+
+                        if (!card && c.id !== 'general') {
+                            // Dynamically insert new public campaign card
+                            var newCard = document.createElement('div');
+                            newCard.className = 'campaign-card';
+                            newCard.setAttribute('data-campaign-id', c.id);
+                            newCard.innerHTML = '<h3>' + (c.name || c.id) + '</h3>' +
+                                '<p>' + (c.subtitle || 'Support this vital charitable initiative run by Notzer Chesed.') + '</p>' +
+                                (c.goalAmount ? '<div style="font-size:0.85rem;color:#888;margin-bottom:12px;">Goal: $' + c.goalAmount.toLocaleString() + '</div>' : '') +
+                                '<a href="' + pageUrl + '" class="cta-button">Learn More & Contribute</a>';
+                            grid.prepend(newCard);
+                        }
+                    });
+                }
+            })
+            .catch(function(err) {
+                // Silently fallback to static pre-rendered cards
+                console.log('Public campaign sync note:', err);
+            });
+    })();
+    </script>
+
     <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-09VTELTDTM"></script>
 <script>
@@ -63,4 +113,5 @@
 
   gtag('config', 'G-09VTELTDTM');
 </script>
+</body>
 </html>

@@ -1093,7 +1093,16 @@ body::before {
                 <div class="field"><label>Admin URL</label><input type="text" id="campAdminUrl" placeholder="/admin/campaign/"></div>
                 <div class="field"><label>Wall URL</label><input type="text" id="campWallUrl" placeholder="/wall/campaign/"></div>
                 <div style="font-size:0.75rem; margin-top:-6px; margin-bottom:12px;"><a href="javascript:void(0)" id="autofillUrlsFromSlug" style="color:var(--accent-light); text-decoration:none;">✨ Auto-populate standard URLs from slug</a></div>
-                <div class="toggle-row"><label class="switch"><input type="checkbox" id="campWallEnabled" checked><span class="slider"></span></label><div class="toggle-text"><strong>Wall Enabled</strong>Show donor wall for this campaign</div></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;">
+                    <div class="toggle-row">
+                        <label class="switch"><input type="checkbox" id="campWallEnabled" checked><span class="slider"></span></label>
+                        <div class="toggle-text"><strong>Wall Enabled</strong>Donor wall</div>
+                    </div>
+                    <div class="toggle-row">
+                        <label class="switch"><input type="checkbox" id="campIsPublic" checked><span class="slider"></span></label>
+                        <div class="toggle-text"><strong>Public Listing</strong>Show on campaigns page</div>
+                    </div>
+                </div>
             </div>
         </div>
         <input type="hidden" id="campEditId">
@@ -2131,6 +2140,7 @@ $('#saveCampaignBtn').addEventListener('click', async () => {
         adminUrl: $('#campAdminUrl').value.trim(),
         wallUrl: $('#campWallUrl').value.trim(),
         wallEnabled: $('#campWallEnabled').checked,
+        isPublic: $('#campIsPublic') ? $('#campIsPublic').checked : true,
     };
     if (!data.name || !data.id) { showToast('Campaign name and slug are required', 'error'); return; }
 
@@ -2172,6 +2182,11 @@ function renderCampaignTable(campaigns) {
     tbody.innerHTML = campaigns.map(c => {
         const isDraft = c.status === 'Draft';
         const isActive = c.status === 'Active';
+        const isPublic = c.isPublic !== false;
+        const visibilityBadge = isPublic
+            ? `<span style="display:inline-block;font-size:0.68rem;padding:2px 6px;border-radius:4px;background:rgba(34,197,94,0.15);color:#4ade80;font-weight:600;margin-top:4px;" title="Listed on notzer.org/campaigns">🌐 Public</span>`
+            : `<span style="display:inline-block;font-size:0.68rem;padding:2px 6px;border-radius:4px;background:rgba(239,68,68,0.15);color:#f87171;font-weight:600;margin-top:4px;" title="Hidden from directory (Direct link only)">🔒 Private</span>`;
+
         const sheetLink = c.sheetId
             ? `<a href="https://docs.google.com/spreadsheets/d/${c.sheetId}/edit" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--accent-light);text-decoration:none;margin-right:6px;" title="Open Google Sheet ID: ${c.sheetId}">📊 Sheet ↗</a>`
             : `<button class="btn btn-secondary btn-sm" onclick="provisionSheetForCampaign('${c.id}')" title="Create dedicated Google Sheet" style="padding:2px 6px;font-size:0.72rem;">🪄 Provision Sheet</button>`;
@@ -2188,7 +2203,10 @@ function renderCampaignTable(campaigns) {
                 <div style="font-weight:600;color:var(--text-primary);">${c.name || c.id}</div>
                 <small style="color:var(--text-muted);font-size:0.72rem;font-family:monospace;">${c.id}</small>
             </td>
-            <td>${getStatusBadge(c.status)}</td>
+            <td>
+                <div>${getStatusBadge(c.status)}</div>
+                ${visibilityBadge}
+            </td>
             <td>${formatCurrency(c.raised)} / ${c.goalAmount ? formatCurrency(c.goalAmount) : '∞'}</td>
             <td style="text-transform:capitalize;">${c.primaryGateway || '—'}</td>
             <td>
@@ -2231,6 +2249,7 @@ function editCampaign(id) {
     $('#campAdminUrl').value = c.adminUrl || `/admin/${c.id}/`;
     $('#campWallUrl').value = c.wallUrl || `/wall/${c.id}/`;
     $('#campWallEnabled').checked = c.wallEnabled !== false;
+    if ($('#campIsPublic')) $('#campIsPublic').checked = c.isPublic !== false;
     $('#campaignForm').classList.add('visible');
 }
 
@@ -2242,6 +2261,7 @@ function clearCampaignForm() {
     if ($('#campStatus')) $('#campStatus').value = 'Active';
     $('#campGateway').value = 'cardknox';
     $('#campWallEnabled').checked = true;
+    if ($('#campIsPublic')) $('#campIsPublic').checked = true;
 }
 
 async function toggleCampaignStatus(id, currentStatus) {
