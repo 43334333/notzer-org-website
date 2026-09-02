@@ -3040,10 +3040,10 @@ function generateDonationPageHtml(config) {
         <p>&copy; 2026 Notzer Chesed. All Rights Reserved. Tax-Deductible 501(c)(3) Organization.</p>
     </footer>
 
-    <script>
+    <` + `script>
     const CAMPAIGN_CONFIG = ${jsonConfigStr};
     console.log('Campaign loaded:', CAMPAIGN_CONFIG.name);
-    </script>
+    <` + `/script>
 </body>
 </html>`;
 }
@@ -3060,7 +3060,7 @@ function generateAdminPageHtml(config) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="../../js/auth.js"></script>
+    <` + `script src="../../js/auth.js"><` + `/script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background-color: #121212; color: #EFEFEF; font-family: 'Inter', sans-serif; line-height: 1.6; min-height: 100vh; }
@@ -3098,7 +3098,7 @@ function generateAdminPageHtml(config) {
         </main>
     </div>
 
-    <script>
+    <` + `script>
     const CAMPAIGN_CONFIG = {
         id: '${config.id}',
         name: '${escapeJs(config.name)}',
@@ -3111,7 +3111,7 @@ function generateAdminPageHtml(config) {
             await requireAuth('campaign_manager', CAMPAIGN_CONFIG.id);
         }
     });
-    </script>
+    <` + `/script>
 </body>
 </html>`;
 }
@@ -3182,10 +3182,10 @@ function generateWallPageHtml(config) {
         </div>
     </div>
 
-    <script>
+    <` + `script>
     const WALL_CONFIG = ${wallJsonStr};
     console.log('Donor wall loaded for:', WALL_CONFIG.campaignName);
-    </script>
+    <` + `/script>
 </body>
 </html>`;
 }
