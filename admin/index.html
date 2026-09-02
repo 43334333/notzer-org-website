@@ -2062,9 +2062,16 @@ function renderDashCampaigns(campaigns) {
         return;
     }
     tbody.innerHTML = campaigns.map(c => {
+        const id = c.id || c.campaignId;
         const pct = c.goalAmount ? Math.min(100, ((c.raised || 0) / c.goalAmount * 100)) : 0;
+        const pageUrl = c.pageUrl || `/${id}.html`;
+        const adminUrl = c.adminUrl || `/admin/${id}/`;
+        const wallUrl = c.wallUrl || `/wall/${id}/`;
+        const bookkeeperUrl = `/admin/${id}/bookkeeper.html`;
+        const sheetId = c.sheetId || c.campaignSheetId;
+
         return `<tr>
-            <td style="font-weight:600;color:var(--text-primary);">${c.name || c.id}</td>
+            <td style="font-weight:600;color:var(--text-primary);">${c.name || c.campaignName || id}</td>
             <td>${getStatusBadge(c.status)}</td>
             <td>
                 <div style="font-size:0.82rem;margin-bottom:4px;">${formatCurrency(c.raised)} / ${c.goalAmount ? formatCurrency(c.goalAmount) : '∞'}</div>
@@ -2072,10 +2079,12 @@ function renderDashCampaigns(campaigns) {
             </td>
             <td>${(c.donors || 0).toLocaleString()}</td>
             <td>
-                <div style="display:flex;gap:4px;">
-                    ${c.pageUrl ? `<a class="quick-link" href="${c.pageUrl}" target="_blank" title="Donation Page">🔗</a>` : ''}
-                    ${c.adminUrl ? `<a class="quick-link" href="${c.adminUrl}" target="_blank" title="Admin Page">⚙️</a>` : ''}
-                    ${c.wallUrl ? `<a class="quick-link" href="${c.wallUrl}" target="_blank" title="Donor Wall">🏆</a>` : ''}
+                <div style="display:flex;gap:4px;align-items:center;">
+                    <a class="quick-link" href="${pageUrl}" target="_blank" title="Donation Page">🔗</a>
+                    <a class="quick-link" href="${adminUrl}" target="_blank" title="Admin Page">⚙️</a>
+                    <a class="quick-link" href="${wallUrl}" target="_blank" title="Donor Wall">🏆</a>
+                    <a class="quick-link" href="${bookkeeperUrl}" target="_blank" title="Bookkeeper Portal">📖</a>
+                    ${sheetId ? `<a class="quick-link" href="https://docs.google.com/spreadsheets/d/${sheetId}/edit" target="_blank" title="Google Sheet">📊</a>` : ''}
                 </div>
             </td>
         </tr>`;
