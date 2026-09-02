@@ -834,6 +834,125 @@ body::before {
     body { background: #fff; color: #000; }
     .glass-card, .stat-card, .form-card { background: #fff; border: 1px solid #ddd; }
 }
+/* --- Page Builder & Templates System --- */
+.builder-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(10px);
+    z-index: 1050;
+    justify-content: center; align-items: center;
+    padding: 1rem;
+    animation: fadeInFast 0.25s ease;
+}
+.builder-overlay.visible { display: flex; }
+.builder-card {
+    background: #141424;
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
+    max-width: 1080px; width: 100%;
+    max-height: 94vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    overflow: hidden;
+}
+.builder-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(25, 25, 42, 0.8);
+}
+.builder-body {
+    flex: 1; overflow-y: auto; padding: 24px;
+}
+.builder-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px;
+    border-top: 1px solid var(--border-subtle);
+    background: rgba(18, 18, 30, 0.9);
+    gap: 12px; flex-wrap: wrap;
+}
+.builder-steps {
+    display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;
+}
+.builder-step-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 0.82rem; font-weight: 600;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle);
+    color: var(--text-muted); cursor: pointer; transition: all var(--transition);
+}
+.builder-step-btn.active {
+    background: rgba(108, 99, 255, 0.15); border-color: var(--accent); color: var(--accent-light);
+}
+.builder-step-btn.completed {
+    color: var(--success); border-color: rgba(52, 211, 153, 0.3);
+}
+
+/* Template Grid */
+.template-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px;
+}
+.template-card {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all var(--transition);
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative;
+}
+.template-card:hover {
+    border-color: rgba(108, 99, 255, 0.4);
+    background: rgba(255,255,255,0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.template-card.selected {
+    border-color: var(--accent);
+    background: rgba(108, 99, 255, 0.12);
+    box-shadow: 0 0 0 2px var(--accent), 0 8px 32px var(--accent-glow);
+}
+.template-card-header {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 10px;
+}
+.template-card-icon {
+    font-size: 1.8rem; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); flex-shrink: 0;
+}
+.template-card-title {
+    font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;
+}
+.template-card-desc {
+    font-size: 0.78rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 14px;
+}
+.template-tag-list {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-top: auto;
+}
+.template-tag {
+    font-size: 0.68rem; font-weight: 500; padding: 2px 8px; border-radius: 12px; background: rgba(255,255,255,0.06); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Swatches */
+.swatch-picker {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px;
+}
+.color-swatch-circle {
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s, border-color 0.2s;
+}
+.color-swatch-circle:hover { transform: scale(1.15); }
+.color-swatch-circle.active { border-color: #ffffff; box-shadow: 0 0 0 2px rgba(255,255,255,0.5); }
+
+/* Amount Chips */
+.chip-container {
+    display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); min-height: 42px; align-items: center;
+}
+.chip-item {
+    display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: rgba(108,99,255,0.2); border: 1px solid rgba(108,99,255,0.4); border-radius: 14px; color: var(--accent-light); font-size: 0.78rem; font-weight: 600;
+}
+.chip-item-remove {
+    cursor: pointer; opacity: 0.7; font-size: 0.9rem; line-height: 1;
+}
+.chip-item-remove:hover { opacity: 1; color: var(--error); }
     </style>
 </head>
 <body>
@@ -923,9 +1042,13 @@ body::before {
 
 <!-- ═══════════════ TAB 2: CAMPAIGNS ═══════════════ -->
 <div class="tab-panel" id="tab-campaigns">
-    <div class="flex items-center justify-between mb-24">
-        <div><h1 class="section-title">Campaigns</h1><p class="section-subtitle" style="margin-bottom:0;">Manage all fundraising campaigns</p></div>
-        <button class="btn btn-primary" id="createCampaignBtn">+ Create Campaign</button>
+    <div class="flex items-center justify-between mb-24 flex-wrap gap-8">
+        <div><h1 class="section-title">Campaigns</h1><p class="section-subtitle" style="margin-bottom:0;">Manage fundraising campaigns and build campaign pages</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary" id="manageTemplatesBtn">📐 Templates Sheet</button>
+            <button class="btn btn-primary" id="openPageBuilderBtn">🛠️ Page Builder & Template Chooser</button>
+            <button class="btn btn-secondary" id="createCampaignBtn">+ Create Campaign</button>
+        </div>
     </div>
 
     <div class="inline-form glass-card mb-24" id="campaignForm">
@@ -934,6 +1057,13 @@ body::before {
             <button class="btn btn-secondary btn-sm" id="cancelCampaignForm">&times; Cancel</button>
         </div>
         <div class="form-grid">
+            <div style="grid-column: 1 / -1; background: rgba(108, 99, 255, 0.08); border: 1px dashed rgba(108, 99, 255, 0.35); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <strong style="color: var(--accent-light); font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">📐 Campaign Page Builder & Template Studio</strong>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Build the Donation Page, Admin Console, and Donor Wall from a standard template with customized info.</div>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" id="launchBuilderFromCampaignForm">🛠️ Launch Page Builder</button>
+            </div>
             <div class="form-col">
                 <div class="col-label">Campaign Info</div>
                 <div class="field"><label>Campaign Name <span class="req">*</span></label><input type="text" id="campName" placeholder="e.g. Keren Shlomo Yechiel"></div>
@@ -952,6 +1082,7 @@ body::before {
                 <div class="field"><label>Page URL</label><input type="text" id="campPageUrl" placeholder="/campaign-name.html"></div>
                 <div class="field"><label>Admin URL</label><input type="text" id="campAdminUrl" placeholder="/admin/campaign/"></div>
                 <div class="field"><label>Wall URL</label><input type="text" id="campWallUrl" placeholder="/wall/campaign/"></div>
+                <div style="font-size:0.75rem; margin-top:-6px; margin-bottom:12px;"><a href="javascript:void(0)" id="autofillUrlsFromSlug" style="color:var(--accent-light); text-decoration:none;">✨ Auto-populate standard URLs from slug</a></div>
                 <div class="toggle-row"><label class="switch"><input type="checkbox" id="campWallEnabled" checked><span class="slider"></span></label><div class="toggle-text"><strong>Wall Enabled</strong>Show donor wall for this campaign</div></div>
             </div>
         </div>
@@ -1375,6 +1506,187 @@ body::before {
     </div>
 </div>
 
+<!-- ═══════════════ PAGE BUILDER & TEMPLATE STUDIO MODAL ═══════════════ -->
+<div class="builder-overlay" id="pageBuilderModal">
+    <div class="builder-card">
+        <div class="builder-header">
+            <div>
+                <h3 style="font-size:1.1rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:8px;">
+                    <span>🛠️</span> Campaign Page Builder & Template Studio
+                </h3>
+                <p style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Select a standard campaign type, customize content & branding, and generate production page files.</p>
+            </div>
+            <button class="modal-close" id="closeBuilderBtn">&times;</button>
+        </div>
+
+        <div class="builder-body">
+            <!-- Step Navigation -->
+            <div class="builder-steps">
+                <button class="builder-step-btn active" id="bStep1Btn" data-step="1"><span>1</span> Choose Template</button>
+                <button class="builder-step-btn" id="bStep2Btn" data-step="2"><span>2</span> Customize Info & Theme</button>
+                <button class="builder-step-btn" id="bStep3Btn" data-step="3"><span>3</span> Preview & Generate Pages</button>
+            </div>
+
+            <!-- STEP 1: CHOOSE TEMPLATE -->
+            <div id="bStep1Panel" class="builder-panel">
+                <div style="margin-bottom:16px;">
+                    <h4 style="font-size:0.95rem;color:var(--text-primary);margin-bottom:4px;">Select a Campaign Template</h4>
+                    <p style="font-size:0.8rem;color:var(--text-muted);">Choose a standard campaign model to preload layout, narrative structure, color scheme, and financial tiers.</p>
+                </div>
+                <div class="template-grid" id="builderTemplateGrid">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- STEP 2: CUSTOMIZE INFO & THEME -->
+            <div id="bStep2Panel" class="builder-panel" style="display:none;">
+                <div class="form-grid">
+                    <div class="form-col">
+                        <div class="col-label">Identity & Story Content</div>
+                        <div class="field">
+                            <label>Campaign Name (English) <span class="req">*</span></label>
+                            <input type="text" id="bCampName" placeholder="e.g. Keren Hachnosas Kallah M. Twersky">
+                        </div>
+                        <div class="field">
+                            <label>Hebrew / Yiddish Title</label>
+                            <input type="text" id="bCampTitleHe" dir="rtl" placeholder="e.g. הכנסת כלה — שמחת חתן וכלה">
+                        </div>
+                        <div class="field">
+                            <label>Campaign Slug <span class="req">*</span></label>
+                            <input type="text" id="bCampSlug" placeholder="e.g. keren-hk-m-twersky">
+                            <small style="font-size:0.72rem;color:var(--text-muted);">Used for page URL: /slug.html, /admin/slug/, /wall/slug/</small>
+                        </div>
+                        <div class="field">
+                            <label>Subtitle / Dedication</label>
+                            <input type="text" id="bCampSubtitle" placeholder="e.g. Building a Jewish home with dignity and joy">
+                        </div>
+                        <div class="field">
+                            <label>Story Layout</label>
+                            <select id="bStoryLayout">
+                                <option value="bilingual-columns">Bilingual Two-Column (English + Hebrew/Yiddish side-by-side)</option>
+                                <option value="single-column">Single Column (English Main Story)</option>
+                                <option value="minimal">Minimal (Short narrative only)</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>English Story Narrative</label>
+                            <textarea id="bStoryEn" rows="4" placeholder="Describe the campaign mission and call to action..."></textarea>
+                        </div>
+                        <div class="field" id="bStoryHeGroup">
+                            <label>Hebrew / Yiddish Story Narrative</label>
+                            <textarea id="bStoryHe" rows="4" dir="rtl" placeholder="באשרייבונג פון די קרן / מצוה אויף אידיש אדער לשון קודש..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-col">
+                        <div class="col-label">Branding, Giving & Gateways</div>
+                        <div class="field">
+                            <label>Primary Accent Color</label>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <input type="color" id="bAccentPicker" value="#d4af37" style="width:40px;height:38px;padding:2px;border:none;border-radius:6px;cursor:pointer;background:transparent;">
+                                <input type="text" id="bAccentHex" value="#d4af37" style="flex:1;" placeholder="#d4af37">
+                            </div>
+                            <div class="swatch-picker" id="builderPaletteSwatches">
+                                <!-- Swatches populated in JS -->
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Goal Amount ($)</label>
+                            <div class="amount-wrapper"><span class="currency">$</span><input type="number" id="bGoalAmount" min="0" step="0.01" placeholder="50000.00"></div>
+                        </div>
+                        <div class="field">
+                            <label>Preset Donation Amounts ($)</label>
+                            <input type="text" id="bPresetsInput" placeholder="180, 360, 500, 1000, 2500, 5000">
+                            <small style="font-size:0.72rem;color:var(--text-muted);">Comma-separated values for donor quick-select buttons</small>
+                        </div>
+                        <div class="field">
+                            <label>Primary Gateway</label>
+                            <select id="bGateway">
+                                <option value="cardknox">Cardknox (with USAePay fallback)</option>
+                                <option value="usaepay">USAePay (Primary)</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Cardknox iFields Key (Public)</label>
+                            <input type="text" id="bCkIfields" placeholder="ifields_gizbernotzerchesed...">
+                        </div>
+                        <div class="field">
+                            <label>USAePay Public Key (Public)</label>
+                            <input type="text" id="bUePublic" placeholder="_public_key...">
+                        </div>
+                        <div class="field">
+                            <label>Cloudflare Turnstile Site Key</label>
+                            <input type="text" id="bTurnstileKey" placeholder="0x4AAAAAAA2P0o3pM2P1w34O" value="0x4AAAAAAA2P0o3pM2P1w34O">
+                        </div>
+                        <div class="col-label" style="margin-top:16px;">Feature Toggles</div>
+                        <div class="toggle-row"><label class="switch"><input type="checkbox" id="bFeatWall" checked><span class="slider"></span></label><div class="toggle-text"><strong>Donor Recognition Wall</strong>Create and link live donor wall (/wall/[slug]/)</div></div>
+                        <div class="toggle-row"><label class="switch"><input type="checkbox" id="bFeatRecurring" checked><span class="slider"></span></label><div class="toggle-text"><strong>Recurring & Installments</strong>Allow monthly/weekly installments with schedule preview</div></div>
+                        <div class="toggle-row"><label class="switch"><input type="checkbox" id="bFeatTeams"><span class="slider"></span></label><div class="toggle-text"><strong>Peer-to-Peer Teams</strong>Enable team captain attribution dropdown</div></div>
+                        <div class="toggle-row"><label class="switch"><input type="checkbox" id="bFeatGallery"><span class="slider"></span></label><div class="toggle-text"><strong>Photo Gallery Section</strong>Include photo toggle & lightbox viewer</div></div>
+                        <div class="toggle-row"><label class="switch"><input type="checkbox" id="bFeatPrayer"><span class="slider"></span></label><div class="toggle-text"><strong>Prayer Request Form</strong>Confidential prayer / Mi Shebeirach form</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: PREVIEW & GENERATE PAGES -->
+            <div id="bStep3Panel" class="builder-panel" style="display:none;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                    <div class="filter-pills" style="margin-bottom:0;">
+                        <button type="button" class="pill active" id="bViewDonationTab">🌐 Donation Page (<span id="bDonationFilename">page.html</span>)</button>
+                        <button type="button" class="pill" id="bViewAdminTab">🔒 Admin Console (/admin/<span id="bAdminSlugName">slug</span>/)</button>
+                        <button type="button" class="pill" id="bViewWallTab">🏆 Donor Wall (/wall/<span id="bWallSlugName">slug</span>/)</button>
+                    </div>
+                    <div style="display:flex;gap:6px;">
+                        <button type="button" class="btn btn-secondary btn-sm" id="bToggleCodePreviewBtn">Toggle Code View</button>
+                    </div>
+                </div>
+
+                <div id="bPreviewContainer" style="margin-bottom:16px;">
+                    <iframe id="builderPreviewFrame" sandbox="allow-scripts allow-forms" style="width:100%;height:460px;border:1px solid rgba(255,255,255,0.1);border-radius:10px;background:#121212;"></iframe>
+                </div>
+
+                <div id="bCodeContainer" style="display:none;margin-bottom:16px;">
+                    <pre style="margin:0;"><code id="builderCodeOutput" style="display:block;max-height:460px;overflow:auto;padding:16px;font-size:0.78rem;font-family:monospace;background:#0d0d15;color:#a5b4fc;border-radius:10px;border:1px solid rgba(255,255,255,0.08);"></code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="builder-footer">
+            <div style="display:flex;gap:8px;">
+                <button type="button" class="btn btn-secondary" id="bPrevBtn" style="display:none;">&larr; Back</button>
+                <button type="button" class="btn btn-primary" id="bNextBtn">Next: Customize &rarr;</button>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary" id="bCopyCodeBtn" style="display:none;">📋 Copy HTML</button>
+                <button type="button" class="btn btn-secondary" id="bDownloadCurrentBtn" style="display:none;">⬇️ Download Page</button>
+                <button type="button" class="btn btn-success" id="bApplyToFormBtn" style="display:none;">✨ Apply URLs & Data to Campaign Form</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ TEMPLATES MANAGER MODAL ═══════════════ -->
+<div class="modal-overlay" id="templatesManagerModal">
+    <div class="modal-card" style="max-width:760px;">
+        <div class="modal-header">
+            <h3 class="modal-title">📐 Master Platform Templates</h3>
+            <button class="modal-close" id="closeTemplatesManagerBtn">&times;</button>
+        </div>
+        <div class="modal-body" style="padding:20px;">
+            <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:16px;">These templates are managed in the <strong>Templates</strong> tab of the <em>Notzer Chesed — Master Platform</em> Google Sheet and define default structures for new campaigns.</p>
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead><tr><th>Template</th><th>Category</th><th>Color</th><th>Layout</th><th>Presets</th><th>Status</th></tr></thead>
+                    <tbody id="templatesManagerTableRows"><tr><td colspan="6" class="empty-state">Loading templates...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="closeTemplatesManagerFooterBtn">Close</button>
+        </div>
+    </div>
+</div>
+
 <!-- Auth Script -->
 <script src="../js/auth.js"></script>
 
@@ -1480,6 +1792,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     initDonationForm();
     initReceiptForm();
     initDateDefaults();
+    initPageBuilder();
+    loadTemplates();
 
     APP.donCampaignSelector = new CampaignSelector('donCampaignSelector', { defaultValue: 'general' });
     APP.rcptCampaignSelector = new CampaignSelector('rcptCampaignSelector', { defaultValue: 'general' });
@@ -1838,7 +2152,7 @@ async function loadCampaigns() {
 function renderCampaignTable(campaigns) {
     const tbody = $('#campaignTableRows');
     if (!campaigns.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-icon">🏛️</div>No campaigns found. Click "Create Campaign" to get started.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-icon">🏛️</div>No campaigns found. Click "Create Campaign" or "Page Builder" to get started.</td></tr>';
         return;
     }
     tbody.innerHTML = campaigns.map(c => `<tr>
@@ -1849,7 +2163,8 @@ function renderCampaignTable(campaigns) {
         <td>${formatDate(c.startDate)}</td>
         <td>${formatDate(c.endDate)}</td>
         <td>
-            <div style="display:flex;gap:6px;">
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                <button class="btn btn-primary btn-sm" onclick="openPageBuilderForCampaign('${c.id}')" title="Build and export HTML pages from template">🛠️ Build Pages</button>
                 <button class="btn btn-secondary btn-sm" onclick="editCampaign('${c.id}')">Edit</button>
                 <button class="btn btn-sm ${c.status === 'Active' ? 'btn-danger' : 'btn-success'}" onclick="toggleCampaignStatus('${c.id}', '${c.status}')">${c.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
             </div>
@@ -1894,6 +2209,927 @@ async function toggleCampaignStatus(id, currentStatus) {
         loadCampaigns();
     } catch (e) { showToast('Failed to update status', 'error'); }
 }
+
+// ═══════════════════════════════════════════════════════════
+// PAGE BUILDER & TEMPLATES SYSTEM
+// ═══════════════════════════════════════════════════════════
+
+const DEFAULT_TEMPLATES = [
+    {
+        id: 'hachnosas-kallah',
+        name: 'Hachnosas Kallah — Wedding Fund',
+        category: 'Wedding / Bridal',
+        icon: '👰',
+        description: 'Dignified bridal and wedding assistance fund with celebratory gold/rose theme, wedding sponsorship tiers, goal progress, and recurring installments.',
+        accentColor: '#d4af37',
+        accentLight: '#f3e5ab',
+        accentDark: '#aa820a',
+        presetAmounts: [180, 360, 500, 1000, 2500, 5000],
+        nameHebrew: 'הכנסת כלה — שמחת חתן וכלה',
+        subtitle: 'Building a Jewish home with dignity and joy',
+        storyLayout: 'bilingual-columns',
+        defaultStoryEn: 'Join us in the sacred mitzvah of Hachnosas Kallah. Our sages teach that rejoicing with a bride and groom and assisting them in establishing their home is among the greatest acts of kindness. This fund provides essential wedding essentials, clothing, and household setup to ensure the young couple can begin their new life with dignity and peace of mind.',
+        defaultStoryHe: 'מצוה גדולה להכניס כלה ולשמח חתן וכלה ביום חתונתם וביום שמחת לבם. הקרן נוסדה לעזור ולסייע בהוצאות החתונה בכבוד ובהרחבה, להעמיד בית נאמן בישראל.',
+        features: { wall: true, teams: true, recurring: true, gallery: false, prayer: true, zelle: true, daf: true, goal: true },
+        heroImageUrl: '',
+        status: 'Active'
+    },
+    {
+        id: 'emergency-family',
+        name: 'Emergency Family Relief',
+        category: 'Crisis / Family',
+        icon: '🚨',
+        description: 'Designed for urgent family crises and sudden loss with dual English/Yiddish narrative, photo gallery, goal bar, and recurring installments.',
+        accentColor: '#4dabf7',
+        accentLight: '#74c0fc',
+        accentDark: '#339af0',
+        presetAmounts: [18, 36, 72, 180, 360, 500, 1000],
+        nameHebrew: 'קרן עזר וחסד',
+        subtitle: 'Standing by a family in their darkest hour',
+        storyLayout: 'bilingual-columns',
+        defaultStoryEn: 'Our community has been shaken by a sudden tragedy. An entire family has been left without their primary support. This fund has been established to provide urgent and ongoing financial assistance to ensure stability during this difficult time. Kol Yisrael areivim zeh lazeh.',
+        defaultStoryHe: 'אונזער קהילה שטייט לימין דער משפחה אין זייער שווערער שעה. די קרן איז געגרינדעט געווארן צוצושטעלן נויטיגע פינאנציעלע הילף און חיזוק פאר די קומענדיגע יארן.',
+        features: { wall: true, teams: true, recurring: true, gallery: true, prayer: false, zelle: true, daf: true, goal: true },
+        heroImageUrl: '',
+        status: 'Active'
+    },
+    {
+        id: 'org-support',
+        name: 'Sister Org / Community Program',
+        category: 'Organization',
+        icon: '🏛️',
+        description: 'Support for communal programs and organizations providing guidance, social services, and discreet aid (Matan B\'Seiser).',
+        accentColor: '#6c63ff',
+        accentLight: '#8b83ff',
+        accentDark: '#5548d9',
+        presetAmounts: [36, 100, 180, 360, 500, 1000, 2500],
+        nameHebrew: 'מתן בסתר — קרן עזרה',
+        subtitle: 'Providing direct and discreet assistance to families in need',
+        storyLayout: 'single-column',
+        defaultStoryEn: 'Matan B\'Seiser is giving in secret — preserving the dignity of the recipient as members of our own household. This campaign provides ongoing, confidential financial assistance, social services, counseling, and essential holiday relief to families in our community.',
+        defaultStoryHe: '',
+        features: { wall: true, teams: true, recurring: true, gallery: false, prayer: true, zelle: true, daf: true, goal: false },
+        heroImageUrl: '',
+        status: 'Active'
+    },
+    {
+        id: 'holiday-seasonal',
+        name: 'Holiday & Seasonal Campaign',
+        category: 'Seasonal',
+        icon: '🎭',
+        description: 'Purim Matanot La\'Evyonim or Pesach Kimcha DePischa campaign with holiday urgency banner, family sponsorship tiers, and rapid checkout.',
+        accentColor: '#e67e22',
+        accentLight: '#f39c12',
+        accentDark: '#d35400',
+        presetAmounts: [18, 36, 54, 100, 180, 360, 500],
+        nameHebrew: 'מתנות לאביונים — מגבית החג',
+        subtitle: 'Ensuring every family celebrates with joy and dignity',
+        storyLayout: 'single-column',
+        defaultStoryEn: 'Fulfill your holiday obligations with 100% distribution on the day of Yom Tov. We provide food packages, holiday clothing, and direct grants to local families so no child is left without the joy of the festival.',
+        defaultStoryHe: '',
+        features: { wall: true, teams: true, recurring: false, gallery: false, prayer: false, zelle: true, daf: true, goal: true },
+        heroImageUrl: '',
+        status: 'Active'
+    },
+    {
+        id: 'memorial-fund',
+        name: 'Memorial & Tribute Fund',
+        category: 'Memorial',
+        icon: '🕯️',
+        description: 'Dedicated memorial tributes and Yahrtzeit funds with Hebrew dedication line, Mishnayot / prayer request options, and dignified styling.',
+        accentColor: '#8e44ad',
+        accentLight: '#bb86fc',
+        accentDark: '#6c3483',
+        presetAmounts: [18, 36, 72, 180, 360, 500, 1000],
+        nameHebrew: 'קרן לעילוי נשמת',
+        subtitle: 'In loving memory and eternal legacy',
+        storyLayout: 'single-column',
+        defaultStoryEn: 'Established in loving memory to support acts of Torah and Chesed. Your generous contribution continues a legacy of kindness, helping needy individuals and perpetuating a name of blessed memory.',
+        defaultStoryHe: '',
+        features: { wall: true, teams: false, recurring: true, gallery: true, prayer: true, zelle: true, daf: true, goal: false },
+        heroImageUrl: '',
+        status: 'Active'
+    },
+    {
+        id: 'team-crowdfunding',
+        name: 'Peer-to-Peer Team Campaign',
+        category: 'Crowdfunding',
+        icon: '🤝',
+        description: 'Ambassador-driven campaign with team selectors, team leaderboards, goal meters, and social sharing.',
+        accentColor: '#27ae60',
+        accentLight: '#2ecc71',
+        accentDark: '#1e8449',
+        presetAmounts: [25, 50, 100, 250, 500, 1000],
+        nameHebrew: 'מגבית השותפים',
+        subtitle: 'Uniting together to reach our communal goal',
+        storyLayout: 'single-column',
+        defaultStoryEn: 'Join our team captains and ambassadors in reaching our collective milestone. Every team and every dollar makes a lasting difference for our community programs.',
+        defaultStoryHe: '',
+        features: { wall: true, teams: true, recurring: true, gallery: false, prayer: false, zelle: true, daf: true, goal: true },
+        heroImageUrl: '',
+        status: 'Active'
+    },
+    {
+        id: 'standard-general',
+        name: 'Standard General Campaign',
+        category: 'General',
+        icon: '⚡',
+        description: 'Clean, modern, versatile donation page with fast Cardknox and USAePay payment options, suitable for all general charitable appeals.',
+        accentColor: '#4dabf7',
+        accentLight: '#74c0fc',
+        accentDark: '#339af0',
+        presetAmounts: [18, 36, 72, 180, 360, 500],
+        nameHebrew: 'נוצר חסד — קרן כללית',
+        subtitle: 'Supporting vital community initiatives',
+        storyLayout: 'single-column',
+        defaultStoryEn: 'Thank you for partnering with Notzer Chesed. Your tax-deductible contribution supports our broad network of charitable programs and urgent family assistance funds.',
+        defaultStoryHe: '',
+        features: { wall: true, teams: false, recurring: true, gallery: false, prayer: false, zelle: true, daf: true, goal: false },
+        heroImageUrl: '',
+        status: 'Active'
+    }
+];
+
+const THEME_PALETTES = [
+    { name: 'Wedding Gold', hex: '#d4af37', light: '#f3e5ab', dark: '#aa820a' },
+    { name: 'Sky Blue', hex: '#4dabf7', light: '#74c0fc', dark: '#339af0' },
+    { name: 'Royal Purple', hex: '#6c63ff', light: '#8b83ff', dark: '#5548d9' },
+    { name: 'Emerald Green', hex: '#27ae60', light: '#2ecc71', dark: '#1e8449' },
+    { name: 'Amber Sunset', hex: '#e67e22', light: '#f39c12', dark: '#d35400' },
+    { name: 'Deep Amethyst', hex: '#8e44ad', light: '#bb86fc', dark: '#6c3483' },
+    { name: 'Crimson Rose', hex: '#e74c3c', light: '#ff7675', dark: '#c0392b' }
+];
+
+const RESERVED_SLUGS = ['admin', 'wall', 'donate', 'js', 'templates', 'css', 'images', 'api', 'assets'];
+
+// Builder State
+const BUILDER_STATE = {
+    step: 1,
+    selectedTemplateId: 'hachnosas-kallah',
+    currentConfig: null,
+    generated: { donation: '', admin: '', wall: '' },
+    activePreviewTab: 'donation',
+    showCode: false
+};
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function escapeJs(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r');
+}
+
+function hexToRgb(hex) {
+    hex = (hex || '#4dabf7').replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    const num = parseInt(hex, 16);
+    if (isNaN(num)) return '77, 171, 247';
+    return `${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}`;
+}
+
+function sanitizeSlug(text) {
+    return String(text || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+async function loadTemplates() {
+    try {
+        const data = await authGet('getTemplates');
+        if (data && data.templates && data.templates.length) {
+            APP.templates = data.templates;
+        } else {
+            APP.templates = DEFAULT_TEMPLATES;
+        }
+    } catch (e) {
+        APP.templates = DEFAULT_TEMPLATES;
+    }
+}
+
+function initPageBuilder() {
+    // Step navigation buttons
+    $('#bStep1Btn').addEventListener('click', () => setBuilderStep(1));
+    $('#bStep2Btn').addEventListener('click', () => setBuilderStep(2));
+    $('#bStep3Btn').addEventListener('click', () => setBuilderStep(3));
+
+    $('#bPrevBtn').addEventListener('click', () => setBuilderStep(BUILDER_STATE.step - 1));
+    $('#bNextBtn').addEventListener('click', () => {
+        if (BUILDER_STATE.step === 1) {
+            setBuilderStep(2);
+        } else if (BUILDER_STATE.step === 2) {
+            if (!validateBuilderStep2()) return;
+            setBuilderStep(3);
+        }
+    });
+
+    $('#openPageBuilderBtn').addEventListener('click', () => openPageBuilder());
+    $('#launchBuilderFromCampaignForm').addEventListener('click', () => {
+        const initial = {
+            name: $('#campName').value.trim(),
+            slug: $('#campSlug').value.trim(),
+            goal: parseFloat($('#campGoal').value) || 0,
+            gateway: $('#campGateway').value,
+            ckIfields: $('#campCkIfields').value.trim(),
+            uePublic: $('#campUePublic').value.trim()
+        };
+        openPageBuilder(initial);
+    });
+
+    $('#closeBuilderBtn').addEventListener('click', closePageBuilder);
+
+    // Auto-fill URLs button in main campaign form
+    $('#autofillUrlsFromSlug').addEventListener('click', () => {
+        const slug = sanitizeSlug($('#campSlug').value || $('#campName').value);
+        if (!slug) { showToast('Enter a campaign name or slug first', 'warning'); return; }
+        $('#campSlug').value = slug;
+        $('#campPageUrl').value = `/${slug}.html`;
+        $('#campAdminUrl').value = `/admin/${slug}/`;
+        $('#campWallUrl').value = `/wall/${slug}/`;
+        showToast('Standard URLs populated', 'success');
+    });
+
+    // Swatches in Step 2
+    const swatchesWrap = $('#builderPaletteSwatches');
+    swatchesWrap.innerHTML = THEME_PALETTES.map(p => `
+        <div class="color-swatch-circle" data-hex="${p.hex}" data-light="${p.light}" data-dark="${p.dark}" style="background:${p.hex};" title="${p.name}"></div>
+    `).join('');
+
+    swatchesWrap.querySelectorAll('.color-swatch-circle').forEach(swatch => {
+        swatch.addEventListener('click', () => {
+            swatchesWrap.querySelectorAll('.color-swatch-circle').forEach(s => s.classList.remove('active'));
+            swatch.classList.add('active');
+            const hex = swatch.dataset.hex;
+            $('#bAccentPicker').value = hex;
+            $('#bAccentHex').value = hex;
+        });
+    });
+
+    $('#bAccentPicker').addEventListener('input', (e) => {
+        $('#bAccentHex').value = e.target.value;
+    });
+    $('#bAccentHex').addEventListener('input', (e) => {
+        if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+            $('#bAccentPicker').value = e.target.value;
+        }
+    });
+
+    // Slug auto-sync from Name in Step 2
+    $('#bCampName').addEventListener('input', () => {
+        if (!$('#bCampSlug').dataset.manual) {
+            $('#bCampSlug').value = sanitizeSlug($('#bCampName').value);
+        }
+    });
+    $('#bCampSlug').addEventListener('input', () => {
+        $('#bCampSlug').dataset.manual = 'true';
+    });
+
+    // Story Layout toggle
+    $('#bStoryLayout').addEventListener('change', () => {
+        const isBilingual = $('#bStoryLayout').value === 'bilingual-columns';
+        $('#bStoryHeGroup').style.display = isBilingual ? 'block' : 'none';
+    });
+
+    // Step 3 View Tabs
+    $('#bViewDonationTab').addEventListener('click', () => setPreviewTab('donation'));
+    $('#bViewAdminTab').addEventListener('click', () => setPreviewTab('admin'));
+    $('#bViewWallTab').addEventListener('click', () => setPreviewTab('wall'));
+
+    $('#bToggleCodePreviewBtn').addEventListener('click', () => {
+        BUILDER_STATE.showCode = !BUILDER_STATE.showCode;
+        $('#bToggleCodePreviewBtn').textContent = BUILDER_STATE.showCode ? 'Toggle Live Preview' : 'Toggle Code View';
+        $('#bPreviewContainer').style.display = BUILDER_STATE.showCode ? 'none' : 'block';
+        $('#bCodeContainer').style.display = BUILDER_STATE.showCode ? 'block' : 'none';
+    });
+
+    // Export & Apply actions
+    $('#bApplyToFormBtn').addEventListener('click', applyBuilderToCampaignForm);
+    $('#bDownloadCurrentBtn').addEventListener('click', downloadCurrentBuilderPage);
+    $('#bCopyCodeBtn').addEventListener('click', copyBuilderCode);
+
+    // Templates Manager Modal
+    $('#manageTemplatesBtn').addEventListener('click', openTemplatesManager);
+    $('#closeTemplatesManagerBtn').addEventListener('click', closeTemplatesManager);
+    $('#closeTemplatesManagerFooterBtn').addEventListener('click', closeTemplatesManager);
+}
+
+function openPageBuilder(initialData = null) {
+    if (!APP.templates || !APP.templates.length) APP.templates = DEFAULT_TEMPLATES;
+    renderBuilderTemplateCards();
+
+    if (initialData) {
+        if (initialData.name) $('#bCampName').value = initialData.name;
+        if (initialData.slug) $('#bCampSlug').value = sanitizeSlug(initialData.slug);
+        if (initialData.goal) $('#bGoalAmount').value = initialData.goal;
+        if (initialData.gateway) $('#bGateway').value = initialData.gateway;
+        if (initialData.ckIfields) $('#bCkIfields').value = initialData.ckIfields;
+        if (initialData.uePublic) $('#bUePublic').value = initialData.uePublic;
+    }
+
+    // Default select first template
+    selectBuilderTemplate(BUILDER_STATE.selectedTemplateId || 'hachnosas-kallah');
+    setBuilderStep(1);
+    $('#pageBuilderModal').classList.add('visible');
+}
+
+function openPageBuilderForCampaign(campaignId) {
+    const c = APP.campaigns.find(x => x.id === campaignId);
+    if (!c) return;
+    openPageBuilder({
+        name: c.name || c.id,
+        slug: c.id,
+        goal: c.goalAmount || 0,
+        gateway: c.primaryGateway || 'cardknox',
+        ckIfields: c.cardknoxIfieldsKey || '',
+        uePublic: c.usaepayPublicKey || ''
+    });
+}
+
+function closePageBuilder() {
+    $('#pageBuilderModal').classList.remove('visible');
+}
+
+function setBuilderStep(step) {
+    BUILDER_STATE.step = step;
+    $$('.builder-step-btn').forEach(btn => {
+        const s = parseInt(btn.dataset.step);
+        btn.classList.toggle('active', s === step);
+        btn.classList.toggle('completed', s < step);
+    });
+
+    $('#bStep1Panel').style.display = step === 1 ? 'block' : 'none';
+    $('#bStep2Panel').style.display = step === 2 ? 'block' : 'none';
+    $('#bStep3Panel').style.display = step === 3 ? 'block' : 'none';
+
+    $('#bPrevBtn').style.display = step > 1 ? 'inline-flex' : 'none';
+    $('#bNextBtn').style.display = step < 3 ? 'inline-flex' : 'none';
+    $('#bNextBtn').textContent = step === 1 ? 'Next: Customize Info & Theme →' : 'Next: Preview & Generate Pages →';
+
+    const isStep3 = step === 3;
+    $('#bApplyToFormBtn').style.display = isStep3 ? 'inline-flex' : 'none';
+    $('#bDownloadCurrentBtn').style.display = isStep3 ? 'inline-flex' : 'none';
+    $('#bCopyCodeBtn').style.display = isStep3 ? 'inline-flex' : 'none';
+
+    if (step === 3) {
+        refreshBuilderPreviews();
+    }
+}
+
+function renderBuilderTemplateCards() {
+    const grid = $('#builderTemplateGrid');
+    const templates = APP.templates || DEFAULT_TEMPLATES;
+    grid.innerHTML = templates.map(t => {
+        const isSel = t.id === BUILDER_STATE.selectedTemplateId;
+        const icon = t.icon || (t.id === 'hachnosas-kallah' ? '👰' : t.id === 'emergency-family' ? '🚨' : t.id === 'org-support' ? '🏛️' : t.id === 'holiday-seasonal' ? '🎭' : t.id === 'memorial-fund' ? '🕯️' : t.id === 'team-crowdfunding' ? '🤝' : '⚡');
+        const feats = t.features || {};
+        return `
+            <div class="template-card ${isSel ? 'selected' : ''}" data-id="${t.id}" onclick="selectBuilderTemplate('${t.id}')">
+                <div>
+                    <div class="template-card-header">
+                        <div class="template-card-icon">${icon}</div>
+                        <span class="badge" style="background:${t.accentColor}22;color:${t.accentColor};border:1px solid ${t.accentColor}55;">${t.category || 'Campaign'}</span>
+                    </div>
+                    <div class="template-card-title">${t.name}</div>
+                    <div class="template-card-desc">${t.description}</div>
+                </div>
+                <div class="template-tag-list">
+                    ${feats.wall ? '<span class="template-tag">🏆 Donor Wall</span>' : ''}
+                    ${feats.recurring ? '<span class="template-tag">📅 Recurring</span>' : ''}
+                    ${feats.teams ? '<span class="template-tag">👥 Teams</span>' : ''}
+                    ${feats.prayer ? '<span class="template-tag">🙏 Prayer Request</span>' : ''}
+                    ${t.storyLayout === 'bilingual-columns' ? '<span class="template-tag">📜 Bilingual</span>' : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function selectBuilderTemplate(templateId) {
+    BUILDER_STATE.selectedTemplateId = templateId;
+    const t = (APP.templates || DEFAULT_TEMPLATES).find(x => x.id === templateId) || DEFAULT_TEMPLATES[0];
+
+    // Pre-populate Step 2 if fields are empty
+    if (!$('#bCampName').value) $('#bCampName').value = t.name.replace(/ —.*$/, '');
+    if (!$('#bCampSlug').value) $('#bCampSlug').value = t.id;
+    if (!$('#bCampTitleHe').value) $('#bCampTitleHe').value = t.nameHebrew || '';
+    if (!$('#bCampSubtitle').value) $('#bCampSubtitle').value = t.subtitle || '';
+
+    $('#bStoryLayout').value = t.storyLayout || 'single-column';
+    $('#bStoryHeGroup').style.display = t.storyLayout === 'bilingual-columns' ? 'block' : 'none';
+
+    if (!$('#bStoryEn').value) $('#bStoryEn').value = t.defaultStoryEn || '';
+    if (!$('#bStoryHe').value) $('#bStoryHe').value = t.defaultStoryHe || '';
+
+    const color = t.accentColor || '#4dabf7';
+    $('#bAccentPicker').value = color;
+    $('#bAccentHex').value = color;
+
+    const presets = Array.isArray(t.presetAmounts) ? t.presetAmounts.join(', ') : '18, 36, 72, 180, 360, 500';
+    if (!$('#bPresetsInput').value) $('#bPresetsInput').value = presets;
+
+    const feats = t.features || {};
+    $('#bFeatWall').checked = feats.wall !== false;
+    $('#bFeatRecurring').checked = feats.recurring !== false;
+    $('#bFeatTeams').checked = !!feats.teams;
+    $('#bFeatGallery').checked = !!feats.gallery;
+    $('#bFeatPrayer').checked = !!feats.prayer;
+
+    // Highlight selected card
+    $$('.template-card').forEach(card => {
+        card.classList.toggle('selected', card.dataset.id === templateId);
+    });
+}
+
+function validateBuilderStep2() {
+    const name = $('#bCampName').value.trim();
+    const slug = sanitizeSlug($('#bCampSlug').value.trim());
+
+    if (!name) { showToast('Campaign Name is required', 'error'); return false; }
+    if (!slug) { showToast('Valid slug is required', 'error'); return false; }
+
+    if (RESERVED_SLUGS.includes(slug)) {
+        showToast(`"${slug}" is a reserved system path. Choose a different slug.`, 'error');
+        return false;
+    }
+
+    $('#bCampSlug').value = slug;
+    return true;
+}
+
+function getBuilderConfig() {
+    const slug = sanitizeSlug($('#bCampSlug').value.trim() || 'campaign');
+    const name = $('#bCampName').value.trim() || 'Campaign';
+    const accentColor = $('#bAccentHex').value.trim() || '#4dabf7';
+
+    // Parse preset amounts
+    let presetAmounts = [18, 36, 72, 180, 360, 500];
+    const rawPresets = $('#bPresetsInput').value.trim();
+    if (rawPresets) {
+        const parsed = rawPresets.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n) && n > 0);
+        if (parsed.length) presetAmounts = parsed;
+    }
+
+    return {
+        id: slug,
+        name: name,
+        nameHebrew: $('#bCampTitleHe').value.trim(),
+        subtitle: $('#bCampSubtitle').value.trim(),
+        storyLayout: $('#bStoryLayout').value,
+        storyEn: $('#bStoryEn').value.trim(),
+        storyHe: $('#bStoryHe').value.trim(),
+        accentColor: accentColor,
+        accentLight: lightenDarkenColor(accentColor, 25),
+        accentDark: lightenDarkenColor(accentColor, -25),
+        goalAmount: parseFloat($('#bGoalAmount').value) || 0,
+        presetAmounts: presetAmounts,
+        primaryGateway: $('#bGateway').value || 'cardknox',
+        cardknoxIfieldsKey: $('#bCkIfields').value.trim(),
+        usaepayPublicKey: $('#bUePublic').value.trim(),
+        turnstileSiteKey: $('#bTurnstileKey').value.trim() || '0x4AAAAAAA2P0o3pM2P1w34O',
+        appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzngv-LEqoOercDK5MfRtB8BpEFhH3sdnq16lyxzq2LN_8W0lUQpa-oUZB4CfGYE28y3g/exec',
+        zelleEmail: 'donate@notzer.org',
+        dafConfirmEmail: 'daf@notzer.org',
+        features: {
+            wall: $('#bFeatWall').checked,
+            recurring: $('#bFeatRecurring').checked,
+            teams: $('#bFeatTeams').checked,
+            gallery: $('#bFeatGallery').checked,
+            prayer: $('#bFeatPrayer').checked,
+        }
+    };
+}
+
+function lightenDarkenColor(col, amt) {
+    let usePound = false;
+    if (col[0] === '#') { col = col.slice(1); usePound = true; }
+    if (col.length === 3) col = col.split('').map(c => c + c).join('');
+    const num = parseInt(col, 16);
+    if (isNaN(num)) return col;
+    let r = (num >> 16) + amt;
+    if (r > 255) r = 255; else if (r < 0) r = 0;
+    let b = ((num >> 8) & 0x00FF) + amt;
+    if (b > 255) b = 255; else if (b < 0) b = 0;
+    let g = (num & 0x0000FF) + amt;
+    if (g > 255) g = 255; else if (g < 0) g = 0;
+    return (usePound ? '#' : '') + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
+}
+
+function refreshBuilderPreviews() {
+    const config = getBuilderConfig();
+    BUILDER_STATE.currentConfig = config;
+
+    $('#bDonationFilename').textContent = `${config.id}.html`;
+    $('#bAdminSlugName').textContent = config.id;
+    $('#bWallSlugName').textContent = config.id;
+
+    // Generate all 3 pages
+    BUILDER_STATE.generated.donation = generateDonationPageHtml(config);
+    BUILDER_STATE.generated.admin = generateAdminPageHtml(config);
+    BUILDER_STATE.generated.wall = generateWallPageHtml(config);
+
+    updateActivePreview();
+}
+
+function setPreviewTab(tab) {
+    BUILDER_STATE.activePreviewTab = tab;
+    $('#bViewDonationTab').classList.toggle('active', tab === 'donation');
+    $('#bViewAdminTab').classList.toggle('active', tab === 'admin');
+    $('#bViewWallTab').classList.toggle('active', tab === 'wall');
+    updateActivePreview();
+}
+
+function updateActivePreview() {
+    const tab = BUILDER_STATE.activePreviewTab;
+    const html = BUILDER_STATE.generated[tab] || '';
+
+    // Rendered frame (sandboxed for safety)
+    const frame = $('#builderPreviewFrame');
+    frame.srcdoc = html;
+
+    // Code output
+    $('#builderCodeOutput').textContent = html;
+}
+
+function applyBuilderToCampaignForm() {
+    const c = BUILDER_STATE.currentConfig || getBuilderConfig();
+    $('#campName').value = c.name;
+    $('#campSlug').value = c.id;
+    $('#campGateway').value = c.primaryGateway;
+    if (c.cardknoxIfieldsKey) $('#campCkIfields').value = c.cardknoxIfieldsKey;
+    if (c.usaepayPublicKey) $('#campUePublic').value = c.usaepayPublicKey;
+    $('#campGoal').value = c.goalAmount || '';
+    $('#campPageUrl').value = `/${c.id}.html`;
+    $('#campAdminUrl').value = `/admin/${c.id}/`;
+    $('#campWallUrl').value = `/wall/${c.id}/`;
+    $('#campWallEnabled').checked = c.features.wall;
+
+    closePageBuilder();
+    $('#campaignForm').classList.add('visible');
+    showToast('Applied campaign URLs and settings to form!', 'success');
+}
+
+function downloadCurrentBuilderPage() {
+    const c = BUILDER_STATE.currentConfig || getBuilderConfig();
+    const tab = BUILDER_STATE.activePreviewTab;
+    let filename = `${c.id}.html`;
+    if (tab === 'admin') filename = `admin-${c.id}-index.html`;
+    if (tab === 'wall') filename = `wall-${c.id}-index.html`;
+
+    const content = BUILDER_STATE.generated[tab] || '';
+    downloadTextFile(filename, content);
+    showToast(`Downloaded ${filename}`, 'success');
+}
+
+function copyBuilderCode() {
+    const tab = BUILDER_STATE.activePreviewTab;
+    const content = BUILDER_STATE.generated[tab] || '';
+    if (!content) return;
+    navigator.clipboard.writeText(content).then(() => {
+        showToast('HTML copied to clipboard!', 'success');
+    }).catch(() => {
+        showToast('Failed to copy', 'error');
+    });
+}
+
+function downloadTextFile(filename, text) {
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+
+// ── HTML PAGE CODE GENERATORS ──
+
+function generateDonationPageHtml(config) {
+    const clientSafeConfig = {
+        id: config.id,
+        name: config.name,
+        nameHebrew: config.nameHebrew || '',
+        subtitle: config.subtitle || '',
+        description: config.storyEn || '',
+        heroImage: config.heroImageUrl || '',
+        colorAccent: config.accentColor || '#4dabf7',
+        colorAccentLight: config.accentLight || '#74c0fc',
+        colorAccentDark: config.accentDark || '#339af0',
+        presetAmounts: config.presetAmounts || [18, 36, 72, 180, 360, 500],
+        recurringEnabled: config.features.recurring !== false,
+        primaryGateway: config.primaryGateway || 'cardknox',
+        cardknox: { ifieldsKey: config.cardknoxIfieldsKey || '' },
+        usaepay: { publicKey: config.usaepayPublicKey || '' },
+        appsScriptUrl: config.appsScriptUrl,
+        wallEnabled: config.features.wall !== false,
+        wallUrl: `/wall/${config.id}/`,
+        goalAmount: config.goalAmount || null,
+        showStory: true,
+        showPhotoGallery: !!config.features.gallery,
+        showOtherWaysToGive: true,
+        zelleEmail: config.zelleEmail || 'donate@notzer.org',
+        dafConfirmEmail: config.dafConfirmEmail || 'daf@notzer.org',
+        turnstileSiteKey: config.turnstileSiteKey || '0x4AAAAAAA2P0o3pM2P1w34O'
+    };
+
+    const isBilingual = config.storyLayout === 'bilingual-columns';
+    const jsonConfigStr = JSON.stringify(clientSafeConfig, null, 4).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${escapeHtml(config.name)} | Notzer Chesed</title>
+    <meta name="description" content="${escapeHtml(config.subtitle || config.name)}">
+    <link rel="icon" type="image/png" href="NC_Logo_03.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --accent: ${config.accentColor};
+            --accent-light: ${config.accentLight};
+            --accent-dark: ${config.accentDark};
+            --accent-rgb: ${hexToRgb(config.accentColor)};
+        }
+        .story-columns { display: grid; grid-template-columns: ${isBilingual ? '1fr 1fr' : '1fr'}; gap: 24px; margin-top: 16px; }
+        @media(max-width:768px) { .story-columns { grid-template-columns: 1fr; } }
+        .story-col-he { direction: rtl; text-align: right; font-family: 'Heebo', 'Inter', sans-serif; line-height: 1.7; }
+        .hero-banner { text-align: center; padding: 40px 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); position: relative; }
+        .hero-he { font-size: 2.2rem; font-weight: 800; color: #fff; margin-bottom: 4px; direction: rtl; font-family: 'Heebo', sans-serif; }
+        .hero-en { font-size: 1.8rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
+        .hero-sub { font-size: 1rem; color: var(--accent-light); font-style: italic; }
+        .goal-bar-wrap { max-width: 500px; margin: 20px auto 0; background: rgba(255,255,255,0.08); border-radius: 20px; height: 18px; overflow: hidden; }
+        .goal-bar-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); transition: width 1s ease; width: 0%; }
+        .amount-pills { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .amount-pill { padding: 12px 8px; text-align: center; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .amount-pill:hover { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.15); }
+        .amount-pill.active { border-color: var(--accent); background: var(--accent); color: #000; }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="container">
+            <p class="org-name">Notzer Chesed</p>
+            <nav class="nav">
+                <a href="index.html">Home</a>
+                <a href="about.html">About Us</a>
+                <a href="campaigns.html">Campaigns</a>
+                <a href="contact.html">Contact Us</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero-banner">
+            ${config.nameHebrew ? `<h1 class="hero-he">${escapeHtml(config.nameHebrew)}</h1>` : ''}
+            <h2 class="hero-en">${escapeHtml(config.name)}</h2>
+            ${config.subtitle ? `<p class="hero-sub">${escapeHtml(config.subtitle)}</p>` : ''}
+            
+            ${config.goalAmount > 0 ? `
+            <div id="goalSection" style="margin-top:20px;">
+                <div class="goal-bar-wrap"><div class="goal-bar-fill" id="goalBarFill"></div></div>
+                <p style="font-size:0.85rem;color:#aaa;margin-top:6px;" id="goalText">Goal: $${config.goalAmount.toLocaleString()}</p>
+            </div>` : ''}
+        </section>
+
+        <!-- Story Section -->
+        <section class="section">
+            <div class="story-columns">
+                <div class="story-col">
+                    ${config.storyEn ? `<p>${escapeHtml(config.storyEn).replace(/\\n/g, '<br>')}</p>` : '<p>Support this vital campaign with Notzer Chesed.</p>'}
+                </div>
+                ${isBilingual && config.storyHe ? `
+                <div class="story-col story-col-he">
+                    <p>${escapeHtml(config.storyHe).replace(/\\n/g, '<br>')}</p>
+                </div>` : ''}
+            </div>
+        </section>
+
+        <!-- Donation Section -->
+        <section class="section" id="donate">
+            <h2 class="section-title">Make a Contribution</h2>
+            <div class="amount-pills" id="amountPills">
+                ${(config.presetAmounts || [180, 360, 500, 1000]).map((amt, idx) => `
+                    <button type="button" class="amount-pill ${idx === 0 ? 'active' : ''}" data-amount="${amt}">$${amt}</button>
+                `).join('')}
+            </div>
+
+            <div style="text-align:center;margin-top:24px;">
+                <a href="${config.primaryGateway === 'cardknox' ? '#cardknox-form' : 'https://secure.usaepay.com/'}" class="cta-button" style="background:var(--accent);color:#000;font-weight:700;">Donate Now</a>
+            </div>
+
+            ${config.features.wall ? `
+            <div style="text-align:center;margin-top:30px;padding:16px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.08);">
+                <p style="font-size:0.9rem;color:#ccc;margin-bottom:8px;">View our community of generous supporters</p>
+                <a href="/wall/${config.id}/" style="color:var(--accent-light);font-weight:600;text-decoration:none;">🏆 Visit the ${escapeHtml(config.name)} Donor Wall &rarr;</a>
+            </div>` : ''}
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 Notzer Chesed. All Rights Reserved. Tax-Deductible 501(c)(3) Organization.</p>
+    </footer>
+
+    <script>
+    const CAMPAIGN_CONFIG = ${jsonConfigStr};
+    console.log('Campaign loaded:', CAMPAIGN_CONFIG.name);
+    </script>
+</body>
+</html>`;
+}
+
+function generateAdminPageHtml(config) {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Admin Entry — ${escapeHtml(config.name)}</title>
+    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="../../js/auth.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #121212; color: #EFEFEF; font-family: 'Inter', sans-serif; line-height: 1.6; min-height: 100vh; }
+        .page-wrapper { max-width: 800px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+        .page-header { text-align: center; margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .page-header img { height: 48px; width: auto; margin-bottom: 1rem; }
+        .page-header h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
+        .page-header p { font-size: 0.88rem; color: #888; }
+        .card { background: #1a1a2e; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+        .field { margin-bottom: 1rem; }
+        .field label { display: block; font-size: 0.8rem; font-weight: 500; color: #9a9ab0; margin-bottom: 0.35rem; }
+        .field input, .field select, .field textarea { width: 100%; padding: 0.65rem 0.8rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-family: inherit; font-size: 0.9rem; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; background: #6c63ff; color: #fff; width: 100%; }
+        .btn:hover { background: #5548d9; }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <header class="page-header">
+            <img src="../../NC_Logo_03.png" alt="Notzer Chesed">
+            <h1>${escapeHtml(config.name)}</h1>
+            <p>Campaign Offline Entry &amp; Management Console</p>
+        </header>
+
+        <main class="card">
+            <h3 style="font-size:1rem;margin-bottom:16px;">Log Offline Donation</h3>
+            <form id="campaignEntryForm">
+                <div class="field"><label>Donor Name *</label><input type="text" id="donorName" required placeholder="Full Name"></div>
+                <div class="field"><label>Email Address</label><input type="email" id="donorEmail" placeholder="donor@example.com"></div>
+                <div class="field"><label>Amount ($) *</label><input type="number" id="donorAmount" min="1" step="0.01" required placeholder="0.00"></div>
+                <div class="field"><label>Payment Status *</label><select id="donorStatus"><option value="Processed">Processed</option><option value="Pledged">Pledged</option></select></div>
+                <div class="field"><label>Payment Method</label><select id="donorMethod"><option value="Check">Check</option><option value="Cash">Cash</option><option value="Zelle">Zelle</option><option value="Cardknox">Credit Card</option></select></div>
+                <button type="submit" class="btn">Record Donation</button>
+            </form>
+        </main>
+    </div>
+
+    <script>
+    const CAMPAIGN_CONFIG = {
+        id: '${config.id}',
+        name: '${escapeJs(config.name)}',
+        appsScriptUrl: '${config.appsScriptUrl}',
+        wallUrl: '../../wall/${config.id}/'
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (typeof requireAuth === 'function') {
+            await requireAuth('campaign_manager', CAMPAIGN_CONFIG.id);
+        }
+    });
+    </script>
+</body>
+</html>`;
+}
+
+function generateWallPageHtml(config) {
+    const wallConfig = {
+        campaignId: config.id,
+        campaignName: config.name,
+        appsScriptUrl: config.appsScriptUrl,
+        accentColor: config.accentColor,
+        accentLight: config.accentLight,
+        accentRgb: hexToRgb(config.accentColor),
+        autoRefreshInterval: 30000
+    };
+
+    const wallJsonStr = JSON.stringify(wallConfig, null, 4).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Wall — ${escapeHtml(config.name)}</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --accent: ${config.accentColor};
+            --accent-light: ${config.accentLight};
+            --accent-rgb: ${hexToRgb(config.accentColor)};
+        }
+        body { background-color: #121212; color: #EFEFEF; font-family: 'Inter', sans-serif; line-height: 1.6; min-height: 100vh; }
+        .page-wrapper { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        .header { text-align: center; padding: 40px 0 24px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .campaign-title { font-size: 2.2rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .live-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 20px; background: rgba(52,211,153,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600; }
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 30px 0; }
+        .stat-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 20px; text-align: center; }
+        .stat-val { font-size: 1.8rem; font-weight: 800; color: var(--accent-light); }
+        .stat-lbl { font-size: 0.8rem; color: #888; text-transform: uppercase; margin-top: 4px; }
+        .donors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 24px; }
+        .donor-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 18px; }
+        .donor-name { font-weight: 700; color: #fff; font-size: 1.05rem; }
+        .donor-amt { color: var(--accent-light); font-weight: 800; font-size: 1.1rem; float: right; }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <header class="header">
+            <img src="../../NC_Logo_03.png" alt="NC" style="height:50px;margin-bottom:12px;">
+            <h1 class="campaign-title">${escapeHtml(config.name)}</h1>
+            <p style="color:#aaa;font-size:0.9rem;margin-bottom:12px;">Supporter Recognition &amp; Donor Wall</p>
+            <div class="live-badge"><span style="width:8px;height:8px;border-radius:50%;background:#34d399;display:inline-block;"></span> LIVE UPDATES</div>
+        </header>
+
+        <section class="stats-bar">
+            <div class="stat-box"><div class="stat-val" id="totalRaisedDisplay">$0</div><div class="stat-lbl">Total Raised</div></div>
+            <div class="stat-box"><div class="stat-val" id="totalDonorsDisplay">0</div><div class="stat-lbl">Generous Donors</div></div>
+        </section>
+
+        <div class="donors-grid" id="donorsGrid">
+            <div class="donor-card"><span class="donor-amt">$1,800</span><div class="donor-name">Anonymous Supporter</div><small style="color:#777;">In honor of the community</small></div>
+            <div class="donor-card"><span class="donor-amt">$500</span><div class="donor-name">Friend of the Family</div><small style="color:#777;">With gratitude</small></div>
+        </div>
+    </div>
+
+    <script>
+    const WALL_CONFIG = ${wallJsonStr};
+    console.log('Donor wall loaded for:', WALL_CONFIG.campaignName);
+    </script>
+</body>
+</html>`;
+}
+
+// ── TEMPLATES MANAGER MODAL CONTROLLER ──
+
+function openTemplatesManager() {
+    renderTemplatesManagerTable();
+    $('#templatesManagerModal').classList.add('visible');
+}
+
+function closeTemplatesManager() {
+    $('#templatesManagerModal').classList.remove('visible');
+}
+
+function renderTemplatesManagerTable() {
+    const tbody = $('#templatesManagerTableRows');
+    const templates = APP.templates || DEFAULT_TEMPLATES;
+    if (!templates.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No templates found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = templates.map(t => {
+        const presets = Array.isArray(t.presetAmounts) ? t.presetAmounts.map(p => `$${p}`).join(', ') : t.presetAmounts;
+        return `
+            <tr>
+                <td style="font-weight:600;color:var(--text-primary);">${t.name}</td>
+                <td><span class="badge badge-pledged">${t.category || 'General'}</span></td>
+                <td><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${t.accentColor};vertical-align:middle;margin-right:6px;"></span>${t.accentColor}</td>
+                <td style="font-size:0.75rem;">${t.storyLayout}</td>
+                <td style="font-size:0.75rem;">${presets}</td>
+                <td><span class="badge ${t.status === 'Active' ? 'badge-active' : 'badge-inactive'}">${t.status || 'Active'}</span></td>
+            </tr>
+        `;
+    }).join('');
+}
+
 
 // ═══════════════════════════════════════════════════════════
 // TAB 3: DONATIONS (Manual Entry)
