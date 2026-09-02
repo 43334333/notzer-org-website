@@ -1065,17 +1065,27 @@ body::before {
                 <button type="button" class="btn btn-primary btn-sm" id="launchBuilderFromCampaignForm">🛠️ Launch Page Builder</button>
             </div>
             <div class="form-col">
-                <div class="col-label">Campaign Info</div>
+                <div class="col-label">Campaign Identity & Gateways</div>
                 <div class="field"><label>Campaign Name <span class="req">*</span></label><input type="text" id="campName" placeholder="e.g. Keren Shlomo Yechiel"></div>
-                <div class="field"><label>Slug <span class="req">*</span></label><input type="text" id="campSlug" placeholder="e.g. ksy (auto-generated)"></div>
+                <div class="field"><label>Slug / Campaign ID <span class="req">*</span></label><input type="text" id="campSlug" placeholder="e.g. ksy (auto-generated)"></div>
+                <div class="field"><label>Status <span class="req">*</span></label><select id="campStatus"><option value="Active">Active</option><option value="Draft">Draft</option><option value="Inactive">Inactive</option></select></div>
                 <div class="field"><label>Primary Gateway <span class="req">*</span></label><select id="campGateway"><option value="cardknox">Cardknox</option><option value="usaepay">USAePay</option></select></div>
                 <div class="field"><label>Cardknox iFields Key</label><input type="text" id="campCkIfields" placeholder="iFields key"></div>
                 <div class="field"><label>Cardknox Server Key</label><input type="text" id="campCkServer" placeholder="Server key"></div>
                 <div class="field"><label>USAePay Public Key</label><input type="text" id="campUePublic" placeholder="Public key"></div>
                 <div class="field"><label>USAePay Source Key</label><input type="text" id="campUeSource" placeholder="Source key"></div>
+                <div class="field"><label>USAePay PIN</label><input type="password" id="campUePin" placeholder="USAePay PIN (optional)"></div>
             </div>
             <div class="form-col">
-                <div class="col-label">Settings</div>
+                <div class="col-label">Backend Storage & URLs</div>
+                <div class="field">
+                    <label>Campaign Sheet ID</label>
+                    <div style="display:flex;gap:6px;">
+                        <input type="text" id="campSheetId" placeholder="Google Sheet ID" style="flex:1;">
+                        <button type="button" class="btn btn-secondary btn-sm" id="provisionSheetBtn" title="Create dedicated Google Sheet with 7 standard tabs" style="white-space:nowrap;">🪄 Provision Sheet</button>
+                    </div>
+                </div>
+                <div class="field"><label>Apps Script Deployment URL</label><input type="text" id="campAppsScriptUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>
                 <div class="field"><label>Goal Amount</label><div class="amount-wrapper"><span class="currency">$</span><input type="number" id="campGoal" min="0" step="0.01" placeholder="0.00"></div></div>
                 <div class="field"><label>Start Date</label><input type="date" id="campStart"></div>
                 <div class="field"><label>End Date</label><input type="date" id="campEnd"></div>
@@ -1094,8 +1104,8 @@ body::before {
         <div class="loading-overlay" id="campaignsLoading"><div class="loading-spinner"></div></div>
         <div class="table-wrapper">
             <table class="data-table">
-                <thead><tr><th>Name</th><th>Status</th><th>Raised / Goal</th><th>Gateway</th><th>Start</th><th>End</th><th>Actions</th></tr></thead>
-                <tbody id="campaignTableRows"><tr><td colspan="7" class="empty-state"><div class="empty-icon">🏛️</div>Loading campaigns...</td></tr></tbody>
+                <thead><tr><th>Name / ID</th><th>Status</th><th>Raised / Goal</th><th>Gateway</th><th>Backend &amp; Links</th><th>Actions</th></tr></thead>
+                <tbody id="campaignTableRows"><tr><td colspan="6" class="empty-state"><div class="empty-icon">🏛️</div>Loading campaigns...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -2105,11 +2115,15 @@ $('#saveCampaignBtn').addEventListener('click', async () => {
     const data = {
         name: $('#campName').value.trim(),
         id: $('#campSlug').value.trim(),
+        status: $('#campStatus') ? $('#campStatus').value : 'Active',
+        sheetId: $('#campSheetId') ? $('#campSheetId').value.trim() : '',
+        appsScriptUrl: $('#campAppsScriptUrl') ? $('#campAppsScriptUrl').value.trim() : '',
         primaryGateway: $('#campGateway').value,
         cardknoxIfieldsKey: $('#campCkIfields').value.trim(),
         cardknoxServerKey: $('#campCkServer').value.trim(),
         usaepayPublicKey: $('#campUePublic').value.trim(),
         usaepaySourceKey: $('#campUeSource').value.trim(),
+        usaepayPin: $('#campUePin') ? $('#campUePin').value.trim() : '',
         goalAmount: parseFloat($('#campGoal').value) || 0,
         startDate: $('#campStart').value,
         endDate: $('#campEnd').value,
@@ -2125,7 +2139,7 @@ $('#saveCampaignBtn').addEventListener('click', async () => {
     try {
         const editId = $('#campEditId').value;
         if (editId) {
-            await authPost('updateCampaign', { campaignId: editId, ...data });
+            await authPost('updateCampaign', { id: editId, campaignId: editId, ...data });
             showToast('Campaign updated successfully', 'success');
         } else {
             await authPost('createCampaign', data);
@@ -2152,62 +2166,121 @@ async function loadCampaigns() {
 function renderCampaignTable(campaigns) {
     const tbody = $('#campaignTableRows');
     if (!campaigns.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-icon">🏛️</div>No campaigns found. Click "Create Campaign" or "Page Builder" to get started.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-icon">🏛️</div>No campaigns found. Click "Create Campaign" or "Page Builder" to get started.</td></tr>';
         return;
     }
-    tbody.innerHTML = campaigns.map(c => `<tr>
-        <td style="font-weight:600;color:var(--text-primary);">${c.name || c.id}</td>
-        <td>${getStatusBadge(c.status)}</td>
-        <td>${formatCurrency(c.raised)} / ${c.goalAmount ? formatCurrency(c.goalAmount) : '∞'}</td>
-        <td style="text-transform:capitalize;">${c.primaryGateway || '—'}</td>
-        <td>${formatDate(c.startDate)}</td>
-        <td>${formatDate(c.endDate)}</td>
-        <td>
-            <div style="display:flex;gap:5px;flex-wrap:wrap;">
-                <button class="btn btn-primary btn-sm" onclick="openPageBuilderForCampaign('${c.id}')" title="Build and export HTML pages from template">🛠️ Build Pages</button>
-                <button class="btn btn-secondary btn-sm" onclick="editCampaign('${c.id}')">Edit</button>
-                <button class="btn btn-sm ${c.status === 'Active' ? 'btn-danger' : 'btn-success'}" onclick="toggleCampaignStatus('${c.id}', '${c.status}')">${c.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
-            </div>
-        </td>
-    </tr>`).join('');
+    tbody.innerHTML = campaigns.map(c => {
+        const isDraft = c.status === 'Draft';
+        const isActive = c.status === 'Active';
+        const sheetLink = c.sheetId
+            ? `<a href="https://docs.google.com/spreadsheets/d/${c.sheetId}/edit" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--accent-light);text-decoration:none;margin-right:6px;" title="Open Google Sheet ID: ${c.sheetId}">📊 Sheet ↗</a>`
+            : `<button class="btn btn-secondary btn-sm" onclick="provisionSheetForCampaign('${c.id}')" title="Create dedicated Google Sheet" style="padding:2px 6px;font-size:0.72rem;">🪄 Provision Sheet</button>`;
+        const pageLink = `<a href="${c.pageUrl || `/${c.id}.html`}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--text-secondary);text-decoration:none;" title="Open Page: ${c.pageUrl || `/${c.id}.html`}">🌐 Page ↗</a>`;
+
+        const activateBtn = isActive
+            ? `<button class="btn btn-sm btn-danger" onclick="toggleCampaignStatus('${c.id}', '${c.status}')">Deactivate</button>`
+            : isDraft
+                ? `<button class="btn btn-sm btn-success" onclick="toggleCampaignStatus('${c.id}', '${c.status}')" title="Activate campaign">🚀 Activate</button>`
+                : `<button class="btn btn-sm btn-success" onclick="toggleCampaignStatus('${c.id}', '${c.status}')">Activate</button>`;
+
+        return `<tr>
+            <td>
+                <div style="font-weight:600;color:var(--text-primary);">${c.name || c.id}</div>
+                <small style="color:var(--text-muted);font-size:0.72rem;font-family:monospace;">${c.id}</small>
+            </td>
+            <td>${getStatusBadge(c.status)}</td>
+            <td>${formatCurrency(c.raised)} / ${c.goalAmount ? formatCurrency(c.goalAmount) : '∞'}</td>
+            <td style="text-transform:capitalize;">${c.primaryGateway || '—'}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    ${sheetLink}
+                    ${pageLink}
+                </div>
+            </td>
+            <td>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                    <button class="btn btn-primary btn-sm" onclick="openPageBuilderForCampaign('${c.id}')" title="Build and export HTML pages from template">🛠️ Build Pages</button>
+                    <button class="btn btn-secondary btn-sm" onclick="editCampaign('${c.id}')">Edit</button>
+                    ${activateBtn}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
 }
 
 function editCampaign(id) {
     const c = APP.campaigns.find(x => x.id === id);
     if (!c) return;
-    $('#campaignFormTitle').textContent = 'Edit Campaign';
+    $('#campaignFormTitle').textContent = 'Edit Campaign (' + id + ')';
     $('#campEditId').value = id;
     $('#campName').value = c.name || '';
     $('#campSlug').value = c.id;
+    if ($('#campStatus')) $('#campStatus').value = c.status || 'Active';
+    if ($('#campSheetId')) $('#campSheetId').value = c.sheetId || c.campaignSheetId || '';
+    if ($('#campAppsScriptUrl')) $('#campAppsScriptUrl').value = c.appsScriptUrl || '';
     $('#campGateway').value = c.primaryGateway || 'cardknox';
     $('#campCkIfields').value = c.cardknoxIfieldsKey || '';
     $('#campCkServer').value = c.cardknoxServerKey || '';
     $('#campUePublic').value = c.usaepayPublicKey || '';
     $('#campUeSource').value = c.usaepaySourceKey || '';
+    if ($('#campUePin')) $('#campUePin').value = c.usaepayPin || '';
     $('#campGoal').value = c.goalAmount || '';
-    $('#campStart').value = c.startDate || '';
-    $('#campEnd').value = c.endDate || '';
-    $('#campPageUrl').value = c.pageUrl || '';
-    $('#campAdminUrl').value = c.adminUrl || '';
-    $('#campWallUrl').value = c.wallUrl || '';
+    $('#campStart').value = c.startDate ? c.startDate.split('T')[0] : '';
+    $('#campEnd').value = c.endDate ? c.endDate.split('T')[0] : '';
+    $('#campPageUrl').value = c.pageUrl || `/${c.id}.html`;
+    $('#campAdminUrl').value = c.adminUrl || `/admin/${c.id}/`;
+    $('#campWallUrl').value = c.wallUrl || `/wall/${c.id}/`;
     $('#campWallEnabled').checked = c.wallEnabled !== false;
     $('#campaignForm').classList.add('visible');
 }
 
 function clearCampaignForm() {
-    ['campEditId','campName','campSlug','campCkIfields','campCkServer','campUePublic','campUeSource','campGoal','campStart','campEnd','campPageUrl','campAdminUrl','campWallUrl'].forEach(id => $(`#${id}`).value = '');
+    ['campEditId','campName','campSlug','campSheetId','campAppsScriptUrl','campCkIfields','campCkServer','campUePublic','campUeSource','campUePin','campGoal','campStart','campEnd','campPageUrl','campAdminUrl','campWallUrl'].forEach(id => {
+        const el = $(`#${id}`);
+        if (el) el.value = '';
+    });
+    if ($('#campStatus')) $('#campStatus').value = 'Active';
     $('#campGateway').value = 'cardknox';
     $('#campWallEnabled').checked = true;
 }
 
 async function toggleCampaignStatus(id, currentStatus) {
-    const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
-    if (!confirm(`Are you sure you want to set "${id}" to ${newStatus}?`)) return;
+    const newStatus = (currentStatus === 'Active') ? 'Inactive' : 'Active';
+    const actionLabel = newStatus === 'Active' ? 'activate' : 'deactivate';
+    if (!confirm(`Are you sure you want to ${actionLabel} "${id}"?`)) return;
     try {
-        await authPost('toggleCampaignStatus', { campaignId: id, status: newStatus });
-        showToast(`Campaign ${newStatus === 'Active' ? 'activated' : 'deactivated'}`, 'success');
+        await authPost('toggleCampaignStatus', { id: id, campaignId: id, status: newStatus, newStatus: newStatus });
+        showToast(`Campaign ${newStatus === 'Active' ? 'activated' : 'deactivated'} successfully`, 'success');
         loadCampaigns();
-    } catch (e) { showToast('Failed to update status', 'error'); }
+    } catch (e) { showToast('Failed to update status: ' + e.message, 'error'); }
+}
+
+async function provisionSheetForCampaign(id) {
+    if (!confirm(`Provision dedicated Google Sheet for "${id}"? This will create the 7 standard tabs and configure the backend URL.`)) return;
+    showToast('Provisioning Google Sheet...', 'info');
+    try {
+        const res = await authPost('provisionCampaign', { id: id, campaignId: id });
+        if (res.status === 'success') {
+            showToast(res.message || 'Campaign sheet provisioned successfully!', 'success');
+            if ($('#campEditId').value === id) {
+                if ($('#campSheetId')) $('#campSheetId').value = res.sheetId || '';
+                if ($('#campAppsScriptUrl')) $('#campAppsScriptUrl').value = res.appsScriptUrl || '';
+            }
+            loadCampaigns();
+        } else {
+            showToast(res.message || 'Failed to provision sheet', 'error');
+        }
+    } catch (e) {
+        showToast('Provisioning failed: ' + e.message, 'error');
+    }
+}
+
+if ($('#provisionSheetBtn')) {
+    $('#provisionSheetBtn').addEventListener('click', () => {
+        const slug = $('#campSlug').value.trim() || $('#campEditId').value.trim();
+        if (!slug) { showToast('Enter campaign slug first', 'warning'); return; }
+        provisionSheetForCampaign(slug);
+    });
 }
 
 // ═══════════════════════════════════════════════════════════
