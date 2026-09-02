@@ -1092,6 +1092,7 @@ body::before {
                 <div class="field"><label>Page URL</label><input type="text" id="campPageUrl" placeholder="/campaign-name.html"></div>
                 <div class="field"><label>Admin URL</label><input type="text" id="campAdminUrl" placeholder="/admin/campaign/"></div>
                 <div class="field"><label>Wall URL</label><input type="text" id="campWallUrl" placeholder="/wall/campaign/"></div>
+                <div class="field"><label>Wall Access Key (Optional)</label><input type="text" id="campWallKey" placeholder="Leave blank for public wall, or set secret key (e.g. secret123)"></div>
                 <div style="font-size:0.75rem; margin-top:-6px; margin-bottom:12px;"><a href="javascript:void(0)" id="autofillUrlsFromSlug" style="color:var(--accent-light); text-decoration:none;">✨ Auto-populate standard URLs from slug</a></div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;">
                     <div class="toggle-row">
@@ -2139,6 +2140,7 @@ $('#saveCampaignBtn').addEventListener('click', async () => {
         pageUrl: $('#campPageUrl').value.trim(),
         adminUrl: $('#campAdminUrl').value.trim(),
         wallUrl: $('#campWallUrl').value.trim(),
+        wallKey: $('#campWallKey') ? $('#campWallKey').value.trim() : '',
         wallEnabled: $('#campWallEnabled').checked,
         isPublic: $('#campIsPublic') ? $('#campIsPublic').checked : true,
     };
@@ -2248,13 +2250,14 @@ function editCampaign(id) {
     $('#campPageUrl').value = c.pageUrl || `/${c.id}.html`;
     $('#campAdminUrl').value = c.adminUrl || `/admin/${c.id}/`;
     $('#campWallUrl').value = c.wallUrl || `/wall/${c.id}/`;
+    if ($('#campWallKey')) $('#campWallKey').value = c.wallKey || c.wallAccessKey || '';
     $('#campWallEnabled').checked = c.wallEnabled !== false;
     if ($('#campIsPublic')) $('#campIsPublic').checked = c.isPublic !== false;
     $('#campaignForm').classList.add('visible');
 }
 
 function clearCampaignForm() {
-    ['campEditId','campName','campSlug','campSheetId','campAppsScriptUrl','campCkIfields','campCkServer','campUePublic','campUeSource','campUePin','campGoal','campStart','campEnd','campPageUrl','campAdminUrl','campWallUrl'].forEach(id => {
+    ['campEditId','campName','campSlug','campSheetId','campAppsScriptUrl','campCkIfields','campCkServer','campUePublic','campUeSource','campUePin','campGoal','campStart','campEnd','campPageUrl','campAdminUrl','campWallUrl','campWallKey'].forEach(id => {
         const el = $(`#${id}`);
         if (el) el.value = '';
     });
