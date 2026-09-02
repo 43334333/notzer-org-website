@@ -2277,21 +2277,28 @@ async function toggleCampaignStatus(id, currentStatus) {
 
 async function provisionSheetForCampaign(id) {
     if (!confirm(`Provision dedicated Google Sheet for "${id}"? This will create the 7 standard tabs and configure the backend URL.`)) return;
-    showToast('Provisioning Google Sheet...', 'info');
+    showToast('Provisioning Google Sheet (creating 7 tabs)...', 'info');
+    console.log('[PROVISION] Initiating sheet provisioning for campaign:', id);
     try {
         const res = await authPost('provisionCampaign', { id: id, campaignId: id });
-        if (res.status === 'success') {
+        console.log('[PROVISION] Server response:', res);
+        if (res && res.status === 'success') {
             showToast(res.message || 'Campaign sheet provisioned successfully!', 'success');
-            if ($('#campEditId').value === id) {
+            if ($('#campEditId').value === id || $('#campSlug').value === id) {
                 if ($('#campSheetId')) $('#campSheetId').value = res.sheetId || '';
                 if ($('#campAppsScriptUrl')) $('#campAppsScriptUrl').value = res.appsScriptUrl || '';
             }
             loadCampaigns();
         } else {
-            showToast(res.message || 'Failed to provision sheet', 'error');
+            const errDetail = res ? (res.message || JSON.stringify(res)) : 'Unknown response from server';
+            console.error('[PROVISION] Failed response:', res);
+            showToast('Provisioning failed: ' + errDetail, 'error');
+            alert('Sheet Provisioning Error:\n\n' + errDetail);
         }
     } catch (e) {
-        showToast('Provisioning failed: ' + e.message, 'error');
+        console.error('[PROVISION] Error caught:', e);
+        showToast('Provisioning error: ' + (e.message || e), 'error');
+        alert('Sheet Provisioning Error:\n\n' + (e.message || e));
     }
 }
 
