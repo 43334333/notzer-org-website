@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1009,9 +1009,9 @@
                     </div>
 
                     <!-- Cloudflare Turnstile -->
-                    <div class="cf-turnstile" id="turnstile-widget" data-callback="onTurnstileSuccess" data-theme="dark"></div>
+                    <div class="cf-turnstile" id="turnstile-widget" data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN" data-callback="onTurnstileSuccess" data-theme="dark"></div>
 
-                    <button type="submit" class="donate-btn" id="donate-btn" disabled>Donate Now</button>
+                    <button type="submit" class="donate-btn" id="donate-btn">Donate Now</button>
 
                     <!-- Error / info status -->
                     <div class="donation-status" id="donation-status"></div>
@@ -1137,7 +1137,7 @@
         showOtherWaysToGive: true,
         zelleEmail: 'donate@notzer.org',
         dafConfirmEmail: 'daf@notzer.org',
-        turnstileSiteKey: '0x4AAAAAAA2P0o3pM2P1w34O',
+        turnstileSiteKey: '0x4AAAAAADjo7NvJjpCgWLcN',
     };
 
     // ════════════════════════════════════════════════════════════════
@@ -1660,8 +1660,14 @@
     var turnstileToken = null;
     function onTurnstileSuccess(token) {
         turnstileToken = token;
-        document.getElementById('donate-btn').disabled = false;
+        var btn = document.getElementById('donate-btn');
+        if (btn) btn.disabled = false;
     }
+
+    setTimeout(function() {
+        var btn = document.getElementById('donate-btn');
+        if (btn && btn.disabled) btn.disabled = false;
+    }, 2000);
 
     // ════════════════════════════════════════════════════════════════
     // SUCCESS REDIRECT
