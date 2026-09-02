@@ -912,6 +912,7 @@ const WALL_CONFIG = {
     campaignNameHebrew: 'הכנסת כלה — שמחת חתן וכלה',
     appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzngv-LEqoOercDK5MfRtB8BpEFhH3sdnq16lyxzq2LN_8W0lUQpa-oUZB4CfGYE28y3g/exec',
     donationPageUrl: '/keren-hk-m-twersky.html',
+    goalAmount: 50000,
     accentColor: '#d4af37',
     accentLight: '#f3e5ab',
     accentRgb: '212, 175, 55',
@@ -938,10 +939,9 @@ const accessKey = new URLSearchParams(window.location.search).get('key');
 // FORMAT HELPERS
 // ============================================================
 function formatCurrency(amount) {
-    if (amount == null || isNaN(amount)) return '$0';
-    return '$' + Number(amount).toLocaleString('en-US', {
+    return '$' + Number(amount || 0).toLocaleString('en-US', {
         minimumFractionDigits: 0,
-        maximumFractionDigits: 0
+        maximumFractionDigits: 0,
     });
 }
 
@@ -957,11 +957,18 @@ function formatDate(timestamp) {
 }
 
 function formatRefreshTime() {
-    return new Date().toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        second: '2-digit'
-    });
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 function getTeamName(teamId) {
@@ -1005,7 +1012,7 @@ async function loadData() {
         currentTotals = data.totals || {};
         currentDonors = data.donors || [];
         currentTeamTotals = data.teamTotals || {};
-        campaignGoal = data.campaignGoal || 0;
+        campaignGoal = data.campaignGoal || data.goalAmount || WALL_CONFIG.goalAmount || 0;
 
         updateStats();
         renderCurrentView();

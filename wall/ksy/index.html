@@ -981,7 +981,7 @@ async function loadData() {
         currentTotals = data.totals || {};
         currentDonors = data.donors || [];
         currentTeamTotals = data.teamTotals || {};
-        campaignGoal = data.campaignGoal || 0;
+        campaignGoal = data.campaignGoal || data.goalAmount || WALL_CONFIG.goalAmount || 0;
 
         updateStats();
         renderCurrentView();
