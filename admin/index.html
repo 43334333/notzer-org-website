@@ -3759,12 +3759,12 @@ function renderResendResults(receipts) {
     }
     tbody.innerHTML = receipts.map(r => `<tr>
         <td style="font-size:0.78rem;color:var(--accent-light);">${r.receiptId || '—'}</td>
-        <td style="font-weight:500;">${r.donor || '—'}</td>
+        <td style="font-weight:500;">${r.donor || r.donorName || '—'}</td>
         <td>${formatCurrency(r.amount)}</td>
-        <td>${formatDate(r.date)}</td>
-        <td>${r.campaign || '—'}</td>
-        <td>${r.sentTo || r.email || '—'}</td>
-        <td><button class="btn btn-secondary btn-sm" onclick="openResendModal('${r.receiptId}','${r.campaignId || ''}','${r.pledgeId || ''}','${r.sentTo || r.email || ''}')">Resend</button></td>
+        <td>${formatDate(r.date || r.timestamp)}</td>
+        <td>${r.campaign || r.campaignId || '—'}</td>
+        <td>${r.sentTo || r.sentToEmail || r.email || '—'}</td>
+        <td><button class="btn btn-secondary btn-sm" onclick="openResendModal('${r.receiptId}','${r.campaignId || ''}','${r.pledgeId || ''}','${r.sentTo || r.sentToEmail || r.email || ''}')">Resend</button></td>
     </tr>`).join('');
 }
 
@@ -3822,15 +3822,15 @@ function renderReceiptLog() {
         updateReceiptLogPagination();
         return;
     }
-    const sourceMap = { auto: 'badge-auto', manual: 'badge-manual', resend_alternate: 'badge-resend', resend_original: 'badge-scheduled' };
+    const sourceMap = { auto: 'badge-auto', online: 'badge-auto', manual: 'badge-manual', resend_alternate: 'badge-resend', resend_original: 'badge-scheduled' };
     tbody.innerHTML = receipts.map(r => `<tr>
         <td style="font-size:0.78rem;color:var(--accent-light);font-weight:500;">${r.receiptId || '—'}</td>
-        <td>${formatDate(r.date)}</td>
-        <td style="font-weight:500;color:var(--text-primary);">${r.donor || '—'}</td>
-        <td>${r.campaign || '—'}</td>
+        <td>${formatDate(r.date || r.timestamp)}</td>
+        <td style="font-weight:500;color:var(--text-primary);">${r.donor || r.donorName || '—'}</td>
+        <td>${r.campaign || r.campaignId || '—'}</td>
         <td>${formatCurrency(r.amount)}</td>
-        <td>${r.sentTo || '—'}</td>
-        <td><span class="badge ${sourceMap[r.source] || 'badge-auto'}">${r.source || '—'}</span></td>
+        <td>${r.sentTo || r.sentToEmail || r.donorEmail || r.email || '—'}</td>
+        <td><span class="badge ${sourceMap[String(r.source || '').toLowerCase()] || 'badge-auto'}">${r.source || '—'}</span></td>
         <td>${r.issuedBy || '—'}</td>
     </tr>`).join('');
     updateReceiptLogPagination();
