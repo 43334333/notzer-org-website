@@ -2027,14 +2027,19 @@ async function loadDashboard() {
     try {
         const data = await authGet('getAllStats');
         const stats = data || {};
-        $('#totalRaised').textContent = formatCurrency(stats.totalRaised || 0);
-        $('#totalDonors').textContent = (stats.totalDonors || 0).toLocaleString();
-        $('#activeCampaigns').textContent = stats.activeCampaigns || 0;
+        const overall = stats.overall || stats;
+        const totalRaisedVal = overall.totalRaised !== undefined ? overall.totalRaised : (stats.totalRaised || 0);
+        const totalDonorsVal = overall.totalDonors !== undefined ? overall.totalDonors : (stats.totalDonors || 0);
+        const activeCampaignsVal = overall.activeCampaigns !== undefined ? overall.activeCampaigns : (stats.activeCampaigns || 0);
+
+        $('#totalRaised').textContent = formatCurrency(totalRaisedVal);
+        $('#totalDonors').textContent = Number(totalDonorsVal).toLocaleString();
+        $('#activeCampaigns').textContent = activeCampaignsVal;
 
         const campaigns = stats.campaigns || [];
         APP.campaigns = campaigns;
         renderDashCampaigns(campaigns);
-        renderActivityFeed(stats.recentDonations || []);
+        renderActivityFeed(stats.recentDonations || stats.recentActivity || []);
         populateCampaignFilters(campaigns);
     } catch (e) {
         showToast('Failed to load dashboard data', 'error');
