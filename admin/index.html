@@ -1656,6 +1656,7 @@ body::before {
                         <button type="button" class="pill active" id="bViewDonationTab">🌐 Donation Page (<span id="bDonationFilename">page.html</span>)</button>
                         <button type="button" class="pill" id="bViewAdminTab">🔒 Admin Console (/admin/<span id="bAdminSlugName">slug</span>/)</button>
                         <button type="button" class="pill" id="bViewWallTab">🏆 Donor Wall (/wall/<span id="bWallSlugName">slug</span>/)</button>
+                        <button type="button" class="pill" id="bViewBookkeeperTab">📖 Bookkeeper (/admin/<span id="bBookkeeperSlugName">slug</span>/bookkeeper.html)</button>
                     </div>
                     <div style="display:flex;gap:6px;">
                         <button type="button" class="btn btn-secondary btn-sm" id="bToggleCodePreviewBtn">Toggle Code View</button>
@@ -2211,9 +2212,11 @@ function renderCampaignTable(campaigns) {
             </div>`;
 
         const sheetLink = c.sheetId
-            ? `<a href="https://docs.google.com/spreadsheets/d/${c.sheetId}/edit" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--accent-light);text-decoration:none;margin-right:6px;" title="Open Google Sheet ID: ${c.sheetId}">📊 Sheet ↗</a>`
+            ? `<a href="https://docs.google.com/spreadsheets/d/${c.sheetId}/edit" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--accent-light);text-decoration:none;" title="Open Google Sheet ID: ${c.sheetId}">📊 Sheet ↗</a>`
             : `<button class="btn btn-secondary btn-sm" onclick="provisionSheetForCampaign('${c.id}')" title="Create dedicated Google Sheet" style="padding:2px 6px;font-size:0.72rem;">🪄 Provision Sheet</button>`;
         const pageLink = `<a href="${c.pageUrl || `/${c.id}.html`}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--text-secondary);text-decoration:none;" title="Open Page: ${c.pageUrl || `/${c.id}.html`}">🌐 Page ↗</a>`;
+        const wallLink = `<a href="/wall/${c.id}/index.html" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--text-secondary);text-decoration:none;" title="Open Donor Wall">🧱 Wall ↗</a>`;
+        const bookkeeperLink = `<a href="/admin/${c.id}/bookkeeper.html" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:#4dabf7;text-decoration:none;" title="Open Bookkeeper Portal">📖 Bookkeeper ↗</a>`;
 
         const activateBtn = isActive
             ? `<button class="btn btn-sm btn-danger" onclick="toggleCampaignStatus('${c.id}', '${c.status}')">Deactivate</button>`
@@ -2241,6 +2244,8 @@ function renderCampaignTable(campaigns) {
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                     ${sheetLink}
                     ${pageLink}
+                    ${wallLink}
+                    ${bookkeeperLink}
                 </div>
             </td>
             <td>
@@ -2574,7 +2579,7 @@ const BUILDER_STATE = {
     step: 1,
     selectedTemplateId: 'hachnosas-kallah',
     currentConfig: null,
-    generated: { donation: '', admin: '', wall: '' },
+    generated: { donation: '', admin: '', wall: '', bookkeeper: '' },
     activePreviewTab: 'donation',
     showCode: false
 };
@@ -2714,6 +2719,7 @@ function initPageBuilder() {
     $('#bViewDonationTab').addEventListener('click', () => setPreviewTab('donation'));
     $('#bViewAdminTab').addEventListener('click', () => setPreviewTab('admin'));
     $('#bViewWallTab').addEventListener('click', () => setPreviewTab('wall'));
+    $('#bViewBookkeeperTab').addEventListener('click', () => setPreviewTab('bookkeeper'));
 
     $('#bToggleCodePreviewBtn').addEventListener('click', () => {
         BUILDER_STATE.showCode = !BUILDER_STATE.showCode;
@@ -2941,11 +2947,13 @@ function refreshBuilderPreviews() {
     $('#bDonationFilename').textContent = `${config.id}.html`;
     $('#bAdminSlugName').textContent = config.id;
     $('#bWallSlugName').textContent = config.id;
+    if ($('#bBookkeeperSlugName')) $('#bBookkeeperSlugName').textContent = config.id;
 
-    // Generate all 3 pages
+    // Generate all 4 pages
     BUILDER_STATE.generated.donation = generateDonationPageHtml(config);
     BUILDER_STATE.generated.admin = generateAdminPageHtml(config);
     BUILDER_STATE.generated.wall = generateWallPageHtml(config);
+    BUILDER_STATE.generated.bookkeeper = generateBookkeeperPageHtml(config);
 
     updateActivePreview();
 }
@@ -2955,6 +2963,7 @@ function setPreviewTab(tab) {
     $('#bViewDonationTab').classList.toggle('active', tab === 'donation');
     $('#bViewAdminTab').classList.toggle('active', tab === 'admin');
     $('#bViewWallTab').classList.toggle('active', tab === 'wall');
+    if ($('#bViewBookkeeperTab')) $('#bViewBookkeeperTab').classList.toggle('active', tab === 'bookkeeper');
     updateActivePreview();
 }
 
@@ -2994,6 +3003,7 @@ function downloadCurrentBuilderPage() {
     let filename = `${c.id}.html`;
     if (tab === 'admin') filename = `admin-${c.id}-index.html`;
     if (tab === 'wall') filename = `wall-${c.id}-index.html`;
+    if (tab === 'bookkeeper') filename = `admin-${c.id}-bookkeeper.html`;
 
     const content = BUILDER_STATE.generated[tab] || '';
     downloadTextFile(filename, content);
@@ -3299,6 +3309,91 @@ function generateWallPageHtml(config) {
     <` + `script>
     const WALL_CONFIG = ${wallJsonStr};
     console.log('Donor wall loaded for:', WALL_CONFIG.campaignName);
+    <` + `/script>
+</body>
+</html>`;
+}
+
+function generateBookkeeperPageHtml(config) {
+    const accent = config.accentColor || '#4dabf7';
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Bookkeeper — ${escapeHtml(config.name)}</title>
+    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #121212; color: #e0e0e0; font-family: 'Inter', sans-serif; line-height: 1.6; min-height: 100vh; }
+        .accent { color: ${accent}; }
+        .access-denied { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 2rem; }
+        .access-denied .lock-icon { width: 72px; height: 72px; border-radius: 50%; background: rgba(255, 82, 82, 0.12); border: 2px solid rgba(255, 82, 82, 0.3); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 1.5rem; }
+        .access-denied h1 { font-size: 1.5rem; margin-bottom: .5rem; color: #ff5252; }
+        .access-denied p { color: #888; max-width: 360px; font-size: 0.95rem; }
+        .app-layout { display: flex; gap: 1.5rem; max-width: 1400px; margin: 0 auto; padding: 2rem 1.25rem; }
+        .main-content { flex: 1; min-width: 0; }
+        .batch-panel { width: 320px; flex-shrink: 0; position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; display: flex; flex-direction: column; }
+        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .page-header-left { display: flex; align-items: center; gap: 1rem; }
+        .page-header-left img { height: 40px; width: auto; opacity: 0.9; }
+        .page-header-left h1 { font-size: 1.35rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+        .page-header-left .subtitle { font-size: 0.8rem; color: #888; margin-top: 2px; }
+        .header-back { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #aaa; font-size: 0.82rem; text-decoration: none; }
+        .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+        .stat-card { background: rgba(30, 30, 50, 0.7); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 1.1rem 1rem; text-align: center; }
+        .stat-card .stat-value { font-size: 1.6rem; font-weight: 700; color: #fff; }
+        .stat-card .stat-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: #888; margin-top: 0.35rem; }
+        .table-card { background: rgba(30, 30, 50, 0.7); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; overflow: hidden; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: #888; padding: 0.85rem 0.75rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .data-table td { padding: 0.75rem; font-size: 0.85rem; color: #ccc; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    </style>
+</head>
+<body>
+    <div class="access-denied" id="accessDenied" style="display:none;">
+        <div class="lock-icon">🔒</div>
+        <h1>Access Denied</h1>
+        <p>This page requires an authorization key. Please use the link provided by your administrator.</p>
+    </div>
+    <div class="app-layout" id="appMain">
+        <div class="main-content">
+            <header class="page-header">
+                <div class="page-header-left">
+                    <img src="../../NC_Logo_03.png" alt="Notzer Chesed">
+                    <div>
+                        <h1>Bookkeeper — Scheduled Payments</h1>
+                        <p class="subtitle">${escapeHtml(config.name)} Campaign</p>
+                    </div>
+                </div>
+                <a class="header-back" id="backLink" href="#">← Back to Admin</a>
+            </header>
+            <div class="stats-bar">
+                <div class="stat-card"><div class="stat-value" id="statTotal">—</div><div class="stat-label">Total Scheduled</div></div>
+                <div class="stat-card"><div class="stat-value" id="statDueWeek">—</div><div class="stat-label">Due This Week</div></div>
+                <div class="stat-card"><div class="stat-value" id="statOverdue">—</div><div class="stat-label">Overdue</div></div>
+                <div class="stat-card"><div class="stat-value" id="statOutstanding">—</div><div class="stat-label">Total Outstanding</div></div>
+            </div>
+            <div class="table-card">
+                <table class="data-table">
+                    <thead><tr><th>Due Date</th><th>Donor</th><th>Amount</th><th>Total Pledge</th><th>Payment #</th><th>Method</th><th>Status</th></tr></thead>
+                    <tbody id="tableBody"><tr><td colspan="7" style="text-align:center;padding:2rem;">Ready for bookkeeper processing.</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <` + `script>
+    const CONFIG = {
+        campaignId: '${config.id}',
+        campaignName: '${escapeJs(config.name)}',
+        apiUrl: '${config.appsScriptUrl}',
+        key: new URLSearchParams(window.location.search).get('key')
+    };
+    console.log('Bookkeeper initialized for campaign:', CONFIG.campaignId);
     <` + `/script>
 </body>
 </html>`;
