@@ -33,7 +33,7 @@ git status --short
 # 2. Secret Scan Invariant Check
 Write-Host ''
 Write-Host '[2/4] Running security and client secret isolation scan...' -ForegroundColor Yellow
-$suspiciousPatterns = @('cardknoxServerKey', 'usaepaySourceKey', 'usaepayPin')
+$suspiciousPatterns = @('cardknoxServerKey', 'usaepaySourceKey', 'usaepayPin', 'tdfValidationToken', 'tdfApiKey', 'tdfToken')
 
 $leakFound = $false
 $filesToCheck = Get-ChildItem -Path $repoRoot -Recurse -Include *.html, *.js | Where-Object { $_.FullName -notmatch 'apps-script-backend' }
