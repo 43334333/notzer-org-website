@@ -1630,7 +1630,7 @@ async function submitDonation(formData) {
         isInstallment: formData.isInstallment || false,
     };
 
-    return await authPost('addManualDonation', payload);
+    return await authPost('issueManualReceipt', payload);
 }
 
 /* ─── UI Helpers ──────────────────────────────────────── */

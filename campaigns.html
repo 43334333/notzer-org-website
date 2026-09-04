@@ -7,6 +7,12 @@
     <meta name="description" content="Explore and support the active charitable campaigns run by Notzer Chesed.">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="NC_Logo_03.png">
+    <style>
+        /* Fail-closed: hide backend-managed campaign cards until confirmed active & public */
+        .campaign-card[data-managed="true"] {
+            display: none;
+        }
+    </style>
 </head>
 <body>
 
@@ -29,7 +35,7 @@
             
             <div class="campaign-grid" id="campaignsGrid">
 
-                <div class="campaign-card" data-campaign-id="keren-hk-m-twersky">
+                <div class="campaign-card" data-campaign-id="keren-hk-m-twersky" data-managed="true" style="display: none;">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                         <span style="font-size:1.4rem;">👰</span>
                         <h3 style="margin:0;">Keren Hachnosas Kallah — M. Twersky</h3>
@@ -38,7 +44,7 @@
                     <a href="keren-hk-m-twersky.html" class="cta-button">Learn More & Contribute</a>
                 </div>
 
-                <div class="campaign-card" data-campaign-id="ksy">
+                <div class="campaign-card" data-campaign-id="ksy" data-managed="true" style="display: none;">
                     <h3>Keren Shlomo Yechiel</h3>
                     <p>Raising urgent funds for a family who suddenly lost their beloved father and breadwinner at the young age of 52. Help us support this family through their unimaginable loss.</p>
                     <a href="keren-shlomo-yechiel.html" class="cta-button">Learn More & Contribute</a>
@@ -99,16 +105,13 @@
                         }
                     });
 
-                    // If a card on the page was marked private in the backend, hide it
-                    grid.querySelectorAll('.campaign-card[data-campaign-id]').forEach(function(el) {
+                    // Reveal backend-managed campaigns ONLY if confirmed active & public
+                    grid.querySelectorAll('.campaign-card[data-managed="true"]').forEach(function(el) {
                         var cId = el.getAttribute('data-campaign-id');
-                        // For known campaigns registered in the backend, if not in activePublicIds, hide
-                        if (cId && (cId === 'keren-hk-m-twersky' || cId === 'ksy')) {
-                            if (!activePublicIds[cId]) {
-                                el.style.display = 'none';
-                            } else {
-                                el.style.display = '';
-                            }
+                        if (cId && activePublicIds[cId]) {
+                            el.style.display = 'block';
+                        } else {
+                            el.style.display = 'none';
                         }
                     });
                 }
