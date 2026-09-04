@@ -1118,8 +1118,13 @@
                         </div>
 
                         <div class="field">
-                            <label for="memo">Memo</label>
-                            <textarea id="memo" name="memo" placeholder="Optional notes…"></textarea>
+                            <label for="memo">Wall Memo</label>
+                            <textarea id="memo" name="memo" placeholder="Shown on donor wall (e.g. In memory of... / In honor of...)"></textarea>
+                        </div>
+
+                        <div class="field">
+                            <label for="notes">Notes</label>
+                            <textarea id="notes" name="notes" placeholder="Optional internal notes…"></textarea>
                         </div>
 
                         <div class="field" style="position:relative;">
@@ -1566,6 +1571,7 @@ async function handleSubmit(e) {
         amount:       parseFloat(form.amount.value),
         displayName:  form.displayName.value.trim(),
         memo:         form.memo.value.trim(),
+        notes:        form.notes ? form.notes.value.trim() : '',
         method:       form.method.value,
         donationDate: form.donationDate.value,
         sendReceipt:  receiptToggle.checked && form.email.value.trim().length > 0,
@@ -1616,6 +1622,7 @@ async function submitDonation(formData) {
         amount:       formData.amount,
         displayName:  formData.displayName || '',
         memo:         formData.memo || '',
+        notes:        formData.notes || '',
         method:       formData.method,
         donationDate: formData.donationDate,
         sendReceipt:  formData.sendReceipt,

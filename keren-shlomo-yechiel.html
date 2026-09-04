@@ -163,8 +163,13 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="donor-memo">Memo</label>
+                                <label for="donor-memo">Wall Memo</label>
                                 <input type="text" id="donor-memo" name="memo" placeholder="In memory of... / In honor of...">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="donor-notes">Notes</label>
+                                <input type="text" id="donor-notes" name="notes" placeholder="Optional notes…">
                             </div>
 
                             <label class="toggle-label">
@@ -689,6 +694,7 @@
                         zip: document.getElementById('donor-zip').value.trim(),
                         displayName: document.getElementById('donor-display-name').value.trim(),
                         memo: document.getElementById('donor-memo').value.trim(),
+                        notes: document.getElementById('donor-notes') ? document.getElementById('donor-notes').value.trim() : '',
                         anonymous: document.getElementById('anonymous-check').checked,
                         isRecurring: isRecurring,
                         frequency: frequency,

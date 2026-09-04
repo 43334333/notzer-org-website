@@ -1179,7 +1179,8 @@ body::before {
                         <div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="donIsInstallment" style="width:auto;"><span>This is an installment (total amount is split across payments)</span></label></div>
                     </div>
                     <div class="field"><label>Donation Date</label><input type="date" id="donDate"></div>
-                    <div class="field"><label>Memo</label><textarea id="donMemo" placeholder="Optional notes…"></textarea></div>
+                    <div class="field"><label>Wall Memo</label><textarea id="donMemo" placeholder="Shown on donor wall (e.g. In memory of... / In honor of...)"></textarea></div>
+                    <div class="field"><label>Notes</label><textarea id="donNotes" placeholder="Optional internal notes…"></textarea></div>
                     <div class="field" style="position:relative;">
                         <label>Teams</label>
                         <div class="tag-input-wrapper" id="donTeamWrapper"><input type="text" class="chip-search" id="donTeamSearch" placeholder="Type to search teams..." autocomplete="off"></div>
@@ -3523,6 +3524,7 @@ async function handleDonationSubmit(e) {
         paymentStatus: statusVal,
         donationDate: $('#donDate').value,
         memo: $('#donMemo').value.trim(),
+        notes: $('#donNotes') ? $('#donNotes').value.trim() : '',
         anonymous: $('#donAnonymous').checked,
         sendReceipt: $('#donSendReceipt').checked && $('#donEmail').value.trim().length > 0,
         teams: APP.selectedTeams.join(','),
