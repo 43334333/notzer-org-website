@@ -1117,48 +1117,66 @@
          ============================================================ -->
     <div class="modal-overlay" id="daf-confirm-modal">
         <div class="modal-content" style="max-width: 440px; text-align: left; padding: 30px;">
-            <div style="text-align: center; margin-bottom: 16px;">
-                <div class="modal-icon" style="margin: 0 auto 10px;">📋</div>
-                <h3 style="margin-bottom: 6px; font-size: 1.25rem;">Before You Continue...</h3>
-                <p style="font-size: 0.85rem; color: #ccc; margin-bottom: 0;">
-                    Please enter your details and intended amount for <strong id="daf-confirm-platform" style="color: var(--accent, #4dabf7);"></strong> so we can attribute your gift and issue a tax receipt:
+            <!-- Step 1: Donor Info Form -->
+            <div id="modal-daf-step-form">
+                <div style="text-align: center; margin-bottom: 16px;">
+                    <div class="modal-icon" style="margin: 0 auto 10px;">📋</div>
+                    <h3 style="margin-bottom: 6px; font-size: 1.25rem;">Before You Continue...</h3>
+                    <p style="font-size: 0.85rem; color: #ccc; margin-bottom: 0;">
+                        Please enter your details and intended amount for <strong id="daf-confirm-platform" style="color: var(--accent, #4dabf7);"></strong> so we can attribute your gift and issue a tax receipt:
+                    </p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <div>
+                        <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">First Name *</label>
+                        <input type="text" id="modal-daf-first-name" placeholder="First Name" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">Last Name *</label>
+                        <input type="text" id="modal-daf-last-name" placeholder="Last Name" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">Email Address *</label>
+                    <input type="email" id="modal-daf-email" placeholder="donor@example.com" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">Total Donation Amount ($) *</label>
+                    <input type="number" id="modal-daf-amount" placeholder="0.00" min="1" step="0.01" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+                </div>
+
+                <div id="modal-daf-error" style="display: none; padding: 8px 10px; margin-bottom: 12px; background: rgba(255, 82, 82, 0.15); border: 1px solid #ff5252; border-radius: 5px; color: #ff5252; font-size: 0.82rem; text-align: center;"></div>
+
+                <div id="daf-confirm-screenshot-box" style="background: rgba(255,255,255,0.03); border: 1px solid #333; border-radius: 6px; padding: 10px; margin-bottom: 18px; font-size: 0.78rem; color: #aaa; text-align: center;">
+                    <p style="margin: 0 0 4px;">After giving, please email confirmation screenshot to:</p>
+                    <div class="zelle-email" id="daf-confirm-email-box" style="margin: 0 auto; display: inline-flex; font-size: 0.82rem; padding: 4px 10px;">
+                        <strong id="daf-confirm-email-display"></strong>
+                        <span class="copy-hint" style="margin-left: 6px;">Copy</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="modal-close-btn" style="flex: 1; background: #333; color: #EFEFEF;" onclick="closeDafConfirm()">Cancel</button>
+                    <button type="button" class="modal-close-btn" style="flex: 1.4; background: var(--accent, #4dabf7); color: #000; font-weight: 600;" id="daf-confirm-proceed">Continue →</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Zelle Instructions Overlay -->
+            <div id="modal-daf-step-zelle" style="display: none; text-align: center;">
+                <div class="modal-icon" style="margin: 0 auto 10px; font-size: 2rem;">⚡</div>
+                <h3 style="margin-bottom: 8px; font-size: 1.25rem;">Send via Zelle</h3>
+                <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 12px;">Send via Zelle to:</p>
+                <div class="zelle-email" id="modal-zelle-email-box" style="margin: 0 auto 12px; display: inline-flex; font-size: 1rem; padding: 8px 16px; cursor: pointer;">
+                    <strong id="modal-zelle-email-display"></strong>
+                    <span class="copy-hint" id="modal-zelle-copy-hint" style="margin-left: 8px;">Click to copy</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #888; margin: 8px auto 20px; line-height: 1.5; max-width: 320px;">
+                    Please include your name and email address in the Zelle memo for receipt purposes.
                 </p>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                <div>
-                    <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">First Name *</label>
-                    <input type="text" id="modal-daf-first-name" placeholder="First Name" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
-                </div>
-                <div>
-                    <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">Last Name *</label>
-                    <input type="text" id="modal-daf-last-name" placeholder="Last Name" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
-                </div>
-            </div>
-
-            <div style="margin-bottom: 10px;">
-                <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">Email Address *</label>
-                <input type="email" id="modal-daf-email" placeholder="donor@example.com" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
-            </div>
-
-            <div style="margin-bottom: 12px;">
-                <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">Total Donation Amount ($) *</label>
-                <input type="number" id="modal-daf-amount" placeholder="0.00" min="1" step="0.01" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
-            </div>
-
-            <div id="modal-daf-error" style="display: none; padding: 8px 10px; margin-bottom: 12px; background: rgba(255, 82, 82, 0.15); border: 1px solid #ff5252; border-radius: 5px; color: #ff5252; font-size: 0.82rem; text-align: center;"></div>
-
-            <div style="background: rgba(255,255,255,0.03); border: 1px solid #333; border-radius: 6px; padding: 10px; margin-bottom: 18px; font-size: 0.78rem; color: #aaa; text-align: center;">
-                <p style="margin: 0 0 4px;">After giving, please email confirmation screenshot to:</p>
-                <div class="zelle-email" id="daf-confirm-email-box" style="margin: 0 auto; display: inline-flex; font-size: 0.82rem; padding: 4px 10px;">
-                    <strong id="daf-confirm-email-display"></strong>
-                    <span class="copy-hint" style="margin-left: 6px;">Copy</span>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 10px;">
-                <button type="button" class="modal-close-btn" style="flex: 1; background: #333; color: #EFEFEF;" onclick="closeDafConfirm()">Cancel</button>
-                <button type="button" class="modal-close-btn" style="flex: 1.4; background: var(--accent, #4dabf7); color: #000; font-weight: 600;" id="daf-confirm-proceed">Continue →</button>
+                <button type="button" class="modal-close-btn" style="width: 100%; background: var(--accent, #4dabf7); color: #000; font-weight: 600; padding: 10px 0;" onclick="closeDafConfirm()">Done</button>
             </div>
         </div>
     </div>
@@ -2068,6 +2086,17 @@
     }
 
     function setupAndShowDafModal() {
+        var stepForm = document.getElementById('modal-daf-step-form');
+        var stepZelle = document.getElementById('modal-daf-step-zelle');
+        if (stepForm) stepForm.style.display = 'block';
+        if (stepZelle) stepZelle.style.display = 'none';
+
+        var screenshotBox = document.getElementById('daf-confirm-screenshot-box');
+        if (screenshotBox) screenshotBox.style.display = isZelleMode ? 'none' : 'block';
+
+        var modalZDisplay = document.getElementById('modal-zelle-email-display');
+        if (modalZDisplay) modalZDisplay.textContent = CAMPAIGN_CONFIG.zelleEmail;
+
         var platformEl = document.getElementById('daf-confirm-platform');
         if (platformEl) platformEl.textContent = pendingDafName;
         var proceedBtn = document.getElementById('daf-confirm-proceed');
@@ -2115,6 +2144,10 @@
     function closeDafConfirm() {
         var modal = document.getElementById('daf-confirm-modal');
         if (modal) modal.classList.remove('active');
+        var stepForm = document.getElementById('modal-daf-step-form');
+        var stepZelle = document.getElementById('modal-daf-step-zelle');
+        if (stepForm) stepForm.style.display = 'block';
+        if (stepZelle) stepZelle.style.display = 'none';
         pendingDafLink = null;
         pendingDafName = null;
         isZelleMode = false;
@@ -2190,12 +2223,34 @@
                 var zelleBtn = document.getElementById('zelle-toggle-btn');
                 if (zelleInfo) zelleInfo.style.display = 'block';
                 if (zelleBtn) zelleBtn.classList.add('open');
-                closeDafConfirm();
+
+                // Transition overlay to Zelle instructions
+                var stepForm = document.getElementById('modal-daf-step-form');
+                var stepZelle = document.getElementById('modal-daf-step-zelle');
+                if (stepForm) stepForm.style.display = 'none';
+                if (stepZelle) stepZelle.style.display = 'block';
+                var copyHint = document.getElementById('modal-zelle-copy-hint');
+                if (copyHint) {
+                    copyHint.textContent = 'Copied!';
+                    setTimeout(function() { copyHint.textContent = 'Click to copy'; }, 3000);
+                }
             } else if (pendingDafLink) {
                 window.open(pendingDafLink, '_blank');
                 closeDafConfirm();
             } else {
                 closeDafConfirm();
+            }
+        });
+    }
+
+    var modalZelleBox = document.getElementById('modal-zelle-email-box');
+    if (modalZelleBox) {
+        modalZelleBox.addEventListener('click', function() {
+            navigator.clipboard.writeText(CAMPAIGN_CONFIG.zelleEmail);
+            var hint = document.getElementById('modal-zelle-copy-hint');
+            if (hint) {
+                hint.textContent = 'Copied!';
+                setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
             }
         });
     }
