@@ -2403,7 +2403,13 @@
             cardNumber: cardNum,
             amount: amt,
             donorName: donorName,
+            firstName: fn,
+            lastName: ln,
             email: em,
+            displayName: (document.getElementById('donor-display-name') ? document.getElementById('donor-display-name').value.trim() : ''),
+            memo: (document.getElementById('donor-memo') ? document.getElementById('donor-memo').value.trim() : ''),
+            anonymous: (document.getElementById('anonymous-check') ? document.getElementById('anonymous-check').checked : false),
+            team: (typeof selectedTeam !== 'undefined' ? selectedTeam : ''),
             turnstileToken: (typeof turnstileToken !== 'undefined' ? turnstileToken : '') || ''
         };
 
