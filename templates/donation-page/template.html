@@ -1008,6 +1008,83 @@
                                     <button type="button" id="preview-schedule-btn" style="display: none;" onclick="openSchedulePreview()">📋 Preview Payment Schedule</button>
                                 </div>
                             </div>
+
+                            <!-- ════════════════════════════════════════
+                                 Other Ways to Give (Zelle & DAF)
+                                 ════════════════════════════════════════ -->
+                            <div class="other-ways-container" id="other-ways-section" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color, rgba(255,255,255,0.1));">
+                                <h4 class="col-heading" style="margin-bottom: 15px;">Other Ways to Give</h4>
+
+                                <!-- Zelle -->
+                                <div class="zelle-toggle">
+                                    <button type="button" class="zelle-btn" id="zelle-toggle-btn" onclick="handleZelleClick()">
+                                        <span class="zelle-icon">⚡</span> Zelle
+                                        <span class="zelle-arrow">▸</span>
+                                    </button>
+                                    <div id="zelle-info" class="zelle-details" style="display: none;">
+                                        <p>Send via Zelle to:</p>
+                                        <div class="zelle-email" id="zelle-email-box">
+                                            <strong id="zelle-email-display"></strong>
+                                            <span class="copy-hint">Click to copy</span>
+                                        </div>
+                                        <p style="font-size: 0.85rem; color: #888; margin-top: 8px;">Please include your name and email address in the Zelle memo for receipt purposes.</p>
+                                    </div>
+                                </div>
+
+                                <!-- DAF Links -->
+                                <p style="color: #aaa; margin: 16px 0 10px; font-size: 0.85rem;">Contribute through your Donor-Advised Fund:</p>
+                                <div class="daf-links">
+                                    <!-- TDF Inline Form Toggle -->
+                                    <button type="button" class="daf-link tdf-toggle-btn" id="tdf-toggle-btn" onclick="toggleTdfForm()">
+                                        🏦 The Donors Fund
+                                    </button>
+                                    <a href="https://portal.ojcfund.org/account/recommendGrant?recurring=false&orgid=MQAAADQAAAA0AAAANwAAADUAAAA=" target="_blank" rel="noopener" class="daf-link" data-link-name="OJC Fund">OJC Fund</a>
+                                    <a href="https://org.pledgercharitable.org/ChargeCard?ein=113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="Pledger Charitable">Pledger Charitable</a>
+                                    <a href="https://matbia.org/d/00124211329" target="_blank" rel="noopener" class="daf-link" data-link-name="Matbia">Matbia</a>
+                                    <a href="https://www.paypal.com/us/fundraiser/charity/3380976" target="_blank" rel="noopener" class="daf-link" data-link-name="PayPal">PayPal</a>
+                                </div>
+
+                                <!-- TDF Inline Giving Card Form -->
+                                <div id="tdf-form-container" style="display: none; margin-top: 16px; padding: 16px; background: #1F1F1F; border: 1px solid #333; border-radius: 8px;">
+                                    <h4 style="margin: 0 0 4px; font-size: 1rem; color: var(--accent, #4dabf7);">The Donors Fund — Giving Card</h4>
+                                    <p style="font-size: 0.8rem; color: #888; margin: 0 0 16px;">Submit a grant recommendation directly from your Donor-Advised Fund.</p>
+
+                                    <!-- Recovery Banner -->
+                                    <div id="tdf-recovery-banner" style="display: none; padding: 12px; margin-bottom: 16px; background: #2a2a1a; border: 1px solid #665500; border-radius: 6px;">
+                                        <p style="margin: 0; font-size: 0.9rem; color: #ffcc00;">⏳ You have a pending grant submission. Checking status...</p>
+                                    </div>
+
+                                    <div id="tdf-form-fields">
+                                        <div style="margin-bottom: 12px;">
+                                            <label for="tdf-card-number" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">Giving Card Number</label>
+                                            <input type="text" id="tdf-card-number" placeholder="Enter your Donors Fund card number" maxlength="25"
+                                                   style="width: 100%; padding: 10px 12px; background: #111; border: 1px solid #444; border-radius: 5px; color: #EFEFEF; font-size: 0.95rem; box-sizing: border-box;"
+                                                   oninput="this.value = this.value.replace(/[^0-9\-]/g, '')">
+                                        </div>
+                                        <div style="margin-bottom: 12px;">
+                                            <label for="tdf-amount" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">Grant Amount ($)</label>
+                                            <input type="number" id="tdf-amount" placeholder="0.00" min="1" max="100000" step="0.01"
+                                                   style="width: 100%; padding: 10px 12px; background: #111; border: 1px solid #444; border-radius: 5px; color: #EFEFEF; font-size: 0.95rem; box-sizing: border-box;">
+                                        </div>
+                                        <div id="tdf-status" style="display: none; padding: 10px; margin-bottom: 12px; border-radius: 5px; font-size: 0.9rem;"></div>
+                                        <button type="button" id="tdf-submit-btn" onclick="submitTdfGrant()" 
+                                                style="width: 100%; padding: 12px; background: var(--accent, #4dabf7); color: #000; font-weight: 600; font-size: 1rem; border: none; border-radius: 5px; cursor: pointer; transition: background 0.2s;">
+                                            Submit Grant Recommendation
+                                        </button>
+                                        <p style="font-size: 0.75rem; color: #666; margin: 8px 0 0; text-align: center;">
+                                            Or <a href="https://thedonorsfund.org/donate/notzer-chesed/113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="The Donors Fund (Direct)" style="color: var(--accent, #4dabf7);">donate directly on The Donors Fund website →</a>
+                                        </p>
+                                    </div>
+
+                                    <!-- TDF Success Result -->
+                                    <div id="tdf-result" style="display: none; text-align: center; padding: 10px 0;">
+                                        <div style="font-size: 2rem; margin-bottom: 8px;">✅</div>
+                                        <h4 style="margin: 0 0 8px; color: var(--accent, #4dabf7);">Grant Recommendation Submitted!</h4>
+                                        <p style="margin: 0; font-size: 0.9rem; color: #ccc;">Confirmation: <strong id="tdf-confirmation-number"></strong></p>
+                                        <p style="font-size: 0.8rem; color: #888; margin: 8px 0 0;">The Donors Fund will process your grant recommendation.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1031,85 +1108,6 @@
             <!-- Donor Wall Link -->
             <div class="wall-link-card" id="wall-link-card" style="display: none;">
                 <a id="wall-link" href="#">🏛️ View the Donor Wall →</a>
-            </div>
-        </section>
-
-        <!-- ============================================================
-             SECTION 3: Other Ways to Give
-             ============================================================ -->
-        <section class="section" id="other-ways-section">
-            <div class="daf-section">
-                <h3>Other Ways to Give</h3>
-
-                <!-- Zelle -->
-                <div class="zelle-toggle">
-                    <button type="button" class="zelle-btn" id="zelle-toggle-btn" onclick="handleZelleClick()">
-                        <span class="zelle-icon">⚡</span> Zelle
-                        <span class="zelle-arrow">▸</span>
-                    </button>
-                    <div id="zelle-info" class="zelle-details" style="display: none;">
-                        <p>Send via Zelle to:</p>
-                        <div class="zelle-email" id="zelle-email-box">
-                            <strong id="zelle-email-display"></strong>
-                            <span class="copy-hint">Click to copy</span>
-                        </div>
-                        <p style="font-size: 0.85rem; color: #888; margin-top: 8px;">Please include your name and email address in the Zelle memo for receipt purposes.</p>
-                    </div>
-                </div>
-
-                <!-- DAF Links -->
-                <p style="color: #aaa; margin: 20px 0 12px;">Contribute through your Donor-Advised Fund:</p>
-                <div class="daf-links">
-                    <!-- TDF Inline Form Toggle -->
-                    <button type="button" class="daf-link tdf-toggle-btn" id="tdf-toggle-btn" onclick="toggleTdfForm()">
-                        🏦 The Donors Fund
-                    </button>
-                    <a href="https://portal.ojcfund.org/account/recommendGrant?recurring=false&orgid=MQAAADQAAAA0AAAANwAAADUAAAA=" target="_blank" rel="noopener" class="daf-link" data-link-name="OJC Fund">OJC Fund</a>
-                    <a href="https://org.pledgercharitable.org/ChargeCard?ein=113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="Pledger Charitable">Pledger Charitable</a>
-                    <a href="https://matbia.org/d/00124211329" target="_blank" rel="noopener" class="daf-link" data-link-name="Matbia">Matbia</a>
-                    <a href="https://www.paypal.com/us/fundraiser/charity/3380976" target="_blank" rel="noopener" class="daf-link" data-link-name="PayPal">PayPal</a>
-                </div>
-
-                <!-- TDF Inline Giving Card Form -->
-                <div id="tdf-form-container" style="display: none; margin-top: 16px; padding: 20px; background: #1F1F1F; border: 1px solid #333; border-radius: 8px;">
-                    <h4 style="margin: 0 0 4px; font-size: 1rem; color: var(--accent, #4dabf7);">The Donors Fund — Giving Card</h4>
-                    <p style="font-size: 0.8rem; color: #888; margin: 0 0 16px;">Submit a grant recommendation directly from your Donor-Advised Fund.</p>
-
-                    <!-- Recovery Banner -->
-                    <div id="tdf-recovery-banner" style="display: none; padding: 12px; margin-bottom: 16px; background: #2a2a1a; border: 1px solid #665500; border-radius: 6px;">
-                        <p style="margin: 0; font-size: 0.9rem; color: #ffcc00;">⏳ You have a pending grant submission. Checking status...</p>
-                    </div>
-
-                    <div id="tdf-form-fields">
-                        <div style="margin-bottom: 12px;">
-                            <label for="tdf-card-number" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">Giving Card Number</label>
-                            <input type="text" id="tdf-card-number" placeholder="Enter your Donors Fund card number" maxlength="25"
-                                   style="width: 100%; padding: 10px 12px; background: #111; border: 1px solid #444; border-radius: 5px; color: #EFEFEF; font-size: 0.95rem; box-sizing: border-box;"
-                                   oninput="this.value = this.value.replace(/[^0-9\-]/g, '')">
-                        </div>
-                        <div style="margin-bottom: 12px;">
-                            <label for="tdf-amount" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">Grant Amount ($)</label>
-                            <input type="number" id="tdf-amount" placeholder="0.00" min="1" max="100000" step="0.01"
-                                   style="width: 100%; padding: 10px 12px; background: #111; border: 1px solid #444; border-radius: 5px; color: #EFEFEF; font-size: 0.95rem; box-sizing: border-box;">
-                        </div>
-                        <div id="tdf-status" style="display: none; padding: 10px; margin-bottom: 12px; border-radius: 5px; font-size: 0.9rem;"></div>
-                        <button type="button" id="tdf-submit-btn" onclick="submitTdfGrant()" 
-                                style="width: 100%; padding: 12px; background: var(--accent, #4dabf7); color: #000; font-weight: 600; font-size: 1rem; border: none; border-radius: 5px; cursor: pointer; transition: background 0.2s;">
-                            Submit Grant Recommendation
-                        </button>
-                        <p style="font-size: 0.75rem; color: #666; margin: 8px 0 0; text-align: center;">
-                            Or <a href="https://thedonorsfund.org/donate/notzer-chesed/113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="The Donors Fund (Direct)" style="color: var(--accent, #4dabf7);">donate directly on The Donors Fund website →</a>
-                        </p>
-                    </div>
-
-                    <!-- TDF Success Result -->
-                    <div id="tdf-result" style="display: none; text-align: center; padding: 10px 0;">
-                        <div style="font-size: 2rem; margin-bottom: 8px;">✅</div>
-                        <h4 style="margin: 0 0 8px; color: var(--accent, #4dabf7);">Grant Recommendation Submitted!</h4>
-                        <p style="margin: 0; font-size: 0.9rem; color: #ccc;">Confirmation: <strong id="tdf-confirmation-number"></strong></p>
-                        <p style="font-size: 0.8rem; color: #888; margin: 8px 0 0;">The Donors Fund will process your grant recommendation.</p>
-                    </div>
-                </div>
             </div>
         </section>
     </main>
