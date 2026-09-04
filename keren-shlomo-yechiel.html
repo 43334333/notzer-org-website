@@ -280,17 +280,16 @@
         <section class="section">
             <div class="daf-section">
                 <h3>Other Ways to Give</h3>
-                <p class="daf-required-note" id="daf-required-note" style="display: none; color: #ff5252; font-size: 0.85rem; margin-bottom: 10px;">Please fill in your First Name, Last Name, and Email above before using these options.</p>
 
                 <!-- Zelle -->
                 <div class="zelle-toggle">
-                    <button type="button" class="zelle-btn" id="zelle-toggle-btn" onclick="if(!validateDafFields()) return; document.getElementById('zelle-info').style.display = document.getElementById('zelle-info').style.display === 'none' ? 'block' : 'none'; this.classList.toggle('open');">
+                    <button type="button" class="zelle-btn" id="zelle-toggle-btn" onclick="handleZelleClick()">
                         <span class="zelle-icon">⚡</span> Zelle
                         <span class="zelle-arrow">▸</span>
                     </button>
                     <div id="zelle-info" class="zelle-details" style="display: none;">
                         <p>Send via Zelle to:</p>
-                        <div class="zelle-email" onclick="navigator.clipboard.writeText('kerensy@notzer.org'); this.querySelector('.copy-hint').textContent = 'Copied!'; logZelleClick();">
+                        <div class="zelle-email" onclick="navigator.clipboard.writeText('kerensy@notzer.org'); this.querySelector('.copy-hint').textContent = 'Copied!';">
                             <strong>kerensy@notzer.org</strong>
                             <span class="copy-hint">Click to copy</span>
                         </div>
@@ -357,19 +356,49 @@
 
     <!-- DAF Confirmation Modal -->
     <div class="modal-overlay" id="daf-confirm-modal">
-        <div class="modal-content">
-            <div class="modal-icon">📋</div>
-            <h3>Before You Go...</h3>
-            <p>After completing your donation through <strong id="daf-confirm-platform"></strong>, please send us a screenshot of your confirmation for our records and your tax-deductible receipt.</p>
-            <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 5px;">Send to:</p>
-            <div class="zelle-email" style="margin: 0 auto 10px; display: inline-flex;" onclick="navigator.clipboard.writeText('office+ksy@notzer.org'); this.querySelector('.copy-hint').textContent = 'Copied!';">
-                <strong>office+ksy@notzer.org</strong>
-                <span class="copy-hint">Click to copy</span>
+        <div class="modal-content" style="max-width: 440px; text-align: left; padding: 30px;">
+            <div style="text-align: center; margin-bottom: 16px;">
+                <div class="modal-icon" style="margin: 0 auto 10px;">📋</div>
+                <h3 style="margin-bottom: 6px; font-size: 1.25rem;">Before You Continue...</h3>
+                <p style="font-size: 0.85rem; color: #ccc; margin-bottom: 0;">
+                    Please enter your details and intended amount for <strong id="daf-confirm-platform" style="color: #4dabf7;"></strong> so we can attribute your gift and issue a tax receipt:
+                </p>
             </div>
-            <p style="margin-bottom: 0;"><a id="daf-mailto-link" href="#" style="font-size: 0.85rem; color: #4dabf7;">or click here to open your email client →</a></p>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">First Name *</label>
+                    <input type="text" id="modal-daf-first-name" placeholder="First Name" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">Last Name *</label>
+                    <input type="text" id="modal-daf-last-name" placeholder="Last Name" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">Email Address *</label>
+                <input type="email" id="modal-daf-email" placeholder="donor@example.com" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">Total Donation Amount ($) *</label>
+                <input type="number" id="modal-daf-amount" placeholder="0.00" min="1" step="0.01" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+            </div>
+
+            <div id="modal-daf-error" style="display: none; padding: 8px 10px; margin-bottom: 12px; background: rgba(255, 82, 82, 0.15); border: 1px solid #ff5252; border-radius: 5px; color: #ff5252; font-size: 0.82rem; text-align: center;"></div>
+
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid #333; border-radius: 6px; padding: 10px; margin-bottom: 18px; font-size: 0.78rem; color: #aaa; text-align: center;">
+                <p style="margin: 0 0 4px;">After giving, please email confirmation screenshot to:</p>
+                <div class="zelle-email" style="margin: 0 auto; display: inline-flex; font-size: 0.82rem; padding: 4px 10px;" onclick="navigator.clipboard.writeText('office+ksy@notzer.org'); this.querySelector('.copy-hint').textContent = 'Copied!';">
+                    <strong>office+ksy@notzer.org</strong>
+                    <span class="copy-hint" style="margin-left: 6px;">Copy</span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
                 <button type="button" class="modal-close-btn" style="flex: 1; background: #333; color: #EFEFEF;" onclick="closeDafConfirm()">Cancel</button>
-                <button type="button" class="modal-close-btn" style="flex: 1;" id="daf-confirm-proceed">Continue →</button>
+                <button type="button" class="modal-close-btn" style="flex: 1.4; background: #4dabf7; color: #000; font-weight: 600;" id="daf-confirm-proceed">Continue →</button>
             </div>
         </div>
     </div>
@@ -877,84 +906,170 @@
         // ============================================================
         // DAF/Zelle Link Gating & Logging
         // ============================================================
-        function validateDafFields() {
+        // ============================================================
+        // DAF & External Link Popup Overlay Gating
+        // ============================================================
+        var pendingDafLink = null;
+        var pendingDafName = null;
+        var isZelleMode = false;
+
+        document.querySelectorAll('a.daf-link').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                pendingDafLink = this.href;
+                pendingDafName = this.getAttribute('data-link-name') || this.textContent.trim() || 'the platform';
+                isZelleMode = false;
+                setupAndShowDafModal();
+            });
+        });
+
+        function handleZelleClick() {
+            var zelleInfo = document.getElementById('zelle-info');
+            var zelleBtn = document.getElementById('zelle-toggle-btn');
+            
+            if (zelleInfo.style.display === 'block') {
+                zelleInfo.style.display = 'none';
+                zelleBtn.classList.remove('open');
+                return;
+            }
+
             var fn = document.getElementById('donor-first-name').value.trim();
             var ln = document.getElementById('donor-last-name').value.trim();
             var em = document.getElementById('donor-email').value.trim();
-            var note = document.getElementById('daf-required-note');
-            if (!fn || !ln || !em) {
-                note.style.display = 'block';
-                document.getElementById('donor-first-name').focus();
-                return false;
+            var amt = (typeof getSelectedAmount === 'function') ? getSelectedAmount() : 0;
+
+            if (fn && ln && em && amt > 0) {
+                zelleInfo.style.display = 'block';
+                zelleBtn.classList.add('open');
+                logLinkClickMaster('Zelle', amt, fn, ln, em);
+            } else {
+                pendingDafLink = null;
+                pendingDafName = 'Zelle';
+                isZelleMode = true;
+                setupAndShowDafModal();
             }
-            note.style.display = 'none';
-            return true;
         }
 
-        function logZelleClick() {
+        function setupAndShowDafModal() {
+            document.getElementById('daf-confirm-platform').textContent = pendingDafName;
+            var proceedBtn = document.getElementById('daf-confirm-proceed');
+            proceedBtn.textContent = isZelleMode ? 'Continue with Zelle →' : ('Continue to ' + pendingDafName + ' →');
+
+            var fnInput = document.getElementById('donor-first-name');
+            var lnInput = document.getElementById('donor-last-name');
+            var emInput = document.getElementById('donor-email');
+            var modalFn = document.getElementById('modal-daf-first-name');
+            var modalLn = document.getElementById('modal-daf-last-name');
+            var modalEm = document.getElementById('modal-daf-email');
+            var modalAmt = document.getElementById('modal-daf-amount');
+
+            modalFn.value = fnInput ? fnInput.value.trim() : '';
+            modalLn.value = lnInput ? lnInput.value.trim() : '';
+            modalEm.value = emInput ? emInput.value.trim() : '';
+
+            var currentAmt = (typeof getSelectedAmount === 'function') ? getSelectedAmount() : 0;
+            if (currentAmt > 0) {
+                modalAmt.value = currentAmt.toFixed(2);
+            } else if (!modalAmt.value) {
+                modalAmt.value = '';
+            }
+
+            document.getElementById('modal-daf-error').style.display = 'none';
+            document.getElementById('daf-confirm-modal').classList.add('active');
+
+            if (!modalFn.value) {
+                modalFn.focus();
+            } else if (!modalLn.value) {
+                modalLn.focus();
+            } else if (!modalEm.value) {
+                modalEm.focus();
+            } else {
+                modalAmt.focus();
+            }
+        }
+
+        function closeDafConfirm() {
+            document.getElementById('daf-confirm-modal').classList.remove('active');
+            pendingDafLink = null;
+            pendingDafName = null;
+            isZelleMode = false;
+        }
+
+        function logLinkClickMaster(linkName, amount, firstName, lastName, email) {
             fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 redirect: 'follow',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({
                     action: 'logLinkClick',
-                    firstName: document.getElementById('donor-first-name').value.trim(),
-                    lastName: document.getElementById('donor-last-name').value.trim(),
-                    email: document.getElementById('donor-email').value.trim(),
-                    linkClicked: 'Zelle (copied email)',
-                    campaign: CAMPAIGN_NAME
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    amount: amount,
+                    linkClicked: linkName,
+                    campaign: CAMPAIGN_NAME,
+                    campaignId: 'ksy'
                 })
             }).catch(function() {});
         }
 
-        var pendingDafLink = null;
-        var pendingDafName = null;
-
-        document.querySelectorAll('a.daf-link').forEach(function(link) {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (!validateDafFields()) return;
-
-                pendingDafLink = this.href;
-                pendingDafName = this.getAttribute('data-link-name') || 'the platform';
-                document.getElementById('daf-confirm-platform').textContent = pendingDafName;
-
-                // Build mailto link with donor info pre-filled
-                var dn = document.getElementById('donor-first-name').value.trim() + ' ' + document.getElementById('donor-last-name').value.trim();
-                var de = document.getElementById('donor-email').value.trim();
-                var body = 'Donor: ' + dn + '\nEmail: ' + de + '\nPlatform: ' + pendingDafName + '\n\nPlease find attached my donation confirmation screenshot.';
-                document.getElementById('daf-mailto-link').href = 'mailto:office+ksy@notzer.org?subject=' + encodeURIComponent('DAF Confirmation - Keren Shlomo Yechiel - ' + dn) + '&body=' + encodeURIComponent(body);
-
-                document.getElementById('daf-confirm-modal').classList.add('active');
-            });
-        });
-
-        function closeDafConfirm() {
-            document.getElementById('daf-confirm-modal').classList.remove('active');
-            pendingDafLink = null;
-            pendingDafName = null;
-        }
-
         document.getElementById('daf-confirm-proceed').addEventListener('click', function() {
-            if (pendingDafLink) {
-                // Log the click to Google Sheet
-                fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    redirect: 'follow',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        action: 'logLinkClick',
-                        firstName: document.getElementById('donor-first-name').value.trim(),
-                        lastName: document.getElementById('donor-last-name').value.trim(),
-                        email: document.getElementById('donor-email').value.trim(),
-                        linkClicked: pendingDafName,
-                        campaign: CAMPAIGN_NAME
-                    })
-                }).catch(function() {});
+            var fn = document.getElementById('modal-daf-first-name').value.trim();
+            var ln = document.getElementById('modal-daf-last-name').value.trim();
+            var em = document.getElementById('modal-daf-email').value.trim();
+            var amt = parseFloat(document.getElementById('modal-daf-amount').value);
+            var errDiv = document.getElementById('modal-daf-error');
 
-                window.open(pendingDafLink, '_blank');
+            if (!fn) {
+                errDiv.textContent = 'Please enter your first name.';
+                errDiv.style.display = 'block';
+                document.getElementById('modal-daf-first-name').focus();
+                return;
             }
-            closeDafConfirm();
+            if (!ln) {
+                errDiv.textContent = 'Please enter your last name.';
+                errDiv.style.display = 'block';
+                document.getElementById('modal-daf-last-name').focus();
+                return;
+            }
+            if (!em || em.indexOf('@') === -1 || em.indexOf('.') === -1) {
+                errDiv.textContent = 'Please enter a valid email address.';
+                errDiv.style.display = 'block';
+                document.getElementById('modal-daf-email').focus();
+                return;
+            }
+            if (isNaN(amt) || amt <= 0) {
+                errDiv.textContent = 'Please enter your intended donation amount.';
+                errDiv.style.display = 'block';
+                document.getElementById('modal-daf-amount').focus();
+                return;
+            }
+
+            errDiv.style.display = 'none';
+
+            // Sync back to main form inputs so user details persist
+            var mainFn = document.getElementById('donor-first-name');
+            var mainLn = document.getElementById('donor-last-name');
+            var mainEm = document.getElementById('donor-email');
+            if (mainFn) mainFn.value = fn;
+            if (mainLn) mainLn.value = ln;
+            if (mainEm) mainEm.value = em;
+
+            logLinkClickMaster(pendingDafName, amt, fn, ln, em);
+
+            if (isZelleMode) {
+                navigator.clipboard.writeText('kerensy@notzer.org');
+                var zelleInfo = document.getElementById('zelle-info');
+                var zelleBtn = document.getElementById('zelle-toggle-btn');
+                if (zelleInfo) zelleInfo.style.display = 'block';
+                if (zelleBtn) zelleBtn.classList.add('open');
+                closeDafConfirm();
+            } else if (pendingDafLink) {
+                window.open(pendingDafLink, '_blank');
+                closeDafConfirm();
+            } else {
+                closeDafConfirm();
+            }
         });
 
         // ============================================================
@@ -1009,12 +1124,16 @@
         }
 
         function submitTdfGrant() {
-            if (!validateDafFields()) return;
-
             var fn = document.getElementById('donor-first-name').value.trim();
             var ln = document.getElementById('donor-last-name').value.trim();
             var em = document.getElementById('donor-email').value.trim();
-            var donorName = fn + ' ' + ln;
+            var donorName = (fn + ' ' + ln).trim();
+
+            if (!fn || !ln || !em) {
+                showTdfStatus('error', 'Please enter your First Name, Last Name, and Email Address above so we can issue your tax receipt.', false);
+                document.getElementById('donor-first-name').focus();
+                return;
+            }
 
             var cardNum = document.getElementById('tdf-card-number').value.replace(/[^0-9]/g, '');
             var amt = parseFloat(document.getElementById('tdf-amount').value);

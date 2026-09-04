@@ -623,8 +623,9 @@
             grid-template-columns: 1fr 1fr;
             gap: 8px;
         }
-        .daf-links a {
+        .daf-links a, .daf-links button {
             display: block;
+            width: 100%;
             padding: 10px 14px;
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -632,8 +633,12 @@
             color: var(--accent);
             font-size: 0.9rem;
             transition: all 0.2s;
+            cursor: pointer;
+            text-align: center;
+            box-sizing: border-box;
+            font-family: inherit;
         }
-        .daf-links a:hover {
+        .daf-links a:hover, .daf-links button:hover {
             border-color: var(--accent);
             background-color: #2a2a2a;
             text-decoration: none;
@@ -1030,11 +1035,10 @@
         <section class="section" id="other-ways-section">
             <div class="daf-section">
                 <h3>Other Ways to Give</h3>
-                <p class="daf-required-note" id="daf-required-note" style="display: none; color: #ff5252; font-size: 0.85rem; margin-bottom: 10px;">Please fill in your First Name, Last Name, and Email above before using these options.</p>
 
                 <!-- Zelle -->
                 <div class="zelle-toggle">
-                    <button type="button" class="zelle-btn" id="zelle-toggle-btn">
+                    <button type="button" class="zelle-btn" id="zelle-toggle-btn" onclick="handleZelleClick()">
                         <span class="zelle-icon">⚡</span> Zelle
                         <span class="zelle-arrow">▸</span>
                     </button>
@@ -1051,11 +1055,55 @@
                 <!-- DAF Links -->
                 <p style="color: #aaa; margin: 20px 0 12px;">Contribute through your Donor-Advised Fund:</p>
                 <div class="daf-links">
-                    <a href="https://thedonorsfund.org/donate/notzer-chesed/113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="The Donors Fund">The Donors Fund</a>
+                    <!-- TDF Inline Form Toggle -->
+                    <button type="button" class="daf-link tdf-toggle-btn" id="tdf-toggle-btn" onclick="toggleTdfForm()">
+                        🏦 The Donors Fund
+                    </button>
                     <a href="https://portal.ojcfund.org/account/recommendGrant?recurring=false&orgid=MQAAADQAAAA0AAAANwAAADUAAAA=" target="_blank" rel="noopener" class="daf-link" data-link-name="OJC Fund">OJC Fund</a>
                     <a href="https://org.pledgercharitable.org/ChargeCard?ein=113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="Pledger Charitable">Pledger Charitable</a>
                     <a href="https://matbia.org/d/00124211329" target="_blank" rel="noopener" class="daf-link" data-link-name="Matbia">Matbia</a>
                     <a href="https://www.paypal.com/us/fundraiser/charity/3380976" target="_blank" rel="noopener" class="daf-link" data-link-name="PayPal">PayPal</a>
+                </div>
+
+                <!-- TDF Inline Giving Card Form -->
+                <div id="tdf-form-container" style="display: none; margin-top: 16px; padding: 20px; background: #1F1F1F; border: 1px solid #333; border-radius: 8px;">
+                    <h4 style="margin: 0 0 4px; font-size: 1rem; color: var(--accent, #4dabf7);">The Donors Fund — Giving Card</h4>
+                    <p style="font-size: 0.8rem; color: #888; margin: 0 0 16px;">Submit a grant recommendation directly from your Donor-Advised Fund.</p>
+
+                    <!-- Recovery Banner -->
+                    <div id="tdf-recovery-banner" style="display: none; padding: 12px; margin-bottom: 16px; background: #2a2a1a; border: 1px solid #665500; border-radius: 6px;">
+                        <p style="margin: 0; font-size: 0.9rem; color: #ffcc00;">⏳ You have a pending grant submission. Checking status...</p>
+                    </div>
+
+                    <div id="tdf-form-fields">
+                        <div style="margin-bottom: 12px;">
+                            <label for="tdf-card-number" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">Giving Card Number</label>
+                            <input type="text" id="tdf-card-number" placeholder="Enter your Donors Fund card number" maxlength="25"
+                                   style="width: 100%; padding: 10px 12px; background: #111; border: 1px solid #444; border-radius: 5px; color: #EFEFEF; font-size: 0.95rem; box-sizing: border-box;"
+                                   oninput="this.value = this.value.replace(/[^0-9\-]/g, '')">
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <label for="tdf-amount" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">Grant Amount ($)</label>
+                            <input type="number" id="tdf-amount" placeholder="0.00" min="1" max="100000" step="0.01"
+                                   style="width: 100%; padding: 10px 12px; background: #111; border: 1px solid #444; border-radius: 5px; color: #EFEFEF; font-size: 0.95rem; box-sizing: border-box;">
+                        </div>
+                        <div id="tdf-status" style="display: none; padding: 10px; margin-bottom: 12px; border-radius: 5px; font-size: 0.9rem;"></div>
+                        <button type="button" id="tdf-submit-btn" onclick="submitTdfGrant()" 
+                                style="width: 100%; padding: 12px; background: var(--accent, #4dabf7); color: #000; font-weight: 600; font-size: 1rem; border: none; border-radius: 5px; cursor: pointer; transition: background 0.2s;">
+                            Submit Grant Recommendation
+                        </button>
+                        <p style="font-size: 0.75rem; color: #666; margin: 8px 0 0; text-align: center;">
+                            Or <a href="https://thedonorsfund.org/donate/notzer-chesed/113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="The Donors Fund (Direct)" style="color: var(--accent, #4dabf7);">donate directly on The Donors Fund website →</a>
+                        </p>
+                    </div>
+
+                    <!-- TDF Success Result -->
+                    <div id="tdf-result" style="display: none; text-align: center; padding: 10px 0;">
+                        <div style="font-size: 2rem; margin-bottom: 8px;">✅</div>
+                        <h4 style="margin: 0 0 8px; color: var(--accent, #4dabf7);">Grant Recommendation Submitted!</h4>
+                        <p style="margin: 0; font-size: 0.9rem; color: #ccc;">Confirmation: <strong id="tdf-confirmation-number"></strong></p>
+                        <p style="font-size: 0.8rem; color: #888; margin: 8px 0 0;">The Donors Fund will process your grant recommendation.</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1065,19 +1113,49 @@
          DAF Confirmation Modal
          ============================================================ -->
     <div class="modal-overlay" id="daf-confirm-modal">
-        <div class="modal-content">
-            <div class="modal-icon">📋</div>
-            <h3>Before You Go...</h3>
-            <p>After completing your donation through <strong id="daf-confirm-platform"></strong>, please send us a screenshot of your confirmation for our records and your tax-deductible receipt.</p>
-            <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 5px;">Send to:</p>
-            <div class="zelle-email" style="margin: 0 auto 10px; display: inline-flex;" id="daf-confirm-email-box">
-                <strong id="daf-confirm-email-display"></strong>
-                <span class="copy-hint">Click to copy</span>
+        <div class="modal-content" style="max-width: 440px; text-align: left; padding: 30px;">
+            <div style="text-align: center; margin-bottom: 16px;">
+                <div class="modal-icon" style="margin: 0 auto 10px;">📋</div>
+                <h3 style="margin-bottom: 6px; font-size: 1.25rem;">Before You Continue...</h3>
+                <p style="font-size: 0.85rem; color: #ccc; margin-bottom: 0;">
+                    Please enter your details and intended amount for <strong id="daf-confirm-platform" style="color: var(--accent, #4dabf7);"></strong> so we can attribute your gift and issue a tax receipt:
+                </p>
             </div>
-            <p style="margin-bottom: 0;"><a id="daf-mailto-link" href="#" style="font-size: 0.85rem; color: #4dabf7;">or click here to open your email client →</a></p>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">First Name *</label>
+                    <input type="text" id="modal-daf-first-name" placeholder="First Name" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">Last Name *</label>
+                    <input type="text" id="modal-daf-last-name" placeholder="Last Name" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">Email Address *</label>
+                <input type="email" id="modal-daf-email" placeholder="donor@example.com" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 0.78rem; color: #aaa; margin-bottom: 3px;">Total Donation Amount ($) *</label>
+                <input type="number" id="modal-daf-amount" placeholder="0.00" min="1" step="0.01" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 0.9rem; box-sizing: border-box;">
+            </div>
+
+            <div id="modal-daf-error" style="display: none; padding: 8px 10px; margin-bottom: 12px; background: rgba(255, 82, 82, 0.15); border: 1px solid #ff5252; border-radius: 5px; color: #ff5252; font-size: 0.82rem; text-align: center;"></div>
+
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid #333; border-radius: 6px; padding: 10px; margin-bottom: 18px; font-size: 0.78rem; color: #aaa; text-align: center;">
+                <p style="margin: 0 0 4px;">After giving, please email confirmation screenshot to:</p>
+                <div class="zelle-email" id="daf-confirm-email-box" style="margin: 0 auto; display: inline-flex; font-size: 0.82rem; padding: 4px 10px;">
+                    <strong id="daf-confirm-email-display"></strong>
+                    <span class="copy-hint" style="margin-left: 6px;">Copy</span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
                 <button type="button" class="modal-close-btn" style="flex: 1; background: #333; color: #EFEFEF;" onclick="closeDafConfirm()">Cancel</button>
-                <button type="button" class="modal-close-btn" style="flex: 1;" id="daf-confirm-proceed">Continue →</button>
+                <button type="button" class="modal-close-btn" style="flex: 1.4; background: var(--accent, #4dabf7); color: #000; font-weight: 600;" id="daf-confirm-proceed">Continue →</button>
             </div>
         </div>
     </div>
@@ -1932,102 +2010,433 @@
     }
 
     // ════════════════════════════════════════════════════════════════
-    // DAF/ZELLE LINK GATING & LOGGING
+    // DAF & EXTERNAL LINK POPUP OVERLAY GATING & TDF GIVING CARD
     // ════════════════════════════════════════════════════════════════
-    function validateDafFields() {
+    function getSelectedAmount() {
+        if (typeof selectedAmount !== 'undefined' && selectedAmount) return selectedAmount;
+        var customInput = document.getElementById('custom-amount');
+        if (customInput && customInput.value) {
+            var val = parseFloat(customInput.value);
+            if (!isNaN(val) && val > 0) return val;
+        }
+        return 0;
+    }
+
+    var pendingDafLink = null;
+    var pendingDafName = null;
+    var isZelleMode = false;
+
+    document.querySelectorAll('a.daf-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            pendingDafLink = this.href;
+            pendingDafName = this.getAttribute('data-link-name') || this.textContent.trim() || 'the platform';
+            isZelleMode = false;
+            setupAndShowDafModal();
+        });
+    });
+
+    function handleZelleClick() {
+        var zelleInfo = document.getElementById('zelle-info');
+        var zelleBtn = document.getElementById('zelle-toggle-btn');
+        
+        if (zelleInfo && zelleInfo.style.display === 'block') {
+            zelleInfo.style.display = 'none';
+            if (zelleBtn) zelleBtn.classList.remove('open');
+            return;
+        }
+
         var fn = document.getElementById('donor-first-name').value.trim();
         var ln = document.getElementById('donor-last-name').value.trim();
         var em = document.getElementById('donor-email').value.trim();
-        var note = document.getElementById('daf-required-note');
-        if (!fn || !ln || !em) {
-            note.style.display = 'block';
-            document.getElementById('donor-first-name').focus();
-            return false;
+        var amt = getSelectedAmount();
+
+        if (fn && ln && em && amt > 0) {
+            if (zelleInfo) zelleInfo.style.display = 'block';
+            if (zelleBtn) zelleBtn.classList.add('open');
+            logLinkClickMaster('Zelle', amt, fn, ln, em);
+        } else {
+            pendingDafLink = null;
+            pendingDafName = 'Zelle';
+            isZelleMode = true;
+            setupAndShowDafModal();
         }
-        note.style.display = 'none';
-        return true;
     }
 
-    // Zelle toggle
-    document.getElementById('zelle-toggle-btn').addEventListener('click', function() {
-        if (!validateDafFields()) return;
-        var info = document.getElementById('zelle-info');
-        info.style.display = info.style.display === 'none' ? 'block' : 'none';
-        this.classList.toggle('open');
-    });
+    function setupAndShowDafModal() {
+        var platformEl = document.getElementById('daf-confirm-platform');
+        if (platformEl) platformEl.textContent = pendingDafName;
+        var proceedBtn = document.getElementById('daf-confirm-proceed');
+        if (proceedBtn) {
+            proceedBtn.textContent = isZelleMode ? 'Continue with Zelle →' : ('Continue to ' + pendingDafName + ' →');
+        }
 
-    // Zelle copy email
-    document.getElementById('zelle-email-box').addEventListener('click', function() {
-        navigator.clipboard.writeText(CAMPAIGN_CONFIG.zelleEmail);
-        this.querySelector('.copy-hint').textContent = 'Copied!';
-        logLinkClick('Zelle (copied email)');
-        var hint = this.querySelector('.copy-hint');
-        setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
-    });
+        var fnInput = document.getElementById('donor-first-name');
+        var lnInput = document.getElementById('donor-last-name');
+        var emInput = document.getElementById('donor-email');
+        var modalFn = document.getElementById('modal-daf-first-name');
+        var modalLn = document.getElementById('modal-daf-last-name');
+        var modalEm = document.getElementById('modal-daf-email');
+        var modalAmt = document.getElementById('modal-daf-amount');
 
-    // DAF confirm email copy
-    document.getElementById('daf-confirm-email-box').addEventListener('click', function() {
-        navigator.clipboard.writeText(CAMPAIGN_CONFIG.dafConfirmEmail);
-        this.querySelector('.copy-hint').textContent = 'Copied!';
-        var hint = this.querySelector('.copy-hint');
-        setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
-    });
+        if (modalFn) modalFn.value = fnInput ? fnInput.value.trim() : '';
+        if (modalLn) modalLn.value = lnInput ? lnInput.value.trim() : '';
+        if (modalEm) modalEm.value = emInput ? emInput.value.trim() : '';
 
-    function logLinkClick(linkName) {
+        var currentAmt = getSelectedAmount();
+        if (modalAmt) {
+            if (currentAmt > 0) {
+                modalAmt.value = currentAmt.toFixed(2);
+            } else if (!modalAmt.value) {
+                modalAmt.value = '';
+            }
+        }
+
+        var errEl = document.getElementById('modal-daf-error');
+        if (errEl) errEl.style.display = 'none';
+        var modal = document.getElementById('daf-confirm-modal');
+        if (modal) modal.classList.add('active');
+
+        if (modalFn && !modalFn.value) {
+            modalFn.focus();
+        } else if (modalLn && !modalLn.value) {
+            modalLn.focus();
+        } else if (modalEm && !modalEm.value) {
+            modalEm.focus();
+        } else if (modalAmt) {
+            modalAmt.focus();
+        }
+    }
+
+    function closeDafConfirm() {
+        var modal = document.getElementById('daf-confirm-modal');
+        if (modal) modal.classList.remove('active');
+        pendingDafLink = null;
+        pendingDafName = null;
+        isZelleMode = false;
+    }
+
+    function logLinkClickMaster(linkName, amount, firstName, lastName, email) {
         fetch(CAMPAIGN_CONFIG.appsScriptUrl, {
             method: 'POST',
             redirect: 'follow',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
                 action: 'logLinkClick',
-                firstName: document.getElementById('donor-first-name').value.trim(),
-                lastName: document.getElementById('donor-last-name').value.trim(),
-                email: document.getElementById('donor-email').value.trim(),
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                amount: amount,
                 linkClicked: linkName,
-                campaign: CAMPAIGN_CONFIG.name
+                campaign: CAMPAIGN_CONFIG.name,
+                campaignId: CAMPAIGN_CONFIG.id
             })
         }).catch(function() {});
     }
 
-    // DAF link interception with confirmation modal
-    var pendingDafLink = null;
-    var pendingDafName = null;
+    var dafProceedBtn = document.getElementById('daf-confirm-proceed');
+    if (dafProceedBtn) {
+        dafProceedBtn.addEventListener('click', function() {
+            var fn = document.getElementById('modal-daf-first-name').value.trim();
+            var ln = document.getElementById('modal-daf-last-name').value.trim();
+            var em = document.getElementById('modal-daf-email').value.trim();
+            var amt = parseFloat(document.getElementById('modal-daf-amount').value);
+            var errDiv = document.getElementById('modal-daf-error');
 
-    document.querySelectorAll('.daf-link').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (!validateDafFields()) return;
+            if (!fn) {
+                errDiv.textContent = 'Please enter your first name.';
+                errDiv.style.display = 'block';
+                document.getElementById('modal-daf-first-name').focus();
+                return;
+            }
+            if (!ln) {
+                errDiv.textContent = 'Please enter your last name.';
+                errDiv.style.display = 'block';
+                document.getElementById('modal-daf-last-name').focus();
+                return;
+            }
+            if (!em || em.indexOf('@') === -1 || em.indexOf('.') === -1) {
+                errDiv.textContent = 'Please enter a valid email address.';
+                errDiv.style.display = 'block';
+                document.getElementById('modal-daf-email').focus();
+                return;
+            }
+            if (isNaN(amt) || amt <= 0) {
+                errDiv.textContent = 'Please enter your intended donation amount.';
+                errDiv.style.display = 'block';
+                document.getElementById('modal-daf-amount').focus();
+                return;
+            }
 
-            pendingDafLink = this.href;
-            pendingDafName = this.getAttribute('data-link-name') || 'the platform';
-            document.getElementById('daf-confirm-platform').textContent = pendingDafName;
+            errDiv.style.display = 'none';
 
-            // Build mailto link with donor info pre-filled
-            var dn = document.getElementById('donor-first-name').value.trim() + ' ' + document.getElementById('donor-last-name').value.trim();
-            var de = document.getElementById('donor-email').value.trim();
-            var body = 'Donor: ' + dn + '\nEmail: ' + de + '\nPlatform: ' + pendingDafName + '\n\nPlease find attached my donation confirmation screenshot.';
-            document.getElementById('daf-mailto-link').href = 'mailto:' + CAMPAIGN_CONFIG.dafConfirmEmail +
-                '?subject=' + encodeURIComponent('DAF Confirmation - ' + CAMPAIGN_CONFIG.name + ' - ' + dn) +
-                '&body=' + encodeURIComponent(body);
+            // Sync back to main form inputs so user details persist
+            var mainFn = document.getElementById('donor-first-name');
+            var mainLn = document.getElementById('donor-last-name');
+            var mainEm = document.getElementById('donor-email');
+            if (mainFn) mainFn.value = fn;
+            if (mainLn) mainLn.value = ln;
+            if (mainEm) mainEm.value = em;
 
-            document.getElementById('daf-confirm-modal').classList.add('active');
+            logLinkClickMaster(pendingDafName, amt, fn, ln, em);
+
+            if (isZelleMode) {
+                navigator.clipboard.writeText(CAMPAIGN_CONFIG.zelleEmail);
+                var zelleInfo = document.getElementById('zelle-info');
+                var zelleBtn = document.getElementById('zelle-toggle-btn');
+                if (zelleInfo) zelleInfo.style.display = 'block';
+                if (zelleBtn) zelleBtn.classList.add('open');
+                closeDafConfirm();
+            } else if (pendingDafLink) {
+                window.open(pendingDafLink, '_blank');
+                closeDafConfirm();
+            } else {
+                closeDafConfirm();
+            }
         });
-    });
-
-    function closeDafConfirm() {
-        document.getElementById('daf-confirm-modal').classList.remove('active');
-        pendingDafLink = null;
-        pendingDafName = null;
     }
 
-    document.getElementById('daf-confirm-proceed').addEventListener('click', function() {
-        if (pendingDafLink) {
-            // Log the click to Google Sheet
-            logLinkClick(pendingDafName);
-            window.open(pendingDafLink, '_blank');
+    // Zelle copy email
+    var zelleEmailBox = document.getElementById('zelle-email-box');
+    if (zelleEmailBox) {
+        zelleEmailBox.addEventListener('click', function() {
+            navigator.clipboard.writeText(CAMPAIGN_CONFIG.zelleEmail);
+            var hint = this.querySelector('.copy-hint');
+            if (hint) {
+                hint.textContent = 'Copied!';
+                setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
+            }
+            logLinkClickMaster('Zelle (copied email)', getSelectedAmount(),
+                document.getElementById('donor-first-name').value.trim(),
+                document.getElementById('donor-last-name').value.trim(),
+                document.getElementById('donor-email').value.trim()
+            );
+        });
+    }
+
+    // DAF confirm email copy
+    var dafEmailBox = document.getElementById('daf-confirm-email-box');
+    if (dafEmailBox) {
+        dafEmailBox.addEventListener('click', function() {
+            navigator.clipboard.writeText(CAMPAIGN_CONFIG.dafConfirmEmail);
+            var hint = this.querySelector('.copy-hint');
+            if (hint) {
+                hint.textContent = 'Copied!';
+                setTimeout(function() { hint.textContent = 'Copy'; }, 2000);
+            }
+        });
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // THE DONORS FUND (TDF) GIVING CARD INTEGRATION
+    // ════════════════════════════════════════════════════════════════
+    var TDF_BACKEND_URL = CAMPAIGN_CONFIG.appsScriptUrl || 'https://script.google.com/macros/s/AKfycbzngv-LEqoOercDK5MfRtB8BpEFhH3sdnq16lyxzq2LN_8W0lUQpa-oUZB4CfGYE28y3g/exec';
+
+    function toggleTdfForm() {
+        var container = document.getElementById('tdf-form-container');
+        var btn = document.getElementById('tdf-toggle-btn');
+        if (!container) return;
+        if (container.style.display === 'none' || !container.style.display) {
+            container.style.display = 'block';
+            if (btn) {
+                btn.style.borderColor = 'var(--accent, #4dabf7)';
+                btn.style.backgroundColor = '#2a2a2a';
+            }
+            
+            // Pre-fill amount if one is selected in the main form
+            var mainAmt = getSelectedAmount();
+            var tdfAmtInput = document.getElementById('tdf-amount');
+            if (tdfAmtInput && mainAmt > 0 && !tdfAmtInput.value) {
+                tdfAmtInput.value = mainAmt.toFixed(2);
+            }
+            var cardInput = document.getElementById('tdf-card-number');
+            if (cardInput) cardInput.focus();
+        } else {
+            container.style.display = 'none';
+            if (btn) {
+                btn.style.borderColor = '#333';
+                btn.style.backgroundColor = '#1F1F1F';
+            }
         }
-        closeDafConfirm();
-    });
+    }
+
+    function showTdfStatus(type, message, showFallback) {
+        var statusDiv = document.getElementById('tdf-status');
+        if (!statusDiv) return;
+        statusDiv.style.display = 'block';
+        if (type === 'error') {
+            statusDiv.style.backgroundColor = 'rgba(255, 82, 82, 0.15)';
+            statusDiv.style.color = '#ff5252';
+            statusDiv.style.border = '1px solid #ff5252';
+        } else if (type === 'warning') {
+            statusDiv.style.backgroundColor = 'rgba(255, 170, 0, 0.15)';
+            statusDiv.style.color = '#ffaa00';
+            statusDiv.style.border = '1px solid #ffaa00';
+        } else {
+            statusDiv.style.backgroundColor = 'rgba(77, 171, 247, 0.15)';
+            statusDiv.style.color = 'var(--accent, #4dabf7)';
+            statusDiv.style.border = '1px solid var(--accent, #4dabf7)';
+        }
+        
+        var html = '<p style="margin: 0;">' + message + '</p>';
+        if (showFallback) {
+            html += '<p style="margin: 6px 0 0; font-size: 0.8rem;"><a href="https://thedonorsfund.org/donate/notzer-chesed/113049033" target="_blank" rel="noopener" style="color: var(--accent, #4dabf7); text-decoration: underline;">Or donate directly on The Donors Fund website →</a></p>';
+        }
+        statusDiv.innerHTML = html;
+    }
+
+    function submitTdfGrant() {
+        var fn = document.getElementById('donor-first-name').value.trim();
+        var ln = document.getElementById('donor-last-name').value.trim();
+        var em = document.getElementById('donor-email').value.trim();
+        var donorName = (fn + ' ' + ln).trim();
+
+        if (!fn || !ln || !em) {
+            showTdfStatus('error', 'Please enter your First Name, Last Name, and Email Address above so we can issue your tax receipt.', false);
+            document.getElementById('donor-first-name').focus();
+            return;
+        }
+
+        var cardNum = document.getElementById('tdf-card-number').value.replace(/[^0-9]/g, '');
+        var amt = parseFloat(document.getElementById('tdf-amount').value);
+
+        if (!cardNum || cardNum.length < 8) {
+            showTdfStatus('error', 'Please enter a valid Giving Card number.', false);
+            document.getElementById('tdf-card-number').focus();
+            return;
+        }
+
+        if (isNaN(amt) || amt < 1) {
+            showTdfStatus('error', 'Please enter a valid donation amount ($1.00 minimum).', false);
+            document.getElementById('tdf-amount').focus();
+            return;
+        }
+
+        if (Math.round(amt * 100) / 100 !== amt) {
+            showTdfStatus('error', 'Amount cannot have more than 2 decimal places.', false);
+            return;
+        }
+
+        // Generate durable client submission ID
+        var submissionId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+            ? crypto.randomUUID() 
+            : 'tdf-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+
+        // Record pending state in sessionStorage for refresh recovery
+        var pendingRecord = {
+            submissionId: submissionId,
+            campaignId: CAMPAIGN_CONFIG.id,
+            amount: amt,
+            cardLast4: cardNum.slice(-4),
+            timestamp: Date.now()
+        };
+        sessionStorage.setItem('tdf_pending_grant', JSON.stringify(pendingRecord));
+
+        var submitBtn = document.getElementById('tdf-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting Grant Recommendation...';
+        showTdfStatus('info', 'Connecting securely to The Donors Fund...', false);
+
+        var payload = {
+            action: 'createDafGrant',
+            campaignId: CAMPAIGN_CONFIG.id,
+            submissionId: submissionId,
+            cardNumber: cardNum,
+            amount: amt,
+            donorName: donorName,
+            email: em,
+            turnstileToken: (typeof turnstileToken !== 'undefined' ? turnstileToken : '') || ''
+        };
+
+        fetch(TDF_BACKEND_URL, {
+            method: 'POST',
+            redirect: 'follow',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.status === 'success' && data.outcome === 'CONFIRMED_ACCEPTED') {
+                sessionStorage.removeItem('tdf_pending_grant');
+                document.getElementById('tdf-form-fields').style.display = 'none';
+                document.getElementById('tdf-result').style.display = 'block';
+                document.getElementById('tdf-confirmation-number').textContent = data.confirmationNumber || 'Accepted';
+            } else if (data.outcome === 'CONFIRMED_REJECTED') {
+                sessionStorage.removeItem('tdf_pending_grant');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Grant Recommendation';
+                showTdfStatus('error', 'The Donors Fund rejected this request: ' + (data.message || 'Please check your card details.'), true);
+            } else if (data.outcome === 'CONFIG_FAILURE') {
+                sessionStorage.removeItem('tdf_pending_grant');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Grant Recommendation';
+                showTdfStatus('error', data.message || 'The Donors Fund service is temporarily unavailable.', true);
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submission Pending Verification';
+                showTdfStatus('warning', 'We could not confirm if your grant was received. Please do NOT submit again. Our team will verify with The Donors Fund and follow up by email.', false);
+            }
+        })
+        .catch(function(err) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submission Pending Verification';
+            showTdfStatus('warning', 'Network connection interrupted. We could not verify whether your grant was received. Please do NOT submit again; refresh the page to check status.', false);
+        });
+    }
+
+    // Browser reload recovery
+    function checkTdfRecovery() {
+        var raw = sessionStorage.getItem('tdf_pending_grant');
+        if (!raw) return;
+        try {
+            var pending = JSON.parse(raw);
+            if (!pending || !pending.submissionId) return;
+
+            var container = document.getElementById('tdf-form-container');
+            if (container) container.style.display = 'block';
+            var banner = document.getElementById('tdf-recovery-banner');
+            if (banner) {
+                banner.style.display = 'block';
+                banner.innerHTML = '<p style="margin: 0; font-size: 0.9rem; color: #ffcc00;">⏳ Checking status of your recent grant submission ($' + (pending.amount || '') + ')...</p>';
+            }
+
+            fetch(TDF_BACKEND_URL + '?action=getDafSubmissionStatus&submissionId=' + encodeURIComponent(pending.submissionId) + '&campaignId=' + encodeURIComponent(CAMPAIGN_CONFIG.id))
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.found) {
+                    if (data.status === 'TDF_SUBMITTED' || data.status === 'COMPLETED') {
+                        sessionStorage.removeItem('tdf_pending_grant');
+                        if (banner) banner.style.display = 'none';
+                        var fields = document.getElementById('tdf-form-fields');
+                        if (fields) fields.style.display = 'none';
+                        var result = document.getElementById('tdf-result');
+                        if (result) result.style.display = 'block';
+                        var conf = document.getElementById('tdf-confirmation-number');
+                        if (conf) conf.textContent = data.confirmationNumber || 'Submitted';
+                    } else if (data.status === 'SUBMIT_FAILED') {
+                        sessionStorage.removeItem('tdf_pending_grant');
+                        if (banner) banner.innerHTML = '<p style="margin: 0; font-size: 0.9rem; color: #ff5252;">Your previous submission was declined. You may enter your details to try again.</p>';
+                    } else {
+                        if (banner) banner.innerHTML = '<p style="margin: 0; font-size: 0.9rem; color: #ffaa00;">Your grant recommendation is currently ' + data.status + '. Please check back soon or contact support.</p>';
+                    }
+                } else {
+                    sessionStorage.removeItem('tdf_pending_grant');
+                    if (banner) banner.style.display = 'none';
+                }
+            })
+            .catch(function() {
+                if (banner) banner.innerHTML = '<p style="margin: 0; font-size: 0.9rem; color: #aaa;">Could not check status right now. Please refresh to retry.</p>';
+            });
+        } catch (e) {
+            sessionStorage.removeItem('tdf_pending_grant');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', checkTdfRecovery);
+    } else {
+        checkTdfRecovery();
+    }
 
     // ════════════════════════════════════════════════════════════════
     // PHOTO GALLERY
