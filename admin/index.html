@@ -3101,11 +3101,30 @@ function updateActivePreview() {
     const tab = BUILDER_STATE.activePreviewTab;
     const html = BUILDER_STATE.generated[tab] || '';
 
+    let previewHtml = html;
+    if (tab === 'admin' || tab === 'bookkeeper') {
+        // Bypass auth redirect for iframe preview so the console layout is rendered
+        previewHtml = previewHtml
+            .replace(/<head>/i, '<head><base href="/">')
+            .replace(/<div class="page-wrapper" id="appMain" style="display:none;">/i, '<div class="page-wrapper" id="appMain" style="display:block;">')
+            .replace(/await\s+requireAuth\([^)]*\);/g, '/* auth bypassed in builder preview */')
+            .replace(/<script src="[^"]*auth\.js"><\/script>/i, `
+                <script>
+                    window.requireAuth = async function() { return true; };
+                    window.getCurrentUser = function() { return { email: 'admin@notzer.org', name: 'Admin (Preview)', role: 'super_admin' }; };
+                    window.authGet = async function() { return { status: 'success', campaigns: [], pledges: [], scheduled: [], teams: [] }; };
+                    window.authPost = async function() { return { status: 'success' }; };
+                <\/script>
+            `);
+    } else if (tab === 'wall' || tab === 'donation') {
+        previewHtml = previewHtml.replace(/<head>/i, '<head><base href="/">');
+    }
+
     // Rendered frame (sandboxed for safety)
     const frame = $('#builderPreviewFrame');
-    frame.srcdoc = html;
+    frame.srcdoc = previewHtml;
 
-    // Code output
+    // Code output (always displays 100% genuine production code)
     $('#builderCodeOutput').textContent = html;
 }
 
@@ -3347,7 +3366,8 @@ function generateBookkeeperPageHtml(config) {
     const tmpl = BUILDER_STATE.templates.admin;
     if (tmpl) {
         let html = applyTemplateTokens(tmpl, config);
-        html = html.replace(/<title>.*?<\/title>/, `<title>Bookkeeper - ${escapeHtml(config.name)}</title>`);
+        html = html.replace(/<title>.*?<\/title>/i, `<title>Bookkeeper - ${escapeHtml(config.name)}</title>`);
+        html = html.replace(/<h1>Admin — Manual Donation Entry<\/h1>/i, `<h1>Bookkeeper — Manual Donation Entry</h1>`);
         return html;
     }
     return `<!DOCTYPE html><html><head><title>Bookkeeper - ${escapeHtml(config.name)}</title></head>
