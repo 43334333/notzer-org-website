@@ -1076,6 +1076,7 @@ body::before {
                 <div class="field"><label>USAePay Public Key</label><input type="text" id="campUePublic" placeholder="Public key"></div>
                 <div class="field"><label>USAePay Source Key</label><input type="text" id="campUeSource" placeholder="Source key"></div>
                 <div class="field"><label>USAePay PIN</label><input type="password" id="campUePin" placeholder="USAePay PIN (optional)"></div>
+                <div class="field"><label>Campaign Manager Email</label><input type="email" id="campManagerEmail" placeholder="manager@example.com"></div>
             </div>
             <div class="form-col">
                 <div class="col-label">Backend Storage & URLs</div>
@@ -2155,6 +2156,7 @@ $('#saveCampaignBtn').addEventListener('click', async () => {
         usaepayPublicKey: $('#campUePublic').value.trim(),
         usaepaySourceKey: $('#campUeSource').value.trim(),
         usaepayPin: $('#campUePin') ? $('#campUePin').value.trim() : '',
+        managerEmail: $('#campManagerEmail') ? $('#campManagerEmail').value.trim() : '',
         goalAmount: parseFloat($('#campGoal').value) || 0,
         startDate: $('#campStart').value,
         endDate: $('#campEnd').value,
@@ -2171,15 +2173,19 @@ $('#saveCampaignBtn').addEventListener('click', async () => {
     btn.disabled = true; btn.classList.add('loading');
     try {
         const editId = $('#campEditId').value;
+        let res;
         if (editId) {
-            await authPost('updateCampaign', { id: editId, campaignId: editId, ...data });
-            showToast('Campaign updated successfully', 'success');
+            res = await authPost('updateCampaign', { id: editId, campaignId: editId, ...data });
         } else {
-            await authPost('createCampaign', data);
-            showToast('Campaign created successfully', 'success');
+            res = await authPost('createCampaign', data);
         }
-        $('#campaignForm').classList.remove('visible');
-        loadCampaigns();
+        if (res && res.status === 'success') {
+            showToast(res.message || (editId ? 'Campaign updated successfully' : 'Campaign created successfully'), 'success');
+            $('#campaignForm').classList.remove('visible');
+            loadCampaigns();
+        } else {
+            showToast('Failed to save campaign: ' + (res && res.message ? res.message : 'Unknown error from server'), 'error');
+        }
     } catch (e) {
         showToast('Failed to save campaign: ' + e.message, 'error');
     }
@@ -2238,6 +2244,7 @@ function renderCampaignTable(campaigns) {
             <td>
                 <div style="font-weight:600;color:var(--text-primary);">${c.name || c.id}</div>
                 <small style="color:var(--text-muted);font-size:0.72rem;font-family:monospace;">${c.id}</small>
+                ${c.managerEmail ? `<div style="font-size:0.7rem;color:var(--accent-light);margin-top:2px;" title="Campaign Manager">👤 ${c.managerEmail}</div>` : ''}
             </td>
             <td>
                 <div>${getStatusBadge(c.status)}</div>
@@ -2363,6 +2370,7 @@ function editCampaign(id) {
     $('#campUePublic').value = c.usaepayPublicKey || '';
     $('#campUeSource').value = c.usaepaySourceKey || '';
     if ($('#campUePin')) $('#campUePin').value = c.usaepayPin || '';
+    if ($('#campManagerEmail')) $('#campManagerEmail').value = c.managerEmail || '';
     $('#campGoal').value = c.goalAmount || '';
     $('#campStart').value = c.startDate ? c.startDate.split('T')[0] : '';
     $('#campEnd').value = c.endDate ? c.endDate.split('T')[0] : '';
@@ -2376,7 +2384,7 @@ function editCampaign(id) {
 }
 
 function clearCampaignForm() {
-    ['campEditId','campName','campSlug','campSheetId','campAppsScriptUrl','campCkIfields','campCkServer','campUePublic','campUeSource','campUePin','campGoal','campStart','campEnd','campPageUrl','campAdminUrl','campWallUrl','campWallKey'].forEach(id => {
+    ['campEditId','campName','campSlug','campSheetId','campAppsScriptUrl','campCkIfields','campCkServer','campUePublic','campUeSource','campUePin','campManagerEmail','campGoal','campStart','campEnd','campPageUrl','campAdminUrl','campWallUrl','campWallKey'].forEach(id => {
         const el = $(`#${id}`);
         if (el) el.value = '';
     });
