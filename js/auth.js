@@ -325,6 +325,45 @@ async function submitOTP(email, code) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// Email + Password Authentication
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Direct Email + Password authentication.
+ * @param {string} email
+ * @param {string} password
+ * @param {string} [campaignId]
+ * @returns {Promise<{ status: string, sessionToken?: string, user?: Object, message?: string }>}
+ */
+async function authenticateWithPassword(email, password, campaignId = '') {
+    try {
+        const payload = {
+            action: 'authenticatePassword',
+            email: (email || '').trim(),
+            password: password || '',
+            campaignId: campaignId || ''
+        };
+        const resp = await fetch(AUTH_CONFIG.masterScriptUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        });
+        const result = await resp.json();
+        if (result.status === 'success') {
+            _authToken = result.sessionToken || result.token;
+            _authMethod = 'password';
+            _currentUser = result.user;
+            persistSession();
+            onAuthSuccess();
+        }
+        return result;
+    } catch (err) {
+        console.error('authenticateWithPassword error:', err);
+        return { status: 'error', message: 'Unable to contact authentication server: ' + err.message };
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
 // Internal / Private Functions
 // ═══════════════════════════════════════════════════════════
 
@@ -342,28 +381,26 @@ function persistSession() {
 
 /**
  * Validate a token with the server by calling the authenticate action.
- * @param {string} token - The auth token (Google ID token or OTP session token)
- * @param {string} method - 'google' or 'otp'
+ * @param {string} token - The auth token (Google ID token or session token)
+ * @param {string} method - 'google', 'password', 'otp', or 'session'
+ * @param {string} [campaignId] - Optional campaign scope
  * @returns {Promise<{ valid: boolean, user?: Object, message?: string }>}
  */
-async function validateWithServer(token, method) {
+async function validateWithServer(token, method, campaignId = '') {
     try {
         console.log('[AUTH] validateWithServer — method:', method, ', URL:', AUTH_CONFIG.masterScriptUrl);
-        console.log('[AUTH] Sending POST with action=authenticate...');
         const resp = await fetch(AUTH_CONFIG.masterScriptUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'authenticate', method, token })
+            body: JSON.stringify({ action: 'authenticate', method, token, campaignId })
         });
-        console.log('[AUTH] Server HTTP status:', resp.status, resp.statusText);
         const text = await resp.text();
-        console.log('[AUTH] Server raw response (first 500 chars):', text.substring(0, 500));
         try {
             const json = JSON.parse(text);
             return json;
         } catch (parseErr) {
             console.error('[AUTH] Failed to parse server response as JSON:', parseErr.message);
-            return { valid: false, message: 'Server returned invalid response. Check console for details.' };
+            return { valid: false, message: 'Server returned invalid response.' };
         }
     } catch (err) {
         console.error('[AUTH] Server validation FETCH failed:', err);
@@ -373,7 +410,7 @@ async function validateWithServer(token, method) {
 
 /**
  * Check if a user has the required role, optionally for a specific campaign.
- * Role hierarchy: super_admin > campaign_manager > viewer
+ * Role hierarchy: super_admin (4) > campaign_owner (3) > campaign_manager (2) > bookkeeper (1.5) > viewer (1)
  * @param {Object} user - User object with role and campaigns properties
  * @param {string} requiredRole - The minimum required role
  * @param {string} [campaignId] - Optional campaign-specific access check
@@ -383,7 +420,13 @@ function hasRole(user, requiredRole, campaignId) {
     if (!user || !user.role) return false;
     if (user.role === 'super_admin') return true;
 
-    const roleLevel = { super_admin: 3, campaign_manager: 2, viewer: 1 };
+    const roleLevel = {
+        super_admin: 4,
+        campaign_owner: 3,
+        campaign_manager: 2,
+        bookkeeper: 1.5,
+        viewer: 1
+    };
     const userLevel = roleLevel[user.role] || 0;
     const requiredLevel = roleLevel[requiredRole] || 0;
 
@@ -394,7 +437,10 @@ function hasRole(user, requiredRole, campaignId) {
         const userCampaigns = Array.isArray(user.campaigns)
             ? user.campaigns
             : (user.campaigns || '').split(',').map(c => c.trim());
-        return userCampaigns.includes(campaignId);
+        if (userCampaigns.includes('*') || userCampaigns.includes(campaignId)) {
+            return true;
+        }
+        return false;
     }
 
     return true;

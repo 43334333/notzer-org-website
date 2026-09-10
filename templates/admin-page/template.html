@@ -926,6 +926,110 @@
             font-style: italic;
         }
 
+        /* ── Teams & Users UI Styles ──────────────────── */
+        .team-progress-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 110px;
+        }
+        .team-progress-bg {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .team-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4dabf7, #51cf66);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        .team-progress-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #bbb;
+            min-width: 32px;
+            text-align: right;
+        }
+        .badge-role-manager {
+            background: rgba(77, 171, 247, 0.15);
+            color: #74c0fc;
+            border: 1px solid rgba(77, 171, 247, 0.3);
+            padding: 0.2rem 0.55rem;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-role-bookkeeper {
+            background: rgba(255, 169, 77, 0.15);
+            color: #ffa94d;
+            border: 1px solid rgba(255, 169, 77, 0.3);
+            padding: 0.2rem 0.55rem;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-role-viewer {
+            background: rgba(255, 255, 255, 0.08);
+            color: #aaa;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 0.2rem 0.55rem;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-status-active {
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            padding: 0.2rem 0.55rem;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+        .badge-status-inactive {
+            background: rgba(255, 82, 82, 0.15);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 82, 82, 0.3);
+            padding: 0.2rem 0.55rem;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+        .action-btn-group {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .action-icon-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ddd;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .action-icon-btn:hover {
+            background: rgba(77, 171, 247, 0.2);
+            border-color: rgba(77, 171, 247, 0.4);
+            color: #fff;
+        }
+        .action-icon-btn.delete-btn:hover {
+            background: rgba(255, 82, 82, 0.2);
+            border-color: rgba(255, 82, 82, 0.4);
+            color: #ff6b6b;
+        }
+
         /* ── Responsive ────────────────────────────────── */
         @media (max-width: 640px) {
             .page-wrapper { padding: 1.25rem 1rem 3rem; }
@@ -974,6 +1078,8 @@
         <button class="tab-btn active" data-tab="donationEntry">Donation Entry</button>
         <button class="tab-btn" data-tab="pledges">Pledges</button>
         <button class="tab-btn" data-tab="scheduledPayments">Scheduled Payments</button>
+        <button class="tab-btn" data-tab="teams">Teams</button>
+        <button class="tab-btn" data-tab="users" id="usersTabBtn" style="display:none;">Users</button>
     </nav>
 
     <!-- ═══ Tab: Donation Entry ═══ -->
@@ -1275,6 +1381,103 @@
                 </table>
             </div>
         </div>
+    <!-- ═══ Tab: Teams ═══ -->
+    <div class="tab-panel" id="tab-teams">
+        <div class="summary-cards" id="teamsSummaryCards">
+            <div class="summary-card accent-blue">
+                <div class="card-value" id="teamsTotalCount">0</div>
+                <div class="card-label">Total Teams</div>
+            </div>
+            <div class="summary-card accent-orange">
+                <div class="card-value" id="teamsTotalGoal">$0</div>
+                <div class="card-label">Total Goal</div>
+            </div>
+            <div class="summary-card accent-green">
+                <div class="card-value" id="teamsTotalRaised">$0</div>
+                <div class="card-label">Total Raised</div>
+            </div>
+            <div class="summary-card accent-blue">
+                <div class="card-value" id="teamsTopTeam" style="font-size:1.1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">—</div>
+                <div class="card-label">Top Team</div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:1rem;">
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <input type="text" id="teamsSearchInput" placeholder="Search teams…" class="form-input" style="width:240px; padding:0.45rem 0.8rem; font-size:0.85rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff;">
+                </div>
+                <button type="button" class="btn-primary" id="openAddTeamBtn" style="padding:0.45rem 1rem; font-size:0.85rem;">+ Add Team</button>
+            </div>
+
+            <div class="data-table-wrapper">
+                <table class="data-table" id="teamsTable">
+                    <thead>
+                        <tr>
+                            <th>Team ID</th>
+                            <th>Team Name</th>
+                            <th>Contact</th>
+                            <th>Email</th>
+                            <th>Goal</th>
+                            <th>Raised</th>
+                            <th>Donors</th>
+                            <th>Progress</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teamsTableBody">
+                        <tr><td colspan="9" class="table-loading">Loading teams…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Tab: Users (Campaign Owner & Super Admin) ═══ -->
+    <div class="tab-panel" id="tab-users">
+        <div class="summary-cards" id="campaignUsersSummaryCards">
+            <div class="summary-card accent-blue">
+                <div class="card-value" id="cUsersTotalCount">0</div>
+                <div class="card-label">Campaign Staff</div>
+            </div>
+            <div class="summary-card accent-green">
+                <div class="card-value" id="cUsersManagersCount">0</div>
+                <div class="card-label">Managers</div>
+            </div>
+            <div class="summary-card accent-orange">
+                <div class="card-value" id="cUsersBookkeepersCount">0</div>
+                <div class="card-label">Bookkeepers</div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:1rem;">
+                <div>
+                    <h3 style="font-size:1.05rem; font-weight:600; color:#fff; margin-bottom:0.25rem;">Authorized Campaign Staff</h3>
+                    <p style="font-size:0.8rem; color:#888;">Manage managers and bookkeepers authorized to access this campaign's admin and bookkeeper portal (Tab 11 Users).</p>
+                </div>
+                <button type="button" class="btn-primary" id="openAddUserBtn" style="padding:0.45rem 1rem; font-size:0.85rem;">+ Add Campaign User</button>
+            </div>
+
+            <div class="data-table-wrapper">
+                <table class="data-table" id="cUsersTable">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Display Name</th>
+                            <th>Role</th>
+                            <th>Auth Method</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cUsersTableBody">
+                        <tr><td colspan="7" class="table-loading">Loading campaign users…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1370,6 +1573,100 @@
     </div>
 </div>
 
+<!-- ═══ Add / Edit Team Modal ═══ -->
+<div class="modal-overlay" id="teamModal">
+    <div class="modal-card">
+        <h3 id="teamModalTitle">Add Team</h3>
+        <div class="field">
+            <label for="tmTeamName">Team Name <span class="req">*</span></label>
+            <input type="text" id="tmTeamName" placeholder="e.g. Weinberger Family" required>
+        </div>
+        <div class="field">
+            <label for="tmTeamId">Team ID / Slug <span style="font-size:0.75rem; color:#888;">(Auto-generated if blank)</span></label>
+            <input type="text" id="tmTeamId" placeholder="e.g. weinberger-family">
+        </div>
+        <div class="field">
+            <label for="tmContactName">Contact Person Name</label>
+            <input type="text" id="tmContactName" placeholder="Contact full name">
+        </div>
+        <div class="field">
+            <label for="tmContactEmail">Contact Email</label>
+            <input type="email" id="tmContactEmail" placeholder="contact@example.com">
+        </div>
+        <div class="field">
+            <label for="tmGoal">Team Goal ($) <span class="req">*</span></label>
+            <div class="amount-wrapper">
+                <span class="currency">$</span>
+                <input type="number" id="tmGoal" min="0" step="100" placeholder="5000">
+            </div>
+        </div>
+        <div class="field">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="tmNotify" checked style="width:auto;">
+                <span style="font-size:0.85rem; color:#bbb;">Notify contact email on each new donation</span>
+            </label>
+        </div>
+        <input type="hidden" id="tmOriginalId">
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeTeamModal()">Cancel</button>
+            <button class="btn-primary" id="saveTeamBtn" onclick="saveTeam()">Save Team</button>
+        </div>
+        <div class="error-alert" id="tmError" style="margin-top:1rem;">
+            <span class="err-icon">⚠</span>
+            <span id="tmErrorMessage"></span>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Add / Edit Campaign User Modal ═══ -->
+<div class="modal-overlay" id="campaignUserModal">
+    <div class="modal-card">
+        <h3 id="cuModalTitle">Add Campaign User</h3>
+        <div class="field">
+            <label for="cuEmail">Email Address <span class="req">*</span></label>
+            <input type="email" id="cuEmail" placeholder="manager@example.com" required>
+        </div>
+        <div class="field">
+            <label for="cuName">Display Name <span class="req">*</span></label>
+            <input type="text" id="cuName" placeholder="Full Name" required>
+        </div>
+        <div class="field">
+            <label for="cuRole">Campaign Role <span class="req">*</span></label>
+            <select id="cuRole">
+                <option value="campaign_manager">Campaign Manager (Full Ops & Teams)</option>
+                <option value="bookkeeper">Bookkeeper (Scheduled Batches & Reports)</option>
+                <option value="viewer">Viewer (Read-Only Analytics)</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="cuAuthMethod">Sign-In Method</label>
+            <select id="cuAuthMethod">
+                <option value="password">Email & Password</option>
+                <option value="google">Google Account (Gmail / Workspace)</option>
+            </select>
+        </div>
+        <div class="field" id="cuPasswordField">
+            <label for="cuPassword">Password / PIN <span style="font-size:0.75rem; color:#888;">(Leave blank to keep existing)</span></label>
+            <input type="password" id="cuPassword" placeholder="Enter user password">
+        </div>
+        <div class="field">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="cuActive" checked style="width:auto;">
+                <span style="font-size:0.85rem; color:#bbb;">Account Active</span>
+            </label>
+        </div>
+        <input type="hidden" id="cuEditEmail">
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeCampaignUserModal()">Cancel</button>
+            <button class="btn-primary" id="saveCampaignUserBtn" onclick="saveCampaignUser()">Save User</button>
+        </div>
+        <div class="error-alert" id="cuError" style="margin-top:1rem;">
+            <span class="err-icon">⚠</span>
+            <span id="cuErrorMessage"></span>
+        </div>
+    </div>
+</div>
+
 <script>
 /* ─── Campaign Config ─────────────────────────────────── */
 const CAMPAIGN_CONFIG = {
@@ -1419,6 +1716,10 @@ let currentPledgeFilter = 'all';
         if (user) {
             userBar.style.display = 'flex';
             userEmailEl.textContent = user.email || user.name || 'Authenticated';
+            if (user.role === 'super_admin' || user.role === 'campaign_owner' || user.isOwner) {
+                const uBtn = document.getElementById('usersTabBtn');
+                if (uBtn) uBtn.style.display = '';
+            }
         }
 
         appMain.style.display = 'block';
@@ -1455,21 +1756,19 @@ function init() {
     form.addEventListener('submit', handleSubmit);
     addAnotherBtn.addEventListener('click', resetForm);
 
-    // Status-dependent field visibility
-    const statusSelect = document.getElementById('paymentStatus');
-    const splitFields = document.getElementById('splitFields');
-    const scheduledFields = document.getElementById('scheduledFields');
-    const methodField = document.getElementById('method');
+    // Payment status change
+    document.getElementById('paymentStatus').addEventListener('change', (e) => {
+        const status = e.target.value;
+        const splitRow = document.getElementById('splitAmountRow');
+        const schedRow = document.getElementById('scheduledConfigRow');
+        const methodField = document.getElementById('method');
 
-    statusSelect.addEventListener('change', function() {
-        const val = this.value;
-        splitFields.style.display = val === 'Split' ? 'block' : 'none';
-        scheduledFields.style.display = val === 'Scheduled' ? 'block' : 'none';
+        splitRow.style.display = status === 'Split' ? 'grid' : 'none';
+        schedRow.style.display = status === 'Scheduled' ? 'block' : 'none';
 
-        // For Pledged, method isn't required (no payment)
-        if (val === 'Pledged') {
+        if (status === 'Pledged') {
             methodField.removeAttribute('required');
-            methodField.closest('.field').style.opacity = '0.5';
+            methodField.closest('.field').style.opacity = '0.6';
         } else {
             methodField.setAttribute('required', '');
             methodField.closest('.field').style.opacity = '1';
@@ -1499,6 +1798,40 @@ function init() {
             el.closest('.field').classList.remove('invalid');
         });
     });
+
+    // Teams & Users tab controls
+    const openAddTeamBtn = document.getElementById('openAddTeamBtn');
+    if (openAddTeamBtn) openAddTeamBtn.addEventListener('click', openAddTeamModal);
+
+    const openAddUserBtn = document.getElementById('openAddUserBtn');
+    if (openAddUserBtn) openAddUserBtn.addEventListener('click', openAddCampaignUserModal);
+
+    const teamsSearchInput = document.getElementById('teamsSearchInput');
+    if (teamsSearchInput) {
+        teamsSearchInput.addEventListener('input', (e) => {
+            renderTeamsTab(e.target.value.trim());
+        });
+    }
+
+    const cuAuthMethod = document.getElementById('cuAuthMethod');
+    if (cuAuthMethod) {
+        cuAuthMethod.addEventListener('change', (e) => {
+            const pwField = document.getElementById('cuPasswordField');
+            if (pwField) {
+                pwField.style.display = e.target.value === 'google' ? 'none' : 'block';
+            }
+        });
+    }
+
+    // Modal backdrop click-to-close
+    ['teamModal', 'campaignUserModal'].forEach(id => {
+        const m = document.getElementById(id);
+        if (m) {
+            m.addEventListener('click', (e) => {
+                if (e.target === m) m.classList.remove('visible');
+            });
+        }
+    });
 }
 
 /* ─── Tab Navigation ──────────────────────────────────── */
@@ -1519,6 +1852,10 @@ function initTabs() {
                 loadPledges();
             } else if (tabId === 'scheduledPayments') {
                 loadScheduledPayments();
+            } else if (tabId === 'teams') {
+                loadTeams(true);
+            } else if (tabId === 'users') {
+                loadCampaignUsers();
             }
         });
     });
@@ -1711,14 +2048,36 @@ function resetForm() {
 }
 
 /* ─── Teams Tag Input ─────────────────────────────────── */
-async function loadTeams() {
+let teamsData = [];
+
+async function loadTeams(renderTable = false) {
+    if (renderTable) {
+        const tbody = document.getElementById('teamsTableBody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="table-loading">Loading teams…</td></tr>';
+    }
     try {
-        const data = await authGet('getTeams', { campaignId: CAMPAIGN_CONFIG.id });
+        const params = { campaignId: CAMPAIGN_CONFIG.id };
+        if (renderTable) params.includeStats = 'true';
+        const data = await authGet('getTeams', params);
         if (data.status === 'success' && Array.isArray(data.teams)) {
             window.allTeams = data.teams;
+            teamsData = data.teams;
+            if (renderTable) {
+                renderTeamsTab();
+                updateTeamsSummary();
+            }
+        } else {
+            if (renderTable) {
+                const tbody = document.getElementById('teamsTableBody');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="table-empty">No teams found.</td></tr>';
+            }
         }
     } catch (err) {
         console.warn('Could not load teams:', err);
+        if (renderTable) {
+            const tbody = document.getElementById('teamsTableBody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="table-empty">Failed to load teams.</td></tr>';
+        }
     }
 }
 
@@ -2292,6 +2651,387 @@ async function submitResendReceipt() {
     } catch (err) {
         document.getElementById('rrErrorMessage').textContent = 'Network error. Please try again.';
         document.getElementById('rrError').classList.add('visible');
+    }
+}
+
+/* ─── Teams Management ───────────────────────────────── */
+function renderTeamsTab(filterText = '') {
+    const tbody = document.getElementById('teamsTableBody');
+    if (!tbody) return;
+
+    let filtered = teamsData;
+    if (filterText) {
+        const q = filterText.toLowerCase();
+        filtered = teamsData.filter(t => 
+            (t.name && t.name.toLowerCase().includes(q)) ||
+            (t.id && t.id.toLowerCase().includes(q)) ||
+            (t.contactName && t.contactName.toLowerCase().includes(q)) ||
+            (t.contactEmail && t.contactEmail.toLowerCase().includes(q))
+        );
+    }
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="table-empty">No teams found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(t => {
+        const goal = Number(t.goal || 0);
+        const raised = Number(t.raised || 0);
+        const donors = Number(t.donorCount || 0);
+        const percent = goal > 0 ? Math.min(Math.round((raised / goal) * 100), 100) : 0;
+        const donateUrl = window.location.origin + '/' + CAMPAIGN_CONFIG.id + '/donate.html?team=' + encodeURIComponent(t.id);
+
+        return `<tr>
+            <td style="font-family:monospace; font-size:0.8rem; color:#888;">${escapeHtml(t.id || '—')}</td>
+            <td><strong style="color:#eee;">${escapeHtml(t.name || '—')}</strong></td>
+            <td>${escapeHtml(t.contactName || '—')}</td>
+            <td>${t.contactEmail ? `<a href="mailto:${escapeHtml(t.contactEmail)}" style="color:#8ab4f8; text-decoration:none;">${escapeHtml(t.contactEmail)}</a>` : '—'}</td>
+            <td>${formatCurrency(goal)}</td>
+            <td style="font-weight:600; color:#81c995;">${formatCurrency(raised)}</td>
+            <td>${donors}</td>
+            <td style="min-width:140px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="team-progress-bar" style="flex:1; height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden;">
+                        <div style="width:${percent}%; height:100%; background:linear-gradient(90deg, #1a73e8, #34a853); border-radius:4px;"></div>
+                    </div>
+                    <span style="font-size:0.75rem; color:#aaa; width:36px; text-align:right;">${percent}%</span>
+                </div>
+            </td>
+            <td>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="tbl-action-btn" onclick="openEditTeamModal('${escapeHtml(t.id)}')">Edit</button>
+                    <button class="tbl-action-btn" onclick="copyTeamDonationLink('${donateUrl}')" title="Copy Team Donation Link">📋 Link</button>
+                    <button class="tbl-action-btn danger" onclick="deleteTeamConfirm('${escapeHtml(t.id)}', '${escapeHtml(t.name)}')">Delete</button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function updateTeamsSummary() {
+    let totalTeams = teamsData.length;
+    let totalGoal = 0;
+    let totalRaised = 0;
+    let topTeam = null;
+    let maxRaised = -1;
+
+    teamsData.forEach(t => {
+        const goal = Number(t.goal || 0);
+        const raised = Number(t.raised || 0);
+        totalGoal += goal;
+        totalRaised += raised;
+        if (raised > maxRaised) {
+            maxRaised = raised;
+            topTeam = t.name;
+        }
+    });
+
+    const elCount = document.getElementById('teamsTotalCount');
+    const elGoal = document.getElementById('teamsTotalGoal');
+    const elRaised = document.getElementById('teamsTotalRaised');
+    const elTop = document.getElementById('teamsTopTeam');
+
+    if (elCount) elCount.textContent = totalTeams;
+    if (elGoal) elGoal.textContent = formatCurrency(totalGoal);
+    if (elRaised) elRaised.textContent = formatCurrency(totalRaised);
+    if (elTop) elTop.textContent = topTeam || '—';
+}
+
+function copyTeamDonationLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Team donation link copied to clipboard!\n' + url);
+    }).catch(() => {
+        prompt('Copy team donation link:', url);
+    });
+}
+
+function openAddTeamModal() {
+    document.getElementById('teamModalTitle').textContent = 'Add Team';
+    document.getElementById('tmTeamName').value = '';
+    document.getElementById('tmTeamId').value = '';
+    document.getElementById('tmTeamId').readOnly = false;
+    document.getElementById('tmContactName').value = '';
+    document.getElementById('tmContactEmail').value = '';
+    document.getElementById('tmGoal').value = '';
+    document.getElementById('tmNotify').checked = true;
+    document.getElementById('tmOriginalId').value = '';
+    document.getElementById('tmError').classList.remove('visible');
+    document.getElementById('teamModal').classList.add('visible');
+}
+
+function openEditTeamModal(teamId) {
+    const team = teamsData.find(t => t.id === teamId);
+    if (!team) return;
+
+    document.getElementById('teamModalTitle').textContent = 'Edit Team';
+    document.getElementById('tmTeamName').value = team.name || '';
+    document.getElementById('tmTeamId').value = team.id || '';
+    document.getElementById('tmTeamId').readOnly = true;
+    document.getElementById('tmContactName').value = team.contactName || '';
+    document.getElementById('tmContactEmail').value = team.contactEmail || '';
+    document.getElementById('tmGoal').value = team.goal || '';
+    document.getElementById('tmNotify').checked = team.notifyOnDonation !== false;
+    document.getElementById('tmOriginalId').value = team.id || '';
+    document.getElementById('tmError').classList.remove('visible');
+    document.getElementById('teamModal').classList.add('visible');
+}
+
+function closeTeamModal() {
+    document.getElementById('teamModal').classList.remove('visible');
+}
+
+async function saveTeam() {
+    const teamName = document.getElementById('tmTeamName').value.trim();
+    let teamId = document.getElementById('tmTeamId').value.trim();
+    const contactName = document.getElementById('tmContactName').value.trim();
+    const contactEmail = document.getElementById('tmContactEmail').value.trim();
+    const goal = parseFloat(document.getElementById('tmGoal').value) || 0;
+    const notifyOnDonation = document.getElementById('tmNotify').checked;
+    const originalTeamId = document.getElementById('tmOriginalId').value.trim();
+
+    if (!teamName) {
+        document.getElementById('tmErrorMessage').textContent = 'Team Name is required.';
+        document.getElementById('tmError').classList.add('visible');
+        return;
+    }
+
+    const btn = document.getElementById('saveTeamBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    document.getElementById('tmError').classList.remove('visible');
+
+    try {
+        const result = await authPost('saveTeam', {
+            campaignId: CAMPAIGN_CONFIG.id,
+            teamId,
+            originalTeamId,
+            teamName,
+            goal,
+            contactName,
+            contactEmail,
+            notifyOnDonation,
+        });
+
+        if (result.status === 'success' || result.success) {
+            closeTeamModal();
+            await loadTeams(true);
+        } else {
+            document.getElementById('tmErrorMessage').textContent = result.message || 'Failed to save team.';
+            document.getElementById('tmError').classList.add('visible');
+        }
+    } catch (err) {
+        document.getElementById('tmErrorMessage').textContent = 'Network error: ' + err.message;
+        document.getElementById('tmError').classList.add('visible');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Team';
+    }
+}
+
+async function deleteTeamConfirm(teamId, teamName) {
+    if (!confirm('Are you sure you want to delete the team "' + teamName + '" (' + teamId + ')?')) {
+        return;
+    }
+
+    try {
+        const result = await authPost('deleteTeam', {
+            campaignId: CAMPAIGN_CONFIG.id,
+            teamId,
+        });
+
+        if (result.status === 'success' || result.success) {
+            await loadTeams(true);
+        } else {
+            alert(result.message || 'Failed to delete team.');
+        }
+    } catch (err) {
+        alert('Network error: ' + err.message);
+    }
+}
+
+/* ─── Campaign Users Management ────────────────────── */
+let campaignUsersData = [];
+
+async function loadCampaignUsers() {
+    const tbody = document.getElementById('cUsersTableBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="table-loading">Loading campaign users…</td></tr>';
+
+    try {
+        const data = await authGet('getCampaignUsers', { campaignId: CAMPAIGN_CONFIG.id });
+        if (data.status === 'success' && Array.isArray(data.users)) {
+            campaignUsersData = data.users;
+            renderCampaignUsersTab();
+            updateCampaignUsersSummary();
+        } else {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No campaign users found.</td></tr>';
+        }
+    } catch (err) {
+        console.error('Failed to load campaign users:', err);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="table-empty">Failed to load campaign users.</td></tr>';
+    }
+}
+
+function renderCampaignUsersTab() {
+    const tbody = document.getElementById('cUsersTableBody');
+    if (!tbody) return;
+
+    if (campaignUsersData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No campaign users found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = campaignUsersData.map(u => {
+        const roleBadge = u.role === 'campaign_manager' ? 'badge-manager' :
+                          u.role === 'bookkeeper' ? 'badge-bookkeeper' : 'badge-viewer';
+        const roleLabel = u.role === 'campaign_manager' ? 'Manager' :
+                          u.role === 'bookkeeper' ? 'Bookkeeper' : 'Viewer';
+        const statusBadge = (u.status === 'Active' || u.active !== false) ? 'badge-active' : 'badge-inactive';
+        const statusLabel = (u.status === 'Active' || u.active !== false) ? 'Active' : 'Inactive';
+
+        return `<tr>
+            <td><strong style="color:#eee;">${escapeHtml(u.email || '—')}</strong></td>
+            <td>${escapeHtml(u.displayName || u.name || '—')}</td>
+            <td><span class="user-role-badge ${roleBadge}">${roleLabel}</span></td>
+            <td style="text-transform:capitalize;">${escapeHtml(u.authMethod || 'password')}</td>
+            <td><span class="user-status-badge ${statusBadge}">${statusLabel}</span></td>
+            <td style="color:#888; font-size:0.8rem;">${escapeHtml(u.lastLogin || u.addedDate || 'Never')}</td>
+            <td>
+                <div style="display:flex; gap:6px;">
+                    <button class="tbl-action-btn" onclick="openEditCampaignUserModal('${escapeHtml(u.email)}')">Edit</button>
+                    <button class="tbl-action-btn danger" onclick="deleteCampaignUserConfirm('${escapeHtml(u.email)}')">Remove</button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function updateCampaignUsersSummary() {
+    let managers = 0;
+    let bookkeepers = 0;
+
+    campaignUsersData.forEach(u => {
+        if (u.role === 'campaign_manager') managers++;
+        else if (u.role === 'bookkeeper') bookkeepers++;
+    });
+
+    const elTotal = document.getElementById('cUsersTotalCount');
+    const elMgr = document.getElementById('cUsersManagersCount');
+    const elBk = document.getElementById('cUsersBookkeepersCount');
+
+    if (elTotal) elTotal.textContent = campaignUsersData.length;
+    if (elMgr) elMgr.textContent = managers;
+    if (elBk) elBk.textContent = bookkeepers;
+}
+
+function openAddCampaignUserModal() {
+    document.getElementById('cuModalTitle').textContent = 'Add Campaign User';
+    document.getElementById('cuEmail').value = '';
+    document.getElementById('cuEmail').readOnly = false;
+    document.getElementById('cuName').value = '';
+    document.getElementById('cuRole').value = 'campaign_manager';
+    document.getElementById('cuAuthMethod').value = 'password';
+    document.getElementById('cuPassword').value = '';
+    document.getElementById('cuPasswordField').style.display = 'block';
+    document.getElementById('cuActive').checked = true;
+    document.getElementById('cuEditEmail').value = '';
+    document.getElementById('cuError').classList.remove('visible');
+    document.getElementById('campaignUserModal').classList.add('visible');
+}
+
+function openEditCampaignUserModal(email) {
+    const u = campaignUsersData.find(user => (user.email || '').toLowerCase() === email.toLowerCase());
+    if (!u) return;
+
+    document.getElementById('cuModalTitle').textContent = 'Edit Campaign User';
+    document.getElementById('cuEmail').value = u.email || '';
+    document.getElementById('cuEmail').readOnly = true;
+    document.getElementById('cuName').value = u.displayName || u.name || '';
+    document.getElementById('cuRole').value = u.role || 'campaign_manager';
+    document.getElementById('cuAuthMethod').value = u.authMethod || 'password';
+    document.getElementById('cuPassword').value = '';
+    document.getElementById('cuPasswordField').style.display = u.authMethod === 'google' ? 'none' : 'block';
+    document.getElementById('cuActive').checked = (u.status === 'Active' || u.active !== false);
+    document.getElementById('cuEditEmail').value = u.email || '';
+    document.getElementById('cuError').classList.remove('visible');
+    document.getElementById('campaignUserModal').classList.add('visible');
+}
+
+function closeCampaignUserModal() {
+    document.getElementById('campaignUserModal').classList.remove('visible');
+}
+
+async function saveCampaignUser() {
+    const email = document.getElementById('cuEmail').value.trim();
+    const name = document.getElementById('cuName').value.trim();
+    const role = document.getElementById('cuRole').value;
+    const authMethod = document.getElementById('cuAuthMethod').value;
+    const password = document.getElementById('cuPassword').value;
+    const active = document.getElementById('cuActive').checked;
+    const originalEmail = document.getElementById('cuEditEmail').value.trim();
+
+    if (!email || !email.includes('@')) {
+        document.getElementById('cuErrorMessage').textContent = 'A valid email address is required.';
+        document.getElementById('cuError').classList.add('visible');
+        return;
+    }
+    if (!name) {
+        document.getElementById('cuErrorMessage').textContent = 'Display name is required.';
+        document.getElementById('cuError').classList.add('visible');
+        return;
+    }
+
+    const btn = document.getElementById('saveCampaignUserBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    document.getElementById('cuError').classList.remove('visible');
+
+    try {
+        const result = await authPost('saveCampaignUser', {
+            campaignId: CAMPAIGN_CONFIG.id,
+            email,
+            originalEmail,
+            name,
+            role,
+            authMethod,
+            password,
+            active,
+        });
+
+        if (result.status === 'success' || result.success) {
+            closeCampaignUserModal();
+            await loadCampaignUsers();
+        } else {
+            document.getElementById('cuErrorMessage').textContent = result.message || 'Failed to save user.';
+            document.getElementById('cuError').classList.add('visible');
+        }
+    } catch (err) {
+        document.getElementById('cuErrorMessage').textContent = 'Network error: ' + err.message;
+        document.getElementById('cuError').classList.add('visible');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save User';
+    }
+}
+
+async function deleteCampaignUserConfirm(email) {
+    if (!confirm('Are you sure you want to remove ' + email + ' from this campaign?')) {
+        return;
+    }
+
+    try {
+        const result = await authPost('deleteCampaignUser', {
+            campaignId: CAMPAIGN_CONFIG.id,
+            email,
+        });
+
+        if (result.status === 'success' || result.success) {
+            await loadCampaignUsers();
+        } else {
+            alert(result.message || 'Failed to remove user.');
+        }
+    } catch (err) {
+        alert('Network error: ' + err.message);
     }
 }
 

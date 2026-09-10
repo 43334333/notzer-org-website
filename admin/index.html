@@ -331,8 +331,11 @@ body::before {
 .badge-google { background: rgba(66,133,244,0.12); color: #4285f4; border: 1px solid rgba(66,133,244,0.25); }
 .badge-otp { background: rgba(108,99,255,0.12); color: var(--accent-light); border: 1px solid rgba(108,99,255,0.25); }
 .badge-super { background: rgba(255,82,82,0.12); color: var(--error); border: 1px solid rgba(255,82,82,0.25); }
+.badge-owner { background: rgba(52,211,153,0.12); color: var(--success); border: 1px solid rgba(52,211,153,0.25); }
 .badge-manager { background: rgba(108,99,255,0.12); color: var(--accent-light); border: 1px solid rgba(108,99,255,0.25); }
+.badge-bookkeeper { background: rgba(251,191,36,0.12); color: var(--warning); border: 1px solid rgba(251,191,36,0.25); }
 .badge-viewer { background: rgba(107,107,128,0.12); color: var(--text-muted); border: 1px solid rgba(107,107,128,0.25); }
+.badge-password { background: rgba(77,171,247,0.12); color: var(--info); border: 1px solid rgba(77,171,247,0.25); }
 
 /* --- Filter Pills --- */
 .filter-pills { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -982,8 +985,9 @@ body::before {
             <div class="nav-item" data-tab="donations"><span class="nav-icon">📝</span><span class="nav-label">Donations</span></div>
             <div class="nav-item" data-tab="pledges"><span class="nav-icon">💳</span><span class="nav-label">Pledges</span></div>
             <div class="nav-item" data-tab="schedule"><span class="nav-icon">📅</span><span class="nav-label">Scheduled</span></div>
+            <div class="nav-item" data-tab="teams"><span class="nav-icon">👥</span><span class="nav-label">Teams</span></div>
             <div class="nav-item" data-tab="receipts"><span class="nav-icon">🧾</span><span class="nav-label">Receipts</span></div>
-            <div class="nav-item" data-tab="users" id="usersNavItem" style="display:none;"><span class="nav-icon">👥</span><span class="nav-label">Users</span></div>
+            <div class="nav-item" data-tab="users" id="usersNavItem" style="display:none;"><span class="nav-icon">👤</span><span class="nav-label">Users</span></div>
             <div class="nav-item" data-tab="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></div>
         </nav>
         <div class="sidebar-footer">© 2026 Notzer Chesed Inc.</div>
@@ -1292,6 +1296,53 @@ body::before {
     </div>
 </div>
 
+<!-- ═══════════════ TAB: TEAMS ═══════════════ -->
+<div class="tab-panel" id="tab-teams">
+    <div class="flex items-center justify-between mb-24 flex-wrap gap-8">
+        <div>
+            <h1 class="section-title">Teams</h1>
+            <p class="section-subtitle" style="margin-bottom:0;">Manage fundraising teams across campaigns (Tab 5 Teams)</p>
+        </div>
+        <button class="btn btn-primary" id="addMasterTeamBtn">+ Add Team</button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon blue">👥</div><div><div class="stat-value" id="masterTeamsTotalCount">0</div><div class="stat-label">Total Teams</div></div></div>
+        <div class="stat-card"><div class="stat-icon purple">🎯</div><div><div class="stat-value" id="masterTeamsTotalGoal">$0</div><div class="stat-label">Total Goal</div></div></div>
+        <div class="stat-card"><div class="stat-icon green">💰</div><div><div class="stat-value" id="masterTeamsTotalRaised">$0</div><div class="stat-label">Total Raised</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange">🏆</div><div><div class="stat-value" id="masterTeamsTopTeam" style="font-size:1.1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">—</div><div class="stat-label">Top Team</div></div></div>
+    </div>
+
+    <div class="filter-bar">
+        <select id="masterTeamsCampaignFilter"><option value="">Select Campaign…</option></select>
+        <input type="text" id="masterTeamsSearch" placeholder="Search team name or ID…">
+    </div>
+
+    <div class="glass-card" style="position:relative;">
+        <div class="loading-overlay" id="masterTeamsLoading"><div class="loading-spinner"></div></div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Team ID</th>
+                        <th>Team Name</th>
+                        <th>Contact Name</th>
+                        <th>Contact Email</th>
+                        <th>Goal</th>
+                        <th>Raised</th>
+                        <th>Donors</th>
+                        <th>Progress</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="masterTeamsTableRows">
+                    <tr><td colspan="9" class="empty-state"><div class="empty-icon">👥</div>Please select a campaign to view teams.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <!-- ═══════════════ TAB 6: RECEIPTS ═══════════════ -->
 <div class="tab-panel" id="tab-receipts">
     <h1 class="section-title">Receipts</h1>
@@ -1390,10 +1441,10 @@ body::before {
             <div class="form-col">
                 <div class="field"><label>Email <span class="req">*</span></label><input type="email" id="userEmail" placeholder="user@example.com" required></div>
                 <div class="field"><label>Display Name <span class="req">*</span></label><input type="text" id="userDisplayName" placeholder="John Doe" required></div>
-                <div class="field"><label>Auth Method</label><select id="userAuthMethod"><option value="google">Google Sign-In</option><option value="otp">Email OTP</option></select></div>
+                <div class="field"><label>Auth Method</label><select id="userAuthMethod"><option value="google">Google Sign-In</option><option value="password">Email & Password</option><option value="otp">Email OTP</option></select></div>
             </div>
             <div class="form-col">
-                <div class="field"><label>Role <span class="req">*</span></label><select id="userRole"><option value="viewer">Viewer</option><option value="campaign_manager">Campaign Manager</option><option value="super_admin">Super Admin</option></select></div>
+                <div class="field"><label>Role <span class="req">*</span></label><select id="userRole"><option value="viewer">Viewer</option><option value="bookkeeper">Bookkeeper</option><option value="campaign_manager">Campaign Manager</option><option value="campaign_owner">Campaign Owner</option><option value="super_admin">Super Admin</option></select></div>
                 <div class="field"><label>Assigned Campaigns</label><input type="text" id="userCampaigns" placeholder="ksy, purim-2026 (or * for all)"></div>
                 <div class="toggle-row"><label class="switch"><input type="checkbox" id="userActive" checked><span class="slider"></span></label><div class="toggle-text"><strong>Active</strong>User can access the platform</div></div>
             </div>
@@ -1759,6 +1810,52 @@ body::before {
     </div>
 </div>
 
+<!-- ═══════════════ MASTER TEAM MODAL ═══════════════ -->
+<div class="modal-overlay" id="masterTeamModal">
+    <div class="modal-card" style="max-width:540px;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="masterTeamModalTitle">Add Team</h3>
+            <button class="modal-close" id="closeMasterTeamModalBtn">&times;</button>
+        </div>
+        <div class="modal-body" style="padding:20px;">
+            <div class="field mb-12">
+                <label>Campaign <span class="req">*</span></label>
+                <select id="mtmCampaignSelect" style="width:100%;"></select>
+            </div>
+            <div class="field mb-12">
+                <label>Team Name <span class="req">*</span></label>
+                <input type="text" id="mtmTeamName" placeholder="e.g. Weinberger Family" required>
+            </div>
+            <div class="field mb-12">
+                <label>Team ID / Slug <span style="font-size:0.75rem;color:var(--text-muted);">(Auto-generated if blank)</span></label>
+                <input type="text" id="mtmTeamId" placeholder="e.g. weinberger-family">
+            </div>
+            <div class="field mb-12">
+                <label>Contact Person Name</label>
+                <input type="text" id="mtmContactName" placeholder="Contact full name">
+            </div>
+            <div class="field mb-12">
+                <label>Contact Email</label>
+                <input type="email" id="mtmContactEmail" placeholder="contact@example.com">
+            </div>
+            <div class="field mb-12">
+                <label>Team Goal ($) <span class="req">*</span></label>
+                <input type="number" id="mtmGoal" min="0" step="100" placeholder="5000">
+            </div>
+            <div class="toggle-row">
+                <label class="switch"><input type="checkbox" id="mtmNotify" checked><span class="slider"></span></label>
+                <div class="toggle-text"><strong>Notify Contact</strong>Send email on each new donation</div>
+            </div>
+            <input type="hidden" id="mtmOriginalId">
+            <div id="mtmError" style="display:none;color:var(--error);font-size:0.83rem;margin-top:12px;"></div>
+        </div>
+        <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;">
+            <button class="btn btn-secondary" id="cancelMasterTeamBtn">Cancel</button>
+            <button class="btn btn-primary" id="saveMasterTeamBtn">Save Team</button>
+        </div>
+    </div>
+</div>
+
 <!-- Auth Script -->
 <script src="../js/auth.js"></script>
 
@@ -1856,7 +1953,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('#userName').textContent = user.name || user.email;
     $('#userRole').textContent = (user.role || 'viewer').replace('_', ' ');
 
-    if (user.role === 'super_admin') {
+    if (user.role === 'super_admin' || user.role === 'campaign_owner') {
         $('#usersNavItem').style.display = '';
     }
 
@@ -1963,6 +2060,17 @@ function initNavigation() {
         $('#sidebar').classList.remove('open');
         $('#sidebarOverlay').classList.remove('open');
     });
+
+    // Master Teams event listeners
+    $('#addMasterTeamBtn')?.addEventListener('click', openAddMasterTeamModal);
+    $('#closeMasterTeamModalBtn')?.addEventListener('click', closeMasterTeamModal);
+    $('#cancelMasterTeamBtn')?.addEventListener('click', closeMasterTeamModal);
+    $('#saveMasterTeamBtn')?.addEventListener('click', saveMasterTeam);
+    $('#masterTeamsCampaignFilter')?.addEventListener('change', () => loadMasterTeams());
+    $('#masterTeamsSearch')?.addEventListener('input', (e) => renderMasterTeamsTable(e.target.value.trim()));
+    $('#masterTeamModal')?.addEventListener('click', (e) => {
+        if (e.target === $('#masterTeamModal')) closeMasterTeamModal();
+    });
 }
 
 function switchTab(tabId) {
@@ -1970,7 +2078,7 @@ function switchTab(tabId) {
     $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tabId));
     $$('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${tabId}`));
 
-    const titles = { dashboard: 'Dashboard', campaigns: 'Campaigns', donations: 'Manual Entry', pledges: 'Pledges', schedule: 'Scheduled Payments', receipts: 'Receipts', users: 'Users', reports: 'Reports' };
+    const titles = { dashboard: 'Dashboard', campaigns: 'Campaigns', donations: 'Manual Entry', pledges: 'Pledges', schedule: 'Scheduled Payments', teams: 'Teams', receipts: 'Receipts', users: 'Users', reports: 'Reports' };
     $('#headerTitle').textContent = titles[tabId] || 'Admin';
 
     // Load data on tab switch
@@ -1978,6 +2086,7 @@ function switchTab(tabId) {
     else if (tabId === 'campaigns') loadCampaigns();
     else if (tabId === 'pledges') loadPledges();
     else if (tabId === 'schedule') loadScheduledPayments();
+    else if (tabId === 'teams') loadMasterTeams();
     else if (tabId === 'receipts') loadReceiptLog();
     else if (tabId === 'users') loadUsers();
     else if (tabId === 'reports') loadReportData();
@@ -4328,8 +4437,8 @@ function renderUserTable() {
         tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-icon">👥</div>No users found</td></tr>';
         return;
     }
-    const roleMap = { super_admin: 'badge-super', campaign_manager: 'badge-manager', viewer: 'badge-viewer' };
-    const authMap = { google: 'badge-google', otp: 'badge-otp' };
+    const roleMap = { super_admin: 'badge-super', campaign_owner: 'badge-owner', campaign_manager: 'badge-manager', bookkeeper: 'badge-bookkeeper', viewer: 'badge-viewer' };
+    const authMap = { google: 'badge-google', password: 'badge-password', otp: 'badge-otp' };
     tbody.innerHTML = APP.users.map(u => `<tr>
         <td style="font-weight:500;">${u.email}</td>
         <td>${u.name || '—'}</td>
@@ -4375,6 +4484,271 @@ async function deactivateUser(email) {
         showToast('User deactivated', 'success');
         loadUsers();
     } catch (e) { showToast('Failed to deactivate user', 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB: MASTER TEAMS MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+let masterTeamsData = [];
+
+async function populateMasterTeamsCampaignFilter() {
+    const sel = $('#masterTeamsCampaignFilter');
+    const modalSel = $('#mtmCampaignSelect');
+    if (!sel) return;
+
+    if (!APP.campaigns || !APP.campaigns.length) {
+        try {
+            const data = await authGet('getActiveCampaigns');
+            APP.campaigns = data.campaigns || [];
+        } catch (e) {}
+    }
+
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">Select Campaign…</option>' + 
+        (APP.campaigns || []).map(c => `<option value="${c.id}">${escapeHtml(c.name || c.id)} (${c.id})</option>`).join('');
+    if (currentVal) sel.value = currentVal;
+
+    if (modalSel) {
+        modalSel.innerHTML = (APP.campaigns || []).map(c => `<option value="${c.id}">${escapeHtml(c.name || c.id)} (${c.id})</option>`).join('');
+    }
+}
+
+async function loadMasterTeams() {
+    await populateMasterTeamsCampaignFilter();
+    const sel = $('#masterTeamsCampaignFilter');
+    let campaignId = sel ? sel.value : '';
+
+    // If none selected, default to first campaign
+    if (!campaignId && APP.campaigns && APP.campaigns.length > 0) {
+        campaignId = APP.campaigns[0].id;
+        if (sel) sel.value = campaignId;
+    }
+
+    if (!campaignId) {
+        $('#masterTeamsTableRows').innerHTML = '<tr><td colspan="9" class="empty-state"><div class="empty-icon">👥</div>No campaigns available.</td></tr>';
+        return;
+    }
+
+    showLoading('masterTeamsLoading');
+    try {
+        const data = await authGet('getTeams', { campaignId, includeStats: 'true' });
+        masterTeamsData = (data.status === 'success' && Array.isArray(data.teams)) ? data.teams : [];
+        renderMasterTeamsTable();
+        updateMasterTeamsSummary();
+    } catch (err) {
+        console.error('Failed to load teams:', err);
+        showToast('Failed to load teams: ' + err.message, 'error');
+        $('#masterTeamsTableRows').innerHTML = '<tr><td colspan="9" class="empty-state">Failed to load teams.</td></tr>';
+    } finally {
+        hideLoading('masterTeamsLoading');
+    }
+}
+
+function renderMasterTeamsTable(filterText = '') {
+    const tbody = $('#masterTeamsTableRows');
+    if (!tbody) return;
+
+    const campaignId = $('#masterTeamsCampaignFilter')?.value || '';
+    let filtered = masterTeamsData;
+    if (filterText) {
+        const q = filterText.toLowerCase();
+        filtered = masterTeamsData.filter(t => 
+            (t.name && t.name.toLowerCase().includes(q)) ||
+            (t.id && t.id.toLowerCase().includes(q)) ||
+            (t.contactName && t.contactName.toLowerCase().includes(q)) ||
+            (t.contactEmail && t.contactEmail.toLowerCase().includes(q))
+        );
+    }
+
+    if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="empty-icon">👥</div>No teams found for this campaign.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(t => {
+        const goal = Number(t.goal || 0);
+        const raised = Number(t.raised || 0);
+        const donors = Number(t.donorCount || 0);
+        const percent = goal > 0 ? Math.min(Math.round((raised / goal) * 100), 100) : 0;
+        const donateUrl = window.location.origin + '/' + campaignId + '/donate.html?team=' + encodeURIComponent(t.id);
+
+        return `<tr>
+            <td style="font-family:monospace; font-size:0.8rem; color:var(--text-muted);">${escapeHtml(t.id || '—')}</td>
+            <td><strong style="color:var(--text-primary);">${escapeHtml(t.name || '—')}</strong></td>
+            <td>${escapeHtml(t.contactName || '—')}</td>
+            <td>${t.contactEmail ? `<a href="mailto:${escapeHtml(t.contactEmail)}" style="color:var(--info); text-decoration:none;">${escapeHtml(t.contactEmail)}</a>` : '—'}</td>
+            <td>${formatCurrency(goal)}</td>
+            <td style="font-weight:600; color:var(--success);">${formatCurrency(raised)}</td>
+            <td>${donors}</td>
+            <td style="min-width:130px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="flex:1; height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                        <div style="width:${percent}%; height:100%; background:var(--accent); border-radius:3px;"></div>
+                    </div>
+                    <span style="font-size:0.75rem; color:var(--text-muted); width:32px; text-align:right;">${percent}%</span>
+                </div>
+            </td>
+            <td>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn btn-secondary btn-sm" onclick="openEditMasterTeamModal('${escapeHtml(t.id)}')">Edit</button>
+                    <button class="btn btn-secondary btn-sm" onclick="copyMasterTeamLink('${donateUrl}')" title="Copy Donation Link">📋</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteMasterTeamConfirm('${escapeHtml(t.id)}', '${escapeHtml(t.name)}')">Delete</button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function updateMasterTeamsSummary() {
+    let totalTeams = masterTeamsData.length;
+    let totalGoal = 0;
+    let totalRaised = 0;
+    let topTeam = null;
+    let maxRaised = -1;
+
+    masterTeamsData.forEach(t => {
+        const goal = Number(t.goal || 0);
+        const raised = Number(t.raised || 0);
+        totalGoal += goal;
+        totalRaised += raised;
+        if (raised > maxRaised) {
+            maxRaised = raised;
+            topTeam = t.name;
+        }
+    });
+
+    $('#masterTeamsTotalCount').textContent = totalTeams;
+    $('#masterTeamsTotalGoal').textContent = formatCurrency(totalGoal);
+    $('#masterTeamsTotalRaised').textContent = formatCurrency(totalRaised);
+    $('#masterTeamsTopTeam').textContent = topTeam || '—';
+}
+
+function copyMasterTeamLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        showToast('Team donation link copied!', 'success');
+    }).catch(() => {
+        prompt('Copy team donation link:', url);
+    });
+}
+
+function openAddMasterTeamModal() {
+    const sel = $('#masterTeamsCampaignFilter');
+    const modalSel = $('#mtmCampaignSelect');
+    if (modalSel && sel && sel.value) {
+        modalSel.value = sel.value;
+    }
+    $('#masterTeamModalTitle').textContent = 'Add Team';
+    $('#mtmTeamName').value = '';
+    $('#mtmTeamId').value = '';
+    $('#mtmTeamId').readOnly = false;
+    $('#mtmContactName').value = '';
+    $('#mtmContactEmail').value = '';
+    $('#mtmGoal').value = '';
+    $('#mtmNotify').checked = true;
+    $('#mtmOriginalId').value = '';
+    $('#mtmError').style.display = 'none';
+    $('#masterTeamModal').classList.add('visible');
+}
+
+function openEditMasterTeamModal(teamId) {
+    const team = masterTeamsData.find(t => t.id === teamId);
+    if (!team) return;
+
+    const sel = $('#masterTeamsCampaignFilter');
+    const modalSel = $('#mtmCampaignSelect');
+    if (modalSel && sel && sel.value) {
+        modalSel.value = sel.value;
+    }
+    $('#masterTeamModalTitle').textContent = 'Edit Team';
+    $('#mtmTeamName').value = team.name || '';
+    $('#mtmTeamId').value = team.id || '';
+    $('#mtmTeamId').readOnly = true;
+    $('#mtmContactName').value = team.contactName || '';
+    $('#mtmContactEmail').value = team.contactEmail || '';
+    $('#mtmGoal').value = team.goal || '';
+    $('#mtmNotify').checked = team.notifyOnDonation !== false;
+    $('#mtmOriginalId').value = team.id || '';
+    $('#mtmError').style.display = 'none';
+    $('#masterTeamModal').classList.add('visible');
+}
+
+function closeMasterTeamModal() {
+    $('#masterTeamModal').classList.remove('visible');
+}
+
+async function saveMasterTeam() {
+    const campaignId = $('#mtmCampaignSelect').value;
+    const teamName = $('#mtmTeamName').value.trim();
+    const teamId = $('#mtmTeamId').value.trim();
+    const contactName = $('#mtmContactName').value.trim();
+    const contactEmail = $('#mtmContactEmail').value.trim();
+    const goal = parseFloat($('#mtmGoal').value) || 0;
+    const notifyOnDonation = $('#mtmNotify').checked;
+    const originalTeamId = $('#mtmOriginalId').value.trim();
+
+    if (!campaignId) {
+        $('#mtmError').textContent = 'Please select a campaign.';
+        $('#mtmError').style.display = 'block';
+        return;
+    }
+    if (!teamName) {
+        $('#mtmError').textContent = 'Team Name is required.';
+        $('#mtmError').style.display = 'block';
+        return;
+    }
+
+    const btn = $('#saveMasterTeamBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    $('#mtmError').style.display = 'none';
+
+    try {
+        const result = await authPost('saveTeam', {
+            campaignId,
+            teamId,
+            originalTeamId,
+            teamName,
+            goal,
+            contactName,
+            contactEmail,
+            notifyOnDonation,
+        });
+
+        if (result.status === 'success' || result.success) {
+            closeMasterTeamModal();
+            showToast('Team saved successfully', 'success');
+            $('#masterTeamsCampaignFilter').value = campaignId;
+            await loadMasterTeams();
+        } else {
+            $('#mtmError').textContent = result.message || 'Failed to save team.';
+            $('#mtmError').style.display = 'block';
+        }
+    } catch (err) {
+        $('#mtmError').textContent = 'Network error: ' + err.message;
+        $('#mtmError').style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Team';
+    }
+}
+
+async function deleteMasterTeamConfirm(teamId, teamName) {
+    const campaignId = $('#masterTeamsCampaignFilter').value;
+    if (!confirm(`Are you sure you want to delete the team "${teamName}" (${teamId})?`)) {
+        return;
+    }
+
+    try {
+        const result = await authPost('deleteTeam', { campaignId, teamId });
+        if (result.status === 'success' || result.success) {
+            showToast('Team deleted', 'success');
+            await loadMasterTeams();
+        } else {
+            showToast(result.message || 'Failed to delete team', 'error');
+        }
+    } catch (err) {
+        showToast('Network error: ' + err.message, 'error');
+    }
 }
 
 // ═══════════════════════════════════════════════════════════

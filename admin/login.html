@@ -840,10 +840,18 @@
         <nav class="tab-nav" role="tablist" aria-label="Sign in method">
             <button class="tab-btn active"
                     role="tab"
-                    id="tab-google"
+                    id="tab-password"
                     aria-selected="true"
-                    aria-controls="panel-google"
+                    aria-controls="panel-password"
                     tabindex="0">
+                <span class="tab-icon" aria-hidden="true">🔐</span>Password
+            </button>
+            <button class="tab-btn"
+                    role="tab"
+                    id="tab-google"
+                    aria-selected="false"
+                    aria-controls="panel-google"
+                    tabindex="-1">
                 <span class="tab-icon" aria-hidden="true">🔑</span>Google
             </button>
             <button class="tab-btn"
@@ -852,7 +860,7 @@
                     aria-selected="false"
                     aria-controls="panel-email"
                     tabindex="-1">
-                <span class="tab-icon" aria-hidden="true">✉️</span>Email
+                <span class="tab-icon" aria-hidden="true">✉️</span>Email OTP
             </button>
         </nav>
 
@@ -862,8 +870,52 @@
             <!-- Error Display (shared) -->
             <div class="auth-error" id="auth-error" role="alert" aria-live="polite"></div>
 
-            <!-- ═══ GOOGLE TAB ═══ -->
+            <!-- ═══ PASSWORD TAB ═══ -->
             <div class="tab-panel active"
+                 role="tabpanel"
+                 id="panel-password"
+                 aria-labelledby="tab-password">
+
+                <div class="email-section">
+                    <form id="password-login-form" onsubmit="return false;">
+                        <div class="form-group">
+                            <label class="form-label" for="pwd-email">Email Address</label>
+                            <input type="email"
+                                   class="form-input"
+                                   id="pwd-email"
+                                   placeholder="you@example.com"
+                                   autocomplete="email"
+                                   required
+                                   aria-required="true">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pwd-password">Password / PIN</label>
+                            <div style="position: relative;">
+                                <input type="password"
+                                       class="form-input"
+                                       id="pwd-password"
+                                       placeholder="Enter your password"
+                                       autocomplete="current-password"
+                                       required
+                                       aria-required="true"
+                                       style="padding-right: 44px;">
+                                <button type="button" id="pwd-toggle-btn" aria-label="Toggle password visibility" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; padding: 4px; line-height: 1;">👁️</button>
+                            </div>
+                        </div>
+                        <button class="primary-btn" id="pwd-login-btn" type="submit">
+                            Sign In with Password
+                        </button>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button class="switch-method-link" type="button" id="switch-from-pwd-to-google">
+                                Or sign in with Google
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ═══ GOOGLE TAB ═══ -->
+            <div class="tab-panel"
                  role="tabpanel"
                  id="panel-google"
                  aria-labelledby="tab-google">
@@ -997,6 +1049,13 @@
         const tabPanels = document.querySelectorAll('.tab-panel');
         const authErrorEl = document.getElementById('auth-error');
 
+        // Password tab
+        const pwdEmailInput = document.getElementById('pwd-email');
+        const pwdPasswordInput = document.getElementById('pwd-password');
+        const pwdLoginBtn = document.getElementById('pwd-login-btn');
+        const pwdToggleBtn = document.getElementById('pwd-toggle-btn');
+        const switchFromPwdToGoogle = document.getElementById('switch-from-pwd-to-google');
+
         // Google tab
         const switchToEmailBtn = document.getElementById('switch-to-email');
 
@@ -1024,6 +1083,70 @@
         let _timerInterval = null;
         let _timerSeconds = 600; // 10 minutes
         let _resendCooldown = 0;
+
+        // ═══════════════════════════════════════════════════════════
+        // Password Authentication Handlers
+        // ═══════════════════════════════════════════════════════════
+
+        if (pwdToggleBtn) {
+            pwdToggleBtn.addEventListener('click', function() {
+                const isPassword = pwdPasswordInput.type === 'password';
+                pwdPasswordInput.type = isPassword ? 'text' : 'password';
+                pwdToggleBtn.textContent = isPassword ? '🙈' : '👁️';
+            });
+        }
+
+        async function handlePasswordLogin() {
+            const email = pwdEmailInput.value.trim().toLowerCase();
+            const password = pwdPasswordInput.value;
+
+            if (!email || !isValidEmail(email)) {
+                showError('Please enter a valid email address.');
+                pwdEmailInput.focus();
+                return;
+            }
+            if (!password) {
+                showError('Please enter your password.');
+                pwdPasswordInput.focus();
+                return;
+            }
+
+            hideError();
+            pwdLoginBtn.disabled = true;
+            pwdLoginBtn.classList.add('loading');
+
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const campaignId = params.get('campaign') || '';
+                const result = await authenticateWithPassword(email, password, campaignId);
+
+                if (result.status === 'success') {
+                    showSuccessAndRedirect();
+                } else {
+                    showError(result.message || 'Invalid email or password.');
+                }
+            } catch (err) {
+                showError('Authentication failed. Please check your connection.');
+                console.error(err);
+            } finally {
+                pwdLoginBtn.disabled = false;
+                pwdLoginBtn.classList.remove('loading');
+            }
+        }
+
+        if (pwdLoginBtn) {
+            pwdLoginBtn.addEventListener('click', handlePasswordLogin);
+        }
+        const pwdForm = document.getElementById('password-login-form');
+        if (pwdForm) {
+            pwdForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                handlePasswordLogin();
+            });
+        }
+        if (switchFromPwdToGoogle) {
+            switchFromPwdToGoogle.addEventListener('click', function() { switchTab('google'); });
+        }
 
         // ═══════════════════════════════════════════════════════════
         // Initialization
@@ -1089,11 +1212,14 @@
                 targetPanel.classList.add('active');
             }
 
-            // Focus the email input when switching to email tab
-            if (tabId === 'email') {
+            // Focus the email input when switching to tabs
+            if (tabId === 'password') {
+                setTimeout(function() { if (pwdEmailInput) pwdEmailInput.focus(); }, 100);
+            } else if (tabId === 'email') {
                 setTimeout(function() { emailInput.focus(); }, 100);
             }
         }
+        window.switchTab = switchTab;
 
         tabBtns.forEach(function(btn) {
             btn.addEventListener('click', function() {
@@ -1484,7 +1610,9 @@
         function formatRole(role) {
             var map = {
                 'super_admin': 'Super Admin',
+                'campaign_owner': 'Campaign Owner',
                 'campaign_manager': 'Campaign Manager',
+                'bookkeeper': 'Bookkeeper',
                 'viewer': 'Viewer'
             };
             return map[role] || role;

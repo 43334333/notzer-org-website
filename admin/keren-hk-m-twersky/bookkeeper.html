@@ -1,14 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>Bookkeeper — Keren Hachnosas Kallah M. Twersky</title>
-    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
+    <link rel="icon" type="image/png" href="/NC_Logo_03.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="../../js/auth.js"></script>
     <style>
         /* ── Reset & Base ──────────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,7 +23,7 @@
         }
 
         /* ── Utility ───────────────────────────────────── */
-        .accent { color: #d4af37; }
+        .accent { color: #4dabf7; }
 
         /* ── Scrollbar ─────────────────────────────────── */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -51,6 +52,122 @@
         }
         .access-denied h1 { font-size: 1.5rem; margin-bottom: .5rem; color: #ff5252; }
         .access-denied p { color: #888; max-width: 360px; font-size: 0.95rem; }
+
+        /* ── User Info Bar ─────────────────────────────── */
+        .user-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1.25rem;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 0.8rem;
+            color: #888;
+        }
+        .user-bar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .user-bar .user-email {
+            color: #bbb;
+            font-weight: 500;
+        }
+        .user-bar .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .user-bar .nav-links a {
+            color: #4dabf7;
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: color 0.2s;
+        }
+        .user-bar .nav-links a:hover {
+            color: #82c7fb;
+        }
+
+        /* ── Auth Card in Access Denied ─────────────────── */
+        .auth-card {
+            background: rgba(30, 30, 50, 0.85);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 2.25rem 2rem;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            text-align: center;
+        }
+        .auth-tab-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 0.75rem;
+        }
+        .auth-tab-btn {
+            flex: 1;
+            padding: 0.45rem;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .auth-tab-btn.active {
+            color: #fff;
+            background: rgba(255,255,255,0.08);
+        }
+        .auth-field {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        .auth-field label {
+            display: block;
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 0.35rem;
+        }
+        .auth-input {
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .auth-input:focus {
+            border-color: #4dabf7;
+        }
+        .auth-submit-btn {
+            width: 100%;
+            padding: 0.65rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 6px;
+            background: #1a73e8;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .auth-submit-btn:hover {
+            background: #1557b0;
+        }
+        .auth-submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
 
         /* ── App Layout (Split Panel) ─────────────────── */
         .app-layout {
@@ -997,15 +1114,65 @@
 </head>
 <body>
 
-<!-- ═══ Access Denied Screen ═══ -->
+<!-- ═══ User Info Bar ═══ -->
+<div class="user-bar" id="userBar" style="display:none;">
+    <div class="user-info">
+        <span>Logged in as: <strong class="user-email" id="userEmail"></strong></span>
+        <span class="user-role-badge" id="userRoleBadge" style="font-size:0.75rem; padding:2px 8px; border-radius:10px; background:rgba(77,171,247,0.15); color:#4dabf7; font-weight:600;"></span>
+    </div>
+    <div class="nav-links">
+        <a href="index.html" id="adminLink">Campaign Admin</a>
+        <a href="javascript:void(0)" onclick="signOut()">Sign Out</a>
+    </div>
+</div>
+
+<!-- ═══ Access / Sign-In Screen ═══ -->
 <div class="access-denied" id="accessDenied" style="display:none;">
-    <div class="lock-icon">🔒</div>
-    <h1>Access Denied</h1>
-    <p>This page requires an authorization key. Please use the link provided by your administrator.</p>
+    <div class="auth-card">
+        <div class="lock-icon" style="margin:0 auto 1.25rem;">🔐</div>
+        <h1 style="font-size:1.35rem; color:#fff; margin-bottom:0.35rem;">Bookkeeper Portal</h1>
+        <p style="color:#888; font-size:0.85rem; margin-bottom:1.25rem;">Keren Hachnosas Kallah M. Twersky Campaign</p>
+
+        <!-- Tab switches for Sign-In vs Access Key -->
+        <div class="auth-tab-bar">
+            <button type="button" class="auth-tab-btn active" id="tabBtnPassword" onclick="switchAuthTab('password')">Password</button>
+            <button type="button" class="auth-tab-btn" id="tabBtnKey" onclick="switchAuthTab('key')">Access Key</button>
+            <button type="button" class="auth-tab-btn" id="tabBtnGoogle" onclick="switchAuthTab('google')">Google</button>
+        </div>
+
+        <!-- Password Sign-In Panel -->
+        <form id="bkPasswordForm" onsubmit="handleBkPasswordLogin(event)" style="display:block;">
+            <div class="auth-field">
+                <label for="bkEmail">Email Address</label>
+                <input type="email" id="bkEmail" class="auth-input" placeholder="bookkeeper@example.com" required autocomplete="username">
+            </div>
+            <div class="auth-field">
+                <label for="bkPassword">Password</label>
+                <input type="password" id="bkPassword" class="auth-input" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="auth-submit-btn" id="bkLoginBtn">Sign In</button>
+        </form>
+
+        <!-- Access Key Panel -->
+        <form id="bkKeyForm" onsubmit="handleBkKeyUnlock(event)" style="display:none;">
+            <div class="auth-field">
+                <label for="bkKeyInput">Campaign Access Key</label>
+                <input type="password" id="bkKeyInput" class="auth-input" placeholder="Enter access key (e.g. 5786)" required>
+            </div>
+            <button type="submit" class="auth-submit-btn" id="bkKeyBtn">Unlock Portal</button>
+        </form>
+
+        <!-- Google Sign-In Panel -->
+        <div id="bkGooglePanel" style="display:none; text-align:center; padding:1rem 0;">
+            <div id="bkGoogleBtnContainer" style="display:flex; justify-content:center;"></div>
+        </div>
+
+        <div id="bkAuthError" style="display:none; margin-top:1rem; padding:0.6rem 0.8rem; background:rgba(255,82,82,0.1); border:1px solid rgba(255,82,82,0.3); border-radius:6px; color:#ff5252; font-size:0.85rem; text-align:center;"></div>
+    </div>
 </div>
 
 <!-- ═══ Main App ═══ -->
-<div class="app-layout" id="appMain" style="display:none;">
+<div class="app-layout" id="appMain">
 
     <!-- ── Left: Main Content ── -->
     <div class="main-content">
@@ -1013,7 +1180,7 @@
         <!-- Header -->
         <header class="page-header">
             <div class="page-header-left">
-                <img src="../../NC_Logo_03.png" alt="Notzer Chesed">
+                <img src="/NC_Logo_03.png" alt="Notzer Chesed">
                 <div>
                     <h1>Bookkeeper — Scheduled Payments</h1>
                     <p class="subtitle">Keren Hachnosas Kallah M. Twersky Campaign</p>
@@ -1096,7 +1263,7 @@
             </div>
 
             <!-- Loading State -->
-            <div class="loading-state" id="loadingState" style="display:none;">
+            <div class="loading-state" id="loadingState">
                 <div class="table-spinner"></div>
                 <p>Loading scheduled payments…</p>
             </div>
@@ -1104,8 +1271,8 @@
             <!-- Empty State -->
             <div class="empty-state" id="emptyState" style="display:none;">
                 <div class="empty-icon">📭</div>
-                <h3>No scheduled payments found</h3>
-                <p>There are no payments matching your current filters.</p>
+                <h3>No scheduled payments yet</h3>
+                <p>Recurring donations and installments will appear here as they are scheduled.</p>
             </div>
         </div>
     </div>
@@ -1188,7 +1355,7 @@ const CONFIG = {
     campaignId: 'keren-hk-m-twersky',
     campaignName: 'Keren Hachnosas Kallah M. Twersky',
     apiUrl: 'https://script.google.com/macros/s/AKfycbzngv-LEqoOercDK5MfRtB8BpEFhH3sdnq16lyxzq2LN_8W0lUQpa-oUZB4CfGYE28y3g/exec',
-    key: new URLSearchParams(window.location.search).get('key')
+    key: new URLSearchParams(window.location.search).get('key') || ''
 };
 
 // Fee schedule: loaded from Fee_Config sheet via API (populated on init)
@@ -1237,7 +1404,11 @@ function buildMethodOptions(actualMethod) {
 // Load fee config from the Fee_Config sheet via API
 async function loadFeeConfig() {
     try {
-        const resp = await fetch(CONFIG.apiUrl + '?action=getFeeConfig&campaign=' + encodeURIComponent(CONFIG.campaignId || '') + '&key=' + encodeURIComponent(CONFIG.key || ''));
+        const authParams = (typeof getAuthParams === 'function') ? getAuthParams() : { authToken: '', authMethod: '' };
+        const token = authParams.authToken || CONFIG.key || '';
+        const method = authParams.authMethod || 'otp';
+
+        const resp = await fetch(CONFIG.apiUrl + '?action=getFeeConfig&campaign=' + encodeURIComponent(CONFIG.campaignId || '') + '&key=' + encodeURIComponent(CONFIG.key || '') + '&authToken=' + encodeURIComponent(token) + '&authMethod=' + encodeURIComponent(method));
         const data = await resp.json();
         if (data.status === 'success' && Array.isArray(data.methods)) {
             FEE_SCHEDULE = {};
@@ -1251,6 +1422,102 @@ async function loadFeeConfig() {
     }
 }
 
+// ── Auth Tab Switcher & Handlers ───────────────────
+function switchAuthTab(tab) {
+    const btnPw = document.getElementById('tabBtnPassword');
+    const btnKey = document.getElementById('tabBtnKey');
+    const btnGg = document.getElementById('tabBtnGoogle');
+    const formPw = document.getElementById('bkPasswordForm');
+    const formKey = document.getElementById('bkKeyForm');
+    const panelGg = document.getElementById('bkGooglePanel');
+    const errEl = document.getElementById('bkAuthError');
+
+    if (errEl) errEl.style.display = 'none';
+
+    if (btnPw) btnPw.classList.toggle('active', tab === 'password');
+    if (btnKey) btnKey.classList.toggle('active', tab === 'key');
+    if (btnGg) btnGg.classList.toggle('active', tab === 'google');
+
+    if (formPw) formPw.style.display = tab === 'password' ? 'block' : 'none';
+    if (formKey) formKey.style.display = tab === 'key' ? 'block' : 'none';
+    if (panelGg) panelGg.style.display = tab === 'google' ? 'block' : 'none';
+
+    if (tab === 'google') {
+        if (typeof initGoogleSignIn === 'function') {
+            initGoogleSignIn('bkGoogleBtnContainer');
+        }
+    }
+}
+
+async function handleBkPasswordLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('bkEmail').value.trim();
+    const password = document.getElementById('bkPassword').value;
+    const btn = document.getElementById('bkLoginBtn');
+    const errEl = document.getElementById('bkAuthError');
+
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+
+    try {
+        const result = await authenticateWithPassword(email, password, CONFIG.campaignId);
+        if (result.status === 'success') {
+            const user = getCurrentUser();
+            const allowedRoles = ['super_admin', 'campaign_owner', 'campaign_manager', 'bookkeeper'];
+            if (user && allowedRoles.includes(user.role)) {
+                await loadFeeConfig();
+                await loadPayments();
+            } else {
+                errEl.textContent = 'Access denied. You need Bookkeeper, Manager, or Admin role.';
+                errEl.style.display = 'block';
+            }
+        } else {
+            errEl.textContent = result.message || 'Invalid email or password.';
+            errEl.style.display = 'block';
+        }
+    } catch (err) {
+        errEl.textContent = 'Sign-in error: ' + err.message;
+        errEl.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+    }
+}
+
+async function handleBkKeyUnlock(e) {
+    e.preventDefault();
+    const key = document.getElementById('bkKeyInput').value.trim();
+    const btn = document.getElementById('bkKeyBtn');
+    const errEl = document.getElementById('bkAuthError');
+
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Verifying…';
+
+    CONFIG.key = key;
+
+    try {
+        await loadFeeConfig();
+        await loadPayments();
+        const accessDenied = document.getElementById('accessDenied');
+        if (accessDenied && accessDenied.style.display !== 'none') {
+            errEl.textContent = 'Invalid access key. Please check and try again.';
+            errEl.style.display = 'block';
+        }
+    } catch (err) {
+        errEl.textContent = 'Unlock error: ' + err.message;
+        errEl.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Unlock Portal';
+    }
+}
+
+function onAuthSuccess() {
+    window.location.reload();
+}
+
 // ── State ──────────────────────────────────────────
 let allPayments = [];
 let filteredPayments = [];
@@ -1261,15 +1528,34 @@ let sortAsc = true;
 
 // ── Initialization ─────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!CONFIG.key) {
-        document.getElementById('accessDenied').style.display = 'flex';
-        return;
+    let authenticated = false;
+    if (typeof initAuth === 'function') {
+        try {
+            authenticated = await initAuth();
+        } catch (e) {
+            console.warn('initAuth failed:', e);
+        }
     }
-    document.getElementById('appMain').style.display = 'flex';
-    document.getElementById('backLink').href = 'index.html?key=' + encodeURIComponent(CONFIG.key);
+
+    const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    const allowedRoles = ['super_admin', 'campaign_owner', 'campaign_manager', 'bookkeeper'];
+
+    document.getElementById('backLink').href = 'index.html' + (CONFIG.key ? '?key=' + encodeURIComponent(CONFIG.key) : '');
     setupEventListeners();
-    await loadFeeConfig();
-    loadPayments();
+
+    if (authenticated && user && allowedRoles.includes(user.role)) {
+        loadFeeConfig();
+        loadPayments();
+    } else if (CONFIG.key) {
+        loadFeeConfig();
+        loadPayments();
+    } else {
+        document.getElementById('appMain').style.display = 'none';
+        document.getElementById('accessDenied').style.display = 'flex';
+        if (typeof initGoogleSignIn === 'function') {
+            initGoogleSignIn('bkGoogleBtnContainer');
+        }
+    }
 });
 
 function setupEventListeners() {
@@ -1322,6 +1608,8 @@ async function loadPayments() {
     const loadingState = document.getElementById('loadingState');
     const tableBody = document.getElementById('tableBody');
     const emptyState = document.getElementById('emptyState');
+    const appMain = document.getElementById('appMain');
+    const accessDenied = document.getElementById('accessDenied');
 
     refreshBtn.classList.add('spinning');
     tableBody.innerHTML = '';
@@ -1329,11 +1617,39 @@ async function loadPayments() {
     loadingState.style.display = 'flex';
 
     try {
-        const resp = await fetch(`${CONFIG.apiUrl}?action=getScheduledForBookkeeper&campaign=${encodeURIComponent(CONFIG.campaignId || '')}&key=${encodeURIComponent(CONFIG.key || '')}`);
+        const authParams = (typeof getAuthParams === 'function') ? getAuthParams() : { authToken: '', authMethod: '' };
+        const token = authParams.authToken || CONFIG.key || '';
+        const method = authParams.authMethod || 'otp';
+
+        const url = `${CONFIG.apiUrl}?action=getScheduledForBookkeeper&campaign=${encodeURIComponent(CONFIG.campaignId || '')}&key=${encodeURIComponent(CONFIG.key || '')}&authToken=${encodeURIComponent(token)}&authMethod=${encodeURIComponent(method)}`;
+        const resp = await fetch(url);
         const data = await resp.json();
 
-        if (data.status === 'error' || data.error) {
-            throw new Error(data.message || data.error);
+        if (data.status === 'error' || data.error || data.authRequired) {
+            appMain.style.display = 'none';
+            accessDenied.style.display = 'flex';
+            const errEl = document.getElementById('bkAuthError');
+            if (errEl && data.message && data.message !== 'Authentication required. Please sign in.') {
+                errEl.textContent = data.message;
+                errEl.style.display = 'block';
+            }
+            return;
+        }
+
+        accessDenied.style.display = 'none';
+        appMain.style.display = 'flex';
+
+        // Update user bar if authenticated
+        if (typeof getCurrentUser === 'function') {
+            const user = getCurrentUser();
+            if (user) {
+                const uBar = document.getElementById('userBar');
+                const uEmail = document.getElementById('userEmail');
+                const uBadge = document.getElementById('userRoleBadge');
+                if (uBar) uBar.style.display = 'flex';
+                if (uEmail) uEmail.textContent = user.email || user.name || 'Authenticated';
+                if (uBadge) uBadge.textContent = (user.role || 'Bookkeeper').replace(/_/g, ' ').toUpperCase();
+            }
         }
 
         allPayments = data.payments || [];
@@ -1344,6 +1660,8 @@ async function loadPayments() {
         showToast('success', `Loaded ${allPayments.length} scheduled payments`);
     } catch (err) {
         showToast('error', 'Failed to load payments: ' + err.message);
+        accessDenied.style.display = 'none';
+        appMain.style.display = 'flex';
         allPayments = [];
         applyFilters();
         updateBatchPanel();
@@ -1354,6 +1672,10 @@ async function loadPayments() {
 }
 
 async function processPayment(payment, fee, method) {
+    const authParams = (typeof getAuthParams === 'function') ? getAuthParams() : { authToken: '', authMethod: '' };
+    const token = authParams.authToken || CONFIG.key || '';
+    const authMeth = authParams.authMethod || 'otp';
+
     const resp = await fetch(CONFIG.apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -1362,6 +1684,8 @@ async function processPayment(payment, fee, method) {
             campaign: CONFIG.campaignId,
             campaignId: CONFIG.campaignId,
             key: CONFIG.key,
+            authToken: token,
+            authMethod: authMeth,
             pledgeId: payment.pledgeId,
             scheduleId: payment.scheduleId,
             paymentNum: payment.paymentNum,
