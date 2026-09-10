@@ -1091,7 +1091,7 @@ body::before {
                 <div class="field"><label>Goal Amount</label><div class="amount-wrapper"><span class="currency">$</span><input type="number" id="campGoal" min="0" step="0.01" placeholder="0.00"></div></div>
                 <div class="field"><label>Start Date</label><input type="date" id="campStart"></div>
                 <div class="field"><label>End Date</label><input type="date" id="campEnd"></div>
-                <div class="field"><label>Page URL</label><input type="text" id="campPageUrl" placeholder="/campaign-name.html"></div>
+                <div class="field"><label>Page URL</label><input type="text" id="campPageUrl" placeholder="/campaigns/slug/"></div>
                 <div class="field"><label>Admin URL</label><input type="text" id="campAdminUrl" placeholder="/admin/campaign/"></div>
                 <div class="field"><label>Wall URL</label><input type="text" id="campWallUrl" placeholder="/wall/campaign/"></div>
                 <div class="field"><label>Wall Access Key (Optional)</label><input type="text" id="campWallKey" placeholder="Leave blank for public wall, or set secret key (e.g. secret123)"></div>
@@ -2059,6 +2059,25 @@ async function loadDashboard() {
     hideLoading('dashActivityLoading');
 }
 
+function getCampaignPageUrl(c) {
+    if (!c) return '/';
+    const id = String(c.id || c.campaignId || '').trim();
+    const idLower = id.toLowerCase();
+    const legacyRoots = ['keren-shlomo-yechiel', 'keren-hk-m-twersky', 'pele-yoetz', 'matanbsff', 'ksy'];
+    const stored = String(c.pageUrl || '').trim();
+
+    if (stored) {
+        if (stored === `/${id}.html` || stored === `${id}.html` || stored === `/${idLower}.html` || stored === `${idLower}.html`) {
+            if (legacyRoots.includes(idLower)) return stored.startsWith('/') ? stored : `/${stored}`;
+            return `/campaigns/${id}/`;
+        }
+        return stored.startsWith('/') || stored.startsWith('http') ? stored : `/${stored}`;
+    }
+
+    if (legacyRoots.includes(idLower)) return `/${id}.html`;
+    return `/campaigns/${id}/`;
+}
+
 function renderDashCampaigns(campaigns) {
     const tbody = $('#dashCampaignRows');
     if (!campaigns.length) {
@@ -2068,7 +2087,7 @@ function renderDashCampaigns(campaigns) {
     tbody.innerHTML = campaigns.map(c => {
         const id = c.id || c.campaignId;
         const pct = c.goalAmount ? Math.min(100, ((c.raised || 0) / c.goalAmount * 100)) : 0;
-        const pageUrl = c.pageUrl || `/${id}.html`;
+        const pageUrl = getCampaignPageUrl(c);
         const adminUrl = c.adminUrl || `/admin/${id}/`;
         const wallUrl = c.wallUrl || `/wall/${id}/`;
         const bookkeeperUrl = `/admin/${id}/bookkeeper.html`;
@@ -2233,7 +2252,8 @@ function renderCampaignTable(campaigns) {
         const sheetLink = c.sheetId
             ? `<a href="https://docs.google.com/spreadsheets/d/${c.sheetId}/edit" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--accent-light);text-decoration:none;" title="Open Google Sheet ID: ${c.sheetId}">📊 Sheet ↗</a>`
             : `<button class="btn btn-secondary btn-sm" onclick="provisionSheetForCampaign('${c.id}')" title="Create dedicated Google Sheet" style="padding:2px 6px;font-size:0.72rem;">🪄 Provision Sheet</button>`;
-        const pageLink = `<a href="${c.pageUrl || `/${c.id}.html`}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--text-secondary);text-decoration:none;" title="Open Page: ${c.pageUrl || `/${c.id}.html`}">🌐 Page ↗</a>`;
+        const pageUrlVal = getCampaignPageUrl(c);
+        const pageLink = `<a href="${pageUrlVal}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--text-secondary);text-decoration:none;" title="Open Page: ${pageUrlVal}">🌐 Page ↗</a>`;
         const wallLink = `<a href="/wall/${c.id}/index.html" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--text-secondary);text-decoration:none;" title="Open Donor Wall">🧱 Wall ↗</a>`;
         const bookkeeperLink = `<a href="/admin/${c.id}/bookkeeper.html" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:#4dabf7;text-decoration:none;" title="Open Bookkeeper Portal">📖 Bookkeeper ↗</a>`;
 
@@ -2322,7 +2342,7 @@ function openDirectoryManagerModal() {
                 </span>
             </td>
             <td style="padding:10px 8px;">
-                <a href="${c.pageUrl || `/${c.id}.html`}" target="_blank" style="font-size:0.8rem;color:var(--accent-light);text-decoration:none;">View Page ↗</a>
+                <a href="${getCampaignPageUrl(c)}" target="_blank" style="font-size:0.8rem;color:var(--accent-light);text-decoration:none;">View Page ↗</a>
             </td>
         </tr>`;
     }).join('');
@@ -2377,7 +2397,7 @@ function editCampaign(id) {
     $('#campGoal').value = c.goalAmount || '';
     $('#campStart').value = c.startDate ? c.startDate.split('T')[0] : '';
     $('#campEnd').value = c.endDate ? c.endDate.split('T')[0] : '';
-    $('#campPageUrl').value = c.pageUrl || `/${c.id}.html`;
+    $('#campPageUrl').value = getCampaignPageUrl(c);
     $('#campAdminUrl').value = c.adminUrl || `/admin/${c.id}/`;
     $('#campWallUrl').value = c.wallUrl || `/wall/${c.id}/`;
     if ($('#campWallKey')) $('#campWallKey').value = c.wallKey || c.wallAccessKey || '';
@@ -2716,7 +2736,7 @@ function initPageBuilder() {
         const slug = sanitizeSlug($('#campSlug').value || $('#campName').value);
         if (!slug) { showToast('Enter a campaign name or slug first', 'warning'); return; }
         $('#campSlug').value = slug;
-        $('#campPageUrl').value = `/${slug}.html`;
+        $('#campPageUrl').value = `/campaigns/${slug}/`;
         $('#campAdminUrl').value = `/admin/${slug}/`;
         $('#campWallUrl').value = `/wall/${slug}/`;
         showToast('Standard URLs populated', 'success');

@@ -90,7 +90,12 @@
                         if (!c.id) return;
                         activePublicIds[c.id] = true;
                         var card = existingCards[c.id];
-                        var pageUrl = c.pageUrl || (c.id + '.html');
+                        var legacyRoots = ['keren-shlomo-yechiel', 'keren-hk-m-twersky', 'pele-yoetz', 'matanbsff', 'ksy'];
+                        var cIdLower = String(c.id || '').trim().toLowerCase();
+                        var pageUrl = String(c.pageUrl || '').trim();
+                        if (!pageUrl || pageUrl === '/' + c.id + '.html' || pageUrl === c.id + '.html' || pageUrl === '/' + cIdLower + '.html' || pageUrl === cIdLower + '.html') {
+                            pageUrl = legacyRoots.indexOf(cIdLower) !== -1 ? (cIdLower + '.html') : ('campaigns/' + c.id + '/');
+                        }
                         if (pageUrl.startsWith('/')) pageUrl = pageUrl.substring(1);
 
                         if (!card && c.id !== 'general') {
