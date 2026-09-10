@@ -994,7 +994,6 @@
             .stat-card .stat-value { font-size: 1.3rem; }
         }
     </style>
-    <script src="/js/auth.js"></script>
 </head>
 <body>
 
@@ -1105,8 +1104,8 @@
             <!-- Empty State -->
             <div class="empty-state" id="emptyState" style="display:none;">
                 <div class="empty-icon">📭</div>
-                <h3>No scheduled payments found</h3>
-                <p>There are no payments matching your current filters.</p>
+                <h3>No scheduled payments yet</h3>
+                <p>Recurring donations and installments will appear here as they are scheduled.</p>
             </div>
         </div>
     </div>
@@ -1262,26 +1261,20 @@ let sortAsc = true;
 
 // ── Initialization ─────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    let authorized = !!CONFIG.key;
-    if (!authorized && typeof window.requireAuth === 'function') {
+    // If no key in URL, check if active admin session exists as fallback
+    if (!CONFIG.key) {
         try {
-            const user = await window.requireAuth('campaign_manager', CONFIG.campaignId);
-            if (user) authorized = true;
-        } catch (e) {
-            authorized = false;
-        }
-    } else if (!authorized && typeof window.getCurrentUser === 'function') {
-        const user = window.getCurrentUser();
-        if (user) authorized = true;
+            const stored = sessionStorage.getItem('nc_auth_session');
+            if (stored) {
+                const sess = JSON.parse(stored);
+                if (sess && sess.token) CONFIG.key = sess.token;
+            }
+        } catch (e) {}
     }
-    if (!authorized) {
-        document.getElementById('accessDenied').style.display = 'flex';
-        return;
-    }
-    document.getElementById('appMain').style.display = 'flex';
+
     document.getElementById('backLink').href = 'index.html' + (CONFIG.key ? '?key=' + encodeURIComponent(CONFIG.key) : '');
     setupEventListeners();
-    await loadFeeConfig();
+    loadFeeConfig();
     loadPayments();
 });
 
@@ -1335,6 +1328,8 @@ async function loadPayments() {
     const loadingState = document.getElementById('loadingState');
     const tableBody = document.getElementById('tableBody');
     const emptyState = document.getElementById('emptyState');
+    const appMain = document.getElementById('appMain');
+    const accessDenied = document.getElementById('accessDenied');
 
     refreshBtn.classList.add('spinning');
     tableBody.innerHTML = '';
@@ -1346,8 +1341,15 @@ async function loadPayments() {
         const data = await resp.json();
 
         if (data.status === 'error' || data.error) {
-            throw new Error(data.message || data.error);
+            appMain.style.display = 'none';
+            accessDenied.style.display = 'flex';
+            const msgEl = accessDenied.querySelector('p');
+            if (msgEl) msgEl.textContent = data.message || data.error || 'This page requires an authorization key. Please use the link provided by your administrator.';
+            return;
         }
+
+        accessDenied.style.display = 'none';
+        appMain.style.display = 'flex';
 
         allPayments = data.payments || [];
         selectedIds.clear();
@@ -1357,6 +1359,8 @@ async function loadPayments() {
         showToast('success', `Loaded ${allPayments.length} scheduled payments`);
     } catch (err) {
         showToast('error', 'Failed to load payments: ' + err.message);
+        accessDenied.style.display = 'none';
+        appMain.style.display = 'flex';
         allPayments = [];
         applyFilters();
         updateBatchPanel();
