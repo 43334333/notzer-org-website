@@ -1683,7 +1683,8 @@ body::before {
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button type="button" class="btn btn-secondary" id="bCopyCodeBtn" style="display:none;">📋 Copy HTML</button>
                 <button type="button" class="btn btn-secondary" id="bDownloadCurrentBtn" style="display:none;">⬇️ Download Page</button>
-                <button type="button" class="btn btn-success" id="bApplyToFormBtn" style="display:none;">✨ Apply URLs & Data to Campaign Form</button>
+                <button type="button" class="btn btn-success" id="bApplyToFormBtn" style="display:none;">✨ Apply URLs &amp; Data to Campaign Form</button>
+                <button type="button" class="btn btn-primary" id="bPublishBtn" style="display:none;">🚀 Publish to Site</button>
             </div>
         </div>
     </div>
@@ -2750,6 +2751,7 @@ function initPageBuilder() {
     $('#bApplyToFormBtn').addEventListener('click', applyBuilderToCampaignForm);
     $('#bDownloadCurrentBtn').addEventListener('click', downloadCurrentBuilderPage);
     $('#bCopyCodeBtn').addEventListener('click', copyBuilderCode);
+    $('#bPublishBtn').addEventListener('click', publishBuilderPages);
 
     // Templates Manager Modal
     $('#manageTemplatesBtn').addEventListener('click', openTemplatesManager);
@@ -2813,6 +2815,7 @@ function setBuilderStep(step) {
     $('#bApplyToFormBtn').style.display = isStep3 ? 'inline-flex' : 'none';
     $('#bDownloadCurrentBtn').style.display = isStep3 ? 'inline-flex' : 'none';
     $('#bCopyCodeBtn').style.display = isStep3 ? 'inline-flex' : 'none';
+    $('#bPublishBtn').style.display = isStep3 ? 'inline-flex' : 'none';
 
     if (step === 3) {
         refreshBuilderPreviews();
@@ -2962,7 +2965,7 @@ function refreshBuilderPreviews() {
     const config = getBuilderConfig();
     BUILDER_STATE.currentConfig = config;
 
-    $('#bDonationFilename').textContent = `${config.id}.html`;
+    $('#bDonationFilename').textContent = `campaigns/${config.id}/`;
     $('#bAdminSlugName').textContent = config.id;
     $('#bWallSlugName').textContent = config.id;
     if ($('#bBookkeeperSlugName')) $('#bBookkeeperSlugName').textContent = config.id;
@@ -3005,7 +3008,7 @@ function applyBuilderToCampaignForm() {
     if (c.cardknoxIfieldsKey) $('#campCkIfields').value = c.cardknoxIfieldsKey;
     if (c.usaepayPublicKey) $('#campUePublic').value = c.usaepayPublicKey;
     $('#campGoal').value = c.goalAmount || '';
-    $('#campPageUrl').value = `/${c.id}.html`;
+    $('#campPageUrl').value = `/campaigns/${c.id}/`;
     $('#campAdminUrl').value = `/admin/${c.id}/`;
     $('#campWallUrl').value = `/wall/${c.id}/`;
     $('#campWallEnabled').checked = c.features.wall;
@@ -3018,7 +3021,7 @@ function applyBuilderToCampaignForm() {
 function downloadCurrentBuilderPage() {
     const c = BUILDER_STATE.currentConfig || getBuilderConfig();
     const tab = BUILDER_STATE.activePreviewTab;
-    let filename = `${c.id}.html`;
+    let filename = `campaigns-${c.id}-index.html`;
     if (tab === 'admin') filename = `admin-${c.id}-index.html`;
     if (tab === 'wall') filename = `wall-${c.id}-index.html`;
     if (tab === 'bookkeeper') filename = `admin-${c.id}-bookkeeper.html`;
@@ -3047,6 +3050,57 @@ function downloadTextFile(filename, text) {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+}
+
+async function publishBuilderPages() {
+    const config = BUILDER_STATE.currentConfig || getBuilderConfig();
+    if (!config.id) { showToast('Campaign slug is required', 'error'); return; }
+
+    const pages = BUILDER_STATE.generated;
+    if (!pages.donation && !pages.admin && !pages.wall && !pages.bookkeeper) {
+        showToast('No pages generated yet. Go to Step 3 first.', 'error');
+        return;
+    }
+
+    const pageCount = [pages.donation, pages.admin, pages.wall, pages.bookkeeper].filter(Boolean).length;
+    if (!confirm(`Publish ${pageCount} page(s) for "${config.name}" (${config.id}) to the live site?\n\nFiles:\n• campaigns/${config.id}/index.html\n• admin/${config.id}/index.html\n• wall/${config.id}/index.html\n• admin/${config.id}/bookkeeper.html`)) return;
+
+    const btn = $('#bPublishBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Publishing...';
+    showToast('Publishing pages to GitHub...', 'info');
+
+    try {
+        const res = await authPost('publishPages', {
+            campaignId: config.id,
+            pages: {
+                donation: pages.donation || undefined,
+                admin: pages.admin || undefined,
+                wall: pages.wall || undefined,
+                bookkeeper: pages.bookkeeper || undefined
+            }
+        });
+
+        if (res && res.status === 'success') {
+            showToast(res.message || 'Pages published successfully!', 'success');
+            if (res.published && res.published.length) {
+                console.log('[PUBLISH] Published files:', res.published);
+            }
+            if (res.errors && res.errors.length) {
+                console.warn('[PUBLISH] Partial errors:', res.errors);
+                showToast('Some pages had errors: ' + res.errors.join('; '), 'warning');
+            }
+        } else {
+            showToast('Publish failed: ' + (res && res.message ? res.message : 'Unknown error'), 'error');
+            if (res && res.errors) console.error('[PUBLISH] Errors:', res.errors);
+        }
+    } catch (e) {
+        showToast('Publish error: ' + e.message, 'error');
+        console.error('[PUBLISH] Exception:', e);
+    }
+
+    btn.disabled = false;
+    btn.textContent = '🚀 Publish to Site';
 }
 
 // ── HTML PAGE CODE GENERATORS ──
@@ -3089,11 +3143,11 @@ function generateDonationPageHtml(config) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${escapeHtml(config.name)} | Notzer Chesed</title>
     <meta name="description" content="${escapeHtml(config.subtitle || config.name)}">
-    <link rel="icon" type="image/png" href="NC_Logo_03.png">
+    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../../style.css">
     <style>
         :root {
             --accent: ${config.accentColor};
@@ -3122,10 +3176,10 @@ function generateDonationPageHtml(config) {
         <div class="container">
             <p class="org-name">Notzer Chesed</p>
             <nav class="nav">
-                <a href="index.html">Home</a>
-                <a href="about.html">About Us</a>
-                <a href="campaigns.html">Campaigns</a>
-                <a href="contact.html">Contact Us</a>
+                <a href="../../index.html">Home</a>
+                <a href="../../about.html">About Us</a>
+                <a href="../../campaigns.html">Campaigns</a>
+                <a href="../../contact.html">Contact Us</a>
             </nav>
         </div>
     </header>
