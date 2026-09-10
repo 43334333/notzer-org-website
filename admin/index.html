@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2600,8 +2600,35 @@ const BUILDER_STATE = {
     currentConfig: null,
     generated: { donation: '', admin: '', wall: '', bookkeeper: '' },
     activePreviewTab: 'donation',
-    showCode: false
+    showCode: false,
+    templates: { donation: null, admin: null, wall: null }
 };
+
+// Load production HTML templates from /templates/ directory
+async function loadBuilderTemplates() {
+    const templatePaths = {
+        donation: '/templates/donation-page/template.html',
+        admin:    '/templates/admin-page/template.html',
+        wall:     '/templates/wall-page/template.html'
+    };
+    const loaded = [];
+    for (const [key, path] of Object.entries(templatePaths)) {
+        if (BUILDER_STATE.templates[key]) { loaded.push(key); continue; }
+        try {
+            const resp = await fetch(path);
+            if (resp.ok) {
+                BUILDER_STATE.templates[key] = await resp.text();
+                loaded.push(key);
+            } else {
+                console.warn(`[BUILDER] Failed to load template ${key}: HTTP ${resp.status}`);
+            }
+        } catch (e) {
+            console.warn(`[BUILDER] Error loading template ${key}:`, e);
+        }
+    }
+    console.log(`[BUILDER] Loaded ${loaded.length}/3 production templates:`, loaded);
+    return loaded.length;
+}
 
 function escapeHtml(str) {
     if (!str) return '';
@@ -2762,6 +2789,9 @@ function initPageBuilder() {
 function openPageBuilder(initialData = null) {
     if (!APP.templates || !APP.templates.length) APP.templates = DEFAULT_TEMPLATES;
     renderBuilderTemplateCards();
+
+    // Load production HTML templates in background (cached after first load)
+    loadBuilderTemplates();
 
     if (initialData) {
         if (initialData.name) $('#bCampName').value = initialData.name;
@@ -3103,372 +3133,85 @@ async function publishBuilderPages() {
     btn.textContent = '🚀 Publish to Site';
 }
 
-// ── HTML PAGE CODE GENERATORS ──
+// â”€â”€ HTML PAGE CODE GENERATORS (Template-Based) â”€â”€
 
-function generateDonationPageHtml(config) {
-    const clientSafeConfig = {
-        id: config.id,
-        name: config.name,
-        nameHebrew: config.nameHebrew || '',
-        subtitle: config.subtitle || '',
-        description: config.storyEn || '',
-        heroImage: config.heroImageUrl || '',
-        colorAccent: config.accentColor || '#4dabf7',
-        colorAccentLight: config.accentLight || '#74c0fc',
-        colorAccentDark: config.accentDark || '#339af0',
-        presetAmounts: config.presetAmounts || [18, 36, 72, 180, 360, 500],
-        recurringEnabled: config.features.recurring !== false,
-        primaryGateway: config.primaryGateway || 'cardknox',
-        cardknox: { ifieldsKey: config.cardknoxIfieldsKey || '' },
-        usaepay: { publicKey: config.usaepayPublicKey || '' },
-        appsScriptUrl: config.appsScriptUrl,
-        wallEnabled: config.features.wall !== false,
-        wallUrl: `/wall/${config.id}/`,
-        goalAmount: config.goalAmount || null,
-        showStory: true,
-        showPhotoGallery: !!config.features.gallery,
-        showOtherWaysToGive: true,
-        zelleEmail: config.zelleEmail || 'donate@notzer.org',
-        dafConfirmEmail: config.dafConfirmEmail || 'daf@notzer.org',
-        turnstileSiteKey: config.turnstileSiteKey || '0x4AAAAAAA2P0o3pM2P1w34O'
+/**
+ * Apply {{TOKEN}} replacements to a template string using builder config.
+ */
+function applyTemplateTokens(template, config) {
+    const accentRgb = hexToRgb(config.accentColor || '#4dabf7');
+    const replacements = {
+        '{{CAMPAIGN_ID}}':           config.id || '',
+        '{{CAMPAIGN_NAME}}':         config.name || '',
+        '{{CAMPAIGN_NAME_HE}}':      config.nameHebrew || '',
+        '{{CAMPAIGN_SUBTITLE}}':     config.subtitle || '',
+        '{{CAMPAIGN_DESCRIPTION}}':  config.subtitle || config.name || '',
+        '{{ACCENT_COLOR}}':          config.accentColor || '#4dabf7',
+        '{{ACCENT_LIGHT}}':          config.accentLight || '#74c0fc',
+        '{{ACCENT_DARK}}':           config.accentDark || '#339af0',
+        '{{ACCENT_RGB}}':            accentRgb || '77, 171, 247',
+        '{{APPS_SCRIPT_URL}}':       config.appsScriptUrl || '',
+        '{{CARDKNOX_IFIELDS_KEY}}':  config.cardknoxIfieldsKey || '',
+        '{{USAEPAY_PUBLIC_KEY}}':    config.usaepayPublicKey || '',
+        '{{PRIMARY_GATEWAY}}':       config.primaryGateway || 'cardknox',
+        '{{TURNSTILE_SITE_KEY}}':    config.turnstileSiteKey || '0x4AAAAAAA2P0o3pM2P1w34O',
+        '{{ZELLE_EMAIL}}':           config.zelleEmail || 'donate@notzer.org',
+        '{{DAF_CONFIRM_EMAIL}}':     config.dafConfirmEmail || 'daf@notzer.org',
+        '{{HERO_IMAGE_URL}}':        config.heroImageUrl || '',
+        '{{DONATION_PAGE_URL}}':     `/campaigns/${config.id}/`,
     };
 
-    const isBilingual = config.storyLayout === 'bilingual-columns';
-    const jsonConfigStr = JSON.stringify(clientSafeConfig, null, 4).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+    let result = template;
+    for (const [token, value] of Object.entries(replacements)) {
+        result = result.split(token).join(value);
+    }
+    return result;
+}
 
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${escapeHtml(config.name)} | Notzer Chesed</title>
-    <meta name="description" content="${escapeHtml(config.subtitle || config.name)}">
-    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../../style.css">
-    <style>
-        :root {
-            --accent: ${config.accentColor};
-            --accent-light: ${config.accentLight};
-            --accent-dark: ${config.accentDark};
-            --accent-rgb: ${hexToRgb(config.accentColor)};
-        }
-        .story-columns { display: grid; grid-template-columns: ${isBilingual ? '1fr 1fr' : '1fr'}; gap: 24px; margin-top: 16px; }
-        @media(max-width:768px) { .story-columns { grid-template-columns: 1fr; } }
-        .story-col-he { direction: rtl; text-align: right; font-family: 'Heebo', 'Inter', sans-serif; line-height: 1.7; }
-        .hero-banner { text-align: center; padding: 40px 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); position: relative; }
-        .hero-he { font-size: 2.2rem; font-weight: 800; color: #fff; margin-bottom: 4px; direction: rtl; font-family: 'Heebo', sans-serif; }
-        .hero-en { font-size: 1.8rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
-        .hero-sub { font-size: 1rem; color: var(--accent-light); font-style: italic; }
-        .goal-bar-wrap { max-width: 500px; margin: 20px auto 0; background: rgba(255,255,255,0.08); border-radius: 20px; height: 18px; overflow: hidden; }
-        .goal-bar-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); transition: width 1s ease; width: 0%; }
-        .amount-pills { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-bottom: 16px; }
-        .amount-pill { padding: 12px 8px; text-align: center; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-        .amount-pill:hover { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.15); }
-        .amount-pill.active { border-color: var(--accent); background: var(--accent); color: #000; }
-    </style>
-</head>
-<body>
-
-    <header class="header">
-        <div class="container">
-            <p class="org-name">Notzer Chesed</p>
-            <nav class="nav">
-                <a href="../../index.html">Home</a>
-                <a href="../../about.html">About Us</a>
-                <a href="../../campaigns.html">Campaigns</a>
-                <a href="../../contact.html">Contact Us</a>
-            </nav>
-        </div>
-    </header>
-
-    <main class="container">
-        <!-- Hero Section -->
-        <section class="hero-banner">
-            ${config.nameHebrew ? `<h1 class="hero-he">${escapeHtml(config.nameHebrew)}</h1>` : ''}
-            <h2 class="hero-en">${escapeHtml(config.name)}</h2>
-            ${config.subtitle ? `<p class="hero-sub">${escapeHtml(config.subtitle)}</p>` : ''}
-            
-            ${config.goalAmount > 0 ? `
-            <div id="goalSection" style="margin-top:20px;">
-                <div class="goal-bar-wrap"><div class="goal-bar-fill" id="goalBarFill"></div></div>
-                <p style="font-size:0.85rem;color:#aaa;margin-top:6px;" id="goalText">Goal: $${config.goalAmount.toLocaleString()}</p>
-            </div>` : ''}
-        </section>
-
-        <!-- Story Section -->
-        <section class="section">
-            <div class="story-columns">
-                <div class="story-col">
-                    ${config.storyEn ? `<p>${escapeHtml(config.storyEn).replace(/\\n/g, '<br>')}</p>` : '<p>Support this vital campaign with Notzer Chesed.</p>'}
-                </div>
-                ${isBilingual && config.storyHe ? `
-                <div class="story-col story-col-he">
-                    <p>${escapeHtml(config.storyHe).replace(/\\n/g, '<br>')}</p>
-                </div>` : ''}
-            </div>
-        </section>
-
-        <!-- Donation Section -->
-        <section class="section" id="donate">
-            <h2 class="section-title">Make a Contribution</h2>
-            <div class="amount-pills" id="amountPills">
-                ${(config.presetAmounts || [180, 360, 500, 1000]).map((amt, idx) => `
-                    <button type="button" class="amount-pill ${idx === 0 ? 'active' : ''}" data-amount="${amt}">$${amt}</button>
-                `).join('')}
-            </div>
-
-            <div style="text-align:center;margin-top:24px;">
-                <a href="${config.primaryGateway === 'cardknox' ? '#cardknox-form' : 'https://secure.usaepay.com/'}" class="cta-button" style="background:var(--accent);color:#000;font-weight:700;">Donate Now</a>
-            </div>
-
-            ${config.features.wall ? `
-            <div style="text-align:center;margin-top:30px;padding:16px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.08);">
-                <p style="font-size:0.9rem;color:#ccc;margin-bottom:8px;">View our community of generous supporters</p>
-                <a href="/wall/${config.id}/" style="color:var(--accent-light);font-weight:600;text-decoration:none;">🏆 Visit the ${escapeHtml(config.name)} Donor Wall &rarr;</a>
-            </div>` : ''}
-        </section>
-    </main>
-
-    <footer class="footer">
-        <p>&copy; 2026 Notzer Chesed. All Rights Reserved. Tax-Deductible 501(c)(3) Organization.</p>
-    </footer>
-
-    <` + `script>
-    const CAMPAIGN_CONFIG = ${jsonConfigStr};
-    console.log('Campaign loaded:', CAMPAIGN_CONFIG.name);
-    <` + `/script>
-</body>
-</html>`;
+function generateDonationPageHtml(config) {
+    const tmpl = BUILDER_STATE.templates.donation;
+    if (tmpl) {
+        return applyTemplateTokens(tmpl, config);
+    }
+    return `<!DOCTYPE html><html><head><title>${escapeHtml(config.name)} | Notzer Chesed</title></head>
+<body style="background:#121212;color:#fff;font-family:sans-serif;text-align:center;padding:40px;">
+<h1>${escapeHtml(config.name)}</h1>
+<p>Template not loaded. Please close and reopen the Page Builder.</p></body></html>`;
 }
 
 function generateAdminPageHtml(config) {
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow">
-    <title>Admin Entry — ${escapeHtml(config.name)}</title>
-    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <` + `script src="../../js/auth.js"><` + `/script>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: #121212; color: #EFEFEF; font-family: 'Inter', sans-serif; line-height: 1.6; min-height: 100vh; }
-        .page-wrapper { max-width: 800px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
-        .page-header { text-align: center; margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .page-header img { height: 48px; width: auto; margin-bottom: 1rem; }
-        .page-header h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .page-header p { font-size: 0.88rem; color: #888; }
-        .card { background: #1a1a2e; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
-        .field { margin-bottom: 1rem; }
-        .field label { display: block; font-size: 0.8rem; font-weight: 500; color: #9a9ab0; margin-bottom: 0.35rem; }
-        .field input, .field select, .field textarea { width: 100%; padding: 0.65rem 0.8rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-family: inherit; font-size: 0.9rem; }
-        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; background: #6c63ff; color: #fff; width: 100%; }
-        .btn:hover { background: #5548d9; }
-    </style>
-</head>
-<body>
-    <div class="page-wrapper">
-        <header class="page-header">
-            <img src="../../NC_Logo_03.png" alt="Notzer Chesed">
-            <h1>${escapeHtml(config.name)}</h1>
-            <p>Campaign Offline Entry &amp; Management Console</p>
-        </header>
-
-        <main class="card">
-            <h3 style="font-size:1rem;margin-bottom:16px;">Log Offline Donation</h3>
-            <form id="campaignEntryForm">
-                <div class="field"><label>Donor Name *</label><input type="text" id="donorName" required placeholder="Full Name"></div>
-                <div class="field"><label>Email Address</label><input type="email" id="donorEmail" placeholder="donor@example.com"></div>
-                <div class="field"><label>Amount ($) *</label><input type="number" id="donorAmount" min="1" step="0.01" required placeholder="0.00"></div>
-                <div class="field"><label>Payment Status *</label><select id="donorStatus"><option value="Processed">Processed</option><option value="Pledged">Pledged</option></select></div>
-                <div class="field"><label>Payment Method</label><select id="donorMethod"><option value="Check">Check</option><option value="Cash">Cash</option><option value="Zelle">Zelle</option><option value="Cardknox">Credit Card</option></select></div>
-                <button type="submit" class="btn">Record Donation</button>
-            </form>
-        </main>
-    </div>
-
-    <` + `script>
-    const CAMPAIGN_CONFIG = {
-        id: '${config.id}',
-        name: '${escapeJs(config.name)}',
-        appsScriptUrl: '${config.appsScriptUrl}',
-        wallUrl: '../../wall/${config.id}/'
-    };
-
-    document.addEventListener('DOMContentLoaded', async () => {
-        if (typeof requireAuth === 'function') {
-            await requireAuth('campaign_manager', CAMPAIGN_CONFIG.id);
-        }
-    });
-    <` + `/script>
-</body>
-</html>`;
+    const tmpl = BUILDER_STATE.templates.admin;
+    if (tmpl) {
+        return applyTemplateTokens(tmpl, config);
+    }
+    return `<!DOCTYPE html><html><head><title>Admin - ${escapeHtml(config.name)}</title></head>
+<body style="background:#121212;color:#fff;font-family:sans-serif;text-align:center;padding:40px;">
+<h1>Admin - ${escapeHtml(config.name)}</h1>
+<p>Template not loaded. Please close and reopen the Page Builder.</p></body></html>`;
 }
 
 function generateWallPageHtml(config) {
-    const wallConfig = {
-        campaignId: config.id,
-        campaignName: config.name,
-        appsScriptUrl: config.appsScriptUrl,
-        accentColor: config.accentColor,
-        accentLight: config.accentLight,
-        accentRgb: hexToRgb(config.accentColor),
-        autoRefreshInterval: 30000
-    };
-
-    const wallJsonStr = JSON.stringify(wallConfig, null, 4).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donor Wall — ${escapeHtml(config.name)}</title>
-    <meta name="robots" content="noindex, nofollow">
-    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        :root {
-            --accent: ${config.accentColor};
-            --accent-light: ${config.accentLight};
-            --accent-rgb: ${hexToRgb(config.accentColor)};
-        }
-        body { background-color: #121212; color: #EFEFEF; font-family: 'Inter', sans-serif; line-height: 1.6; min-height: 100vh; }
-        .page-wrapper { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-        .header { text-align: center; padding: 40px 0 24px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .campaign-title { font-size: 2.2rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
-        .live-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 20px; background: rgba(52,211,153,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600; }
-        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 30px 0; }
-        .stat-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 20px; text-align: center; }
-        .stat-val { font-size: 1.8rem; font-weight: 800; color: var(--accent-light); }
-        .stat-lbl { font-size: 0.8rem; color: #888; text-transform: uppercase; margin-top: 4px; }
-        .donors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 24px; }
-        .donor-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 18px; }
-        .donor-name { font-weight: 700; color: #fff; font-size: 1.05rem; }
-        .donor-amt { color: var(--accent-light); font-weight: 800; font-size: 1.1rem; float: right; }
-    </style>
-</head>
-<body>
-    <div class="page-wrapper">
-        <header class="header">
-            <img src="../../NC_Logo_03.png" alt="NC" style="height:50px;margin-bottom:12px;">
-            <h1 class="campaign-title">${escapeHtml(config.name)}</h1>
-            <p style="color:#aaa;font-size:0.9rem;margin-bottom:12px;">Supporter Recognition &amp; Donor Wall</p>
-            <div class="live-badge"><span style="width:8px;height:8px;border-radius:50%;background:#34d399;display:inline-block;"></span> LIVE UPDATES</div>
-        </header>
-
-        <section class="stats-bar">
-            <div class="stat-box"><div class="stat-val" id="totalRaisedDisplay">$0</div><div class="stat-lbl">Total Raised</div></div>
-            <div class="stat-box"><div class="stat-val" id="totalDonorsDisplay">0</div><div class="stat-lbl">Generous Donors</div></div>
-        </section>
-
-        <div class="donors-grid" id="donorsGrid">
-            <div class="donor-card"><span class="donor-amt">$1,800</span><div class="donor-name">Anonymous Supporter</div><small style="color:#777;">In honor of the community</small></div>
-            <div class="donor-card"><span class="donor-amt">$500</span><div class="donor-name">Friend of the Family</div><small style="color:#777;">With gratitude</small></div>
-        </div>
-    </div>
-
-    <` + `script>
-    const WALL_CONFIG = ${wallJsonStr};
-    console.log('Donor wall loaded for:', WALL_CONFIG.campaignName);
-    <` + `/script>
-</body>
-</html>`;
+    const tmpl = BUILDER_STATE.templates.wall;
+    if (tmpl) {
+        return applyTemplateTokens(tmpl, config);
+    }
+    return `<!DOCTYPE html><html><head><title>Donor Wall - ${escapeHtml(config.name)}</title></head>
+<body style="background:#121212;color:#fff;font-family:sans-serif;text-align:center;padding:40px;">
+<h1>Donor Wall - ${escapeHtml(config.name)}</h1>
+<p>Template not loaded. Please close and reopen the Page Builder.</p></body></html>`;
 }
 
 function generateBookkeeperPageHtml(config) {
-    const accent = config.accentColor || '#4dabf7';
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow">
-    <title>Bookkeeper — ${escapeHtml(config.name)}</title>
-    <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: #121212; color: #e0e0e0; font-family: 'Inter', sans-serif; line-height: 1.6; min-height: 100vh; }
-        .accent { color: ${accent}; }
-        .access-denied { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 2rem; }
-        .access-denied .lock-icon { width: 72px; height: 72px; border-radius: 50%; background: rgba(255, 82, 82, 0.12); border: 2px solid rgba(255, 82, 82, 0.3); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 1.5rem; }
-        .access-denied h1 { font-size: 1.5rem; margin-bottom: .5rem; color: #ff5252; }
-        .access-denied p { color: #888; max-width: 360px; font-size: 0.95rem; }
-        .app-layout { display: flex; gap: 1.5rem; max-width: 1400px; margin: 0 auto; padding: 2rem 1.25rem; }
-        .main-content { flex: 1; min-width: 0; }
-        .batch-panel { width: 320px; flex-shrink: 0; position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; display: flex; flex-direction: column; }
-        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .page-header-left { display: flex; align-items: center; gap: 1rem; }
-        .page-header-left img { height: 40px; width: auto; opacity: 0.9; }
-        .page-header-left h1 { font-size: 1.35rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
-        .page-header-left .subtitle { font-size: 0.8rem; color: #888; margin-top: 2px; }
-        .header-back { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #aaa; font-size: 0.82rem; text-decoration: none; }
-        .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
-        .stat-card { background: rgba(30, 30, 50, 0.7); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 1.1rem 1rem; text-align: center; }
-        .stat-card .stat-value { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .stat-card .stat-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: #888; margin-top: 0.35rem; }
-        .table-card { background: rgba(30, 30, 50, 0.7); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; overflow: hidden; }
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: #888; padding: 0.85rem 0.75rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .data-table td { padding: 0.75rem; font-size: 0.85rem; color: #ccc; border-bottom: 1px solid rgba(255,255,255,0.04); }
-    </style>
-</head>
-<body>
-    <div class="access-denied" id="accessDenied" style="display:none;">
-        <div class="lock-icon">🔒</div>
-        <h1>Access Denied</h1>
-        <p>This page requires an authorization key. Please use the link provided by your administrator.</p>
-    </div>
-    <div class="app-layout" id="appMain">
-        <div class="main-content">
-            <header class="page-header">
-                <div class="page-header-left">
-                    <img src="../../NC_Logo_03.png" alt="Notzer Chesed">
-                    <div>
-                        <h1>Bookkeeper — Scheduled Payments</h1>
-                        <p class="subtitle">${escapeHtml(config.name)} Campaign</p>
-                    </div>
-                </div>
-                <a class="header-back" id="backLink" href="#">← Back to Admin</a>
-            </header>
-            <div class="stats-bar">
-                <div class="stat-card"><div class="stat-value" id="statTotal">—</div><div class="stat-label">Total Scheduled</div></div>
-                <div class="stat-card"><div class="stat-value" id="statDueWeek">—</div><div class="stat-label">Due This Week</div></div>
-                <div class="stat-card"><div class="stat-value" id="statOverdue">—</div><div class="stat-label">Overdue</div></div>
-                <div class="stat-card"><div class="stat-value" id="statOutstanding">—</div><div class="stat-label">Total Outstanding</div></div>
-            </div>
-            <div class="table-card">
-                <table class="data-table">
-                    <thead><tr><th>Due Date</th><th>Donor</th><th>Amount</th><th>Total Pledge</th><th>Payment #</th><th>Method</th><th>Status</th></tr></thead>
-                    <tbody id="tableBody"><tr><td colspan="7" style="text-align:center;padding:2rem;">Ready for bookkeeper processing.</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <` + `script>
-    const CONFIG = {
-        campaignId: '${config.id}',
-        campaignName: '${escapeJs(config.name)}',
-        apiUrl: '${config.appsScriptUrl}',
-        key: new URLSearchParams(window.location.search).get('key')
-    };
-    console.log('Bookkeeper initialized for campaign:', CONFIG.campaignId);
-    <` + `/script>
-</body>
-</html>`;
+    const tmpl = BUILDER_STATE.templates.admin;
+    if (tmpl) {
+        let html = applyTemplateTokens(tmpl, config);
+        html = html.replace(/<title>.*?<\/title>/, `<title>Bookkeeper - ${escapeHtml(config.name)}</title>`);
+        return html;
+    }
+    return `<!DOCTYPE html><html><head><title>Bookkeeper - ${escapeHtml(config.name)}</title></head>
+<body style="background:#121212;color:#fff;font-family:sans-serif;text-align:center;padding:40px;">
+<h1>Bookkeeper - ${escapeHtml(config.name)}</h1>
+<p>Template not loaded. Please close and reopen the Page Builder.</p></body></html>`;
 }
 
 // ── TEMPLATES MANAGER MODAL CONTROLLER ──
