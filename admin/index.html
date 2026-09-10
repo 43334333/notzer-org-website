@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1681,6 +1681,7 @@ body::before {
                 <button type="button" class="btn btn-primary" id="bNextBtn">Next: Customize &rarr;</button>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary" id="bSaveConfigBtn" style="display:none;">💾 Save Config</button>
                 <button type="button" class="btn btn-secondary" id="bCopyCodeBtn" style="display:none;">📋 Copy HTML</button>
                 <button type="button" class="btn btn-secondary" id="bDownloadCurrentBtn" style="display:none;">⬇️ Download Page</button>
                 <button type="button" class="btn btn-success" id="bApplyToFormBtn" style="display:none;">✨ Apply URLs &amp; Data to Campaign Form</button>
@@ -2167,6 +2168,7 @@ $('#saveCampaignBtn').addEventListener('click', async () => {
         wallKey: $('#campWallKey') ? $('#campWallKey').value.trim() : '',
         wallEnabled: $('#campWallEnabled').checked,
         isPublic: $('#campIsPublic') ? $('#campIsPublic').checked : true,
+        pageConfig: APP._lastBuilderConfig || undefined,
     };
     if (!data.name || !data.id) { showToast('Campaign name and slug are required', 'error'); return; }
 
@@ -2775,6 +2777,7 @@ function initPageBuilder() {
     });
 
     // Export & Apply actions
+    $('#bSaveConfigBtn').addEventListener('click', saveBuilderConfigToBackend);
     $('#bApplyToFormBtn').addEventListener('click', applyBuilderToCampaignForm);
     $('#bDownloadCurrentBtn').addEventListener('click', downloadCurrentBuilderPage);
     $('#bCopyCodeBtn').addEventListener('click', copyBuilderCode);
@@ -2786,39 +2789,106 @@ function initPageBuilder() {
     $('#closeTemplatesManagerFooterBtn').addEventListener('click', closeTemplatesManager);
 }
 
-function openPageBuilder(initialData = null) {
+function openPageBuilder(initialData = null, jumpToStep2 = false) {
     if (!APP.templates || !APP.templates.length) APP.templates = DEFAULT_TEMPLATES;
     renderBuilderTemplateCards();
 
     // Load production HTML templates in background (cached after first load)
     loadBuilderTemplates();
 
+    // Select default template baseline (do not force overwrite if initialData provided)
+    selectBuilderTemplate(BUILDER_STATE.selectedTemplateId || 'hachnosas-kallah', !initialData);
+
     if (initialData) {
-        if (initialData.name) $('#bCampName').value = initialData.name;
-        if (initialData.slug) $('#bCampSlug').value = sanitizeSlug(initialData.slug);
-        if (initialData.goal) $('#bGoalAmount').value = initialData.goal;
+        if (initialData.name !== undefined) $('#bCampName').value = initialData.name;
+        if (initialData.slug !== undefined) $('#bCampSlug').value = sanitizeSlug(initialData.slug);
+        if (initialData.nameHebrew !== undefined) $('#bCampTitleHe').value = initialData.nameHebrew;
+        if (initialData.subtitle !== undefined) $('#bCampSubtitle').value = initialData.subtitle;
+        if (initialData.storyLayout) {
+            $('#bStoryLayout').value = initialData.storyLayout;
+            $('#bStoryHeGroup').style.display = initialData.storyLayout === 'bilingual-columns' ? 'block' : 'none';
+        }
+        if (initialData.storyEn !== undefined) $('#bStoryEn').value = initialData.storyEn;
+        if (initialData.storyHe !== undefined) $('#bStoryHe').value = initialData.storyHe;
+        if (initialData.accentColor) {
+            $('#bAccentPicker').value = initialData.accentColor;
+            $('#bAccentHex').value = initialData.accentColor;
+        }
+        if (initialData.goal !== undefined) $('#bGoalAmount').value = initialData.goal || '';
+        if (initialData.presetAmounts) {
+            $('#bPresetsInput').value = Array.isArray(initialData.presetAmounts) ? initialData.presetAmounts.join(', ') : String(initialData.presetAmounts);
+        }
         if (initialData.gateway) $('#bGateway').value = initialData.gateway;
-        if (initialData.ckIfields) $('#bCkIfields').value = initialData.ckIfields;
-        if (initialData.uePublic) $('#bUePublic').value = initialData.uePublic;
+        if (initialData.ckIfields !== undefined) $('#bCkIfields').value = initialData.ckIfields;
+        if (initialData.uePublic !== undefined) $('#bUePublic').value = initialData.uePublic;
+        if (initialData.turnstileKey !== undefined) $('#bTurnstileKey').value = initialData.turnstileKey;
+        if (initialData.features) {
+            if (initialData.features.wall !== undefined) $('#bFeatWall').checked = !!initialData.features.wall;
+            if (initialData.features.recurring !== undefined) $('#bFeatRecurring').checked = !!initialData.features.recurring;
+            if (initialData.features.teams !== undefined) $('#bFeatTeams').checked = !!initialData.features.teams;
+            if (initialData.features.gallery !== undefined) $('#bFeatGallery').checked = !!initialData.features.gallery;
+            if (initialData.features.prayer !== undefined) $('#bFeatPrayer').checked = !!initialData.features.prayer;
+        }
     }
 
-    // Default select first template
-    selectBuilderTemplate(BUILDER_STATE.selectedTemplateId || 'hachnosas-kallah');
-    setBuilderStep(1);
+    setBuilderStep(jumpToStep2 ? 2 : 1);
     $('#pageBuilderModal').classList.add('visible');
 }
 
-function openPageBuilderForCampaign(campaignId) {
+async function openPageBuilderForCampaign(campaignId) {
     const c = APP.campaigns.find(x => x.id === campaignId);
     if (!c) return;
-    openPageBuilder({
-        name: c.name || c.id,
-        slug: c.id,
-        goal: c.goalAmount || 0,
-        gateway: c.primaryGateway || 'cardknox',
-        ckIfields: c.cardknoxIfieldsKey || '',
-        uePublic: c.usaepayPublicKey || ''
-    });
+
+    let cfg = c.pageConfig || null;
+
+    if (!cfg) {
+        try {
+            const testUrls = [
+                `/campaigns/${c.id}/index.html`,
+                c.pageUrl ? (c.pageUrl.endsWith('/') ? `${c.pageUrl}index.html` : c.pageUrl) : null,
+                `/${c.id}.html`
+            ].filter(Boolean);
+
+            for (const url of testUrls) {
+                try {
+                    const resp = await fetch(url);
+                    if (resp.ok) {
+                        const text = await resp.text();
+                        const match = text.match(/const\s+CAMPAIGN_CONFIG\s*=\s*(\{[\s\S]*?\n\s*\};)/);
+                        if (match) {
+                            const parsed = Function('"use strict";return (' + match[1].replace(/;\s*$/, '') + ')')();
+                            if (parsed && parsed.id) {
+                                cfg = parsed;
+                                break;
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
+        } catch (fetchErr) {
+            console.warn('[BUILDER] Could not fetch existing page config:', fetchErr);
+        }
+    }
+
+    const initial = {
+        name: (cfg && cfg.name) || c.name || c.id,
+        slug: (cfg && cfg.id) || c.id,
+        nameHebrew: (cfg && (cfg.nameHebrew || cfg.campaignNameHebrew)) || '',
+        subtitle: (cfg && cfg.subtitle) || '',
+        storyLayout: (cfg && cfg.storyLayout) || 'single-column',
+        storyEn: (cfg && (cfg.storyEn || cfg.description)) || '',
+        storyHe: (cfg && cfg.storyHe) || '',
+        accentColor: (cfg && (cfg.colorAccent || cfg.accentColor)) || '#4dabf7',
+        goal: (cfg && cfg.goalAmount) || c.goalAmount || 0,
+        presetAmounts: (cfg && cfg.presetAmounts) || [180, 360, 500, 1000, 2500, 5000],
+        gateway: (cfg && cfg.primaryGateway) || c.primaryGateway || 'cardknox',
+        ckIfields: (cfg && cfg.cardknox && cfg.cardknox.ifieldsKey) || c.cardknoxIfieldsKey || '',
+        uePublic: (cfg && cfg.usaepay && cfg.usaepay.publicKey) || c.usaepayPublicKey || '',
+        turnstileKey: (cfg && cfg.turnstileSiteKey) || '0x4AAAAAAA2P0o3pM2P1w34O',
+        features: (cfg && cfg.features) || { wall: c.wallEnabled !== false, recurring: true }
+    };
+
+    openPageBuilder(initial, true);
 }
 
 function closePageBuilder() {
@@ -2842,6 +2912,8 @@ function setBuilderStep(step) {
     $('#bNextBtn').textContent = step === 1 ? 'Next: Customize Info & Theme →' : 'Next: Preview & Generate Pages →';
 
     const isStep3 = step === 3;
+    const isStep2Or3 = step === 2 || step === 3;
+    $('#bSaveConfigBtn').style.display = isStep2Or3 ? 'inline-flex' : 'none';
     $('#bApplyToFormBtn').style.display = isStep3 ? 'inline-flex' : 'none';
     $('#bDownloadCurrentBtn').style.display = isStep3 ? 'inline-flex' : 'none';
     $('#bCopyCodeBtn').style.display = isStep3 ? 'inline-flex' : 'none';
@@ -2860,7 +2932,7 @@ function renderBuilderTemplateCards() {
         const icon = t.icon || (t.id === 'hachnosas-kallah' ? '👰' : t.id === 'emergency-family' ? '🚨' : t.id === 'org-support' ? '🏛️' : t.id === 'holiday-seasonal' ? '🎭' : t.id === 'memorial-fund' ? '🕯️' : t.id === 'team-crowdfunding' ? '🤝' : '⚡');
         const feats = t.features || {};
         return `
-            <div class="template-card ${isSel ? 'selected' : ''}" data-id="${t.id}" onclick="selectBuilderTemplate('${t.id}')">
+            <div class="template-card ${isSel ? 'selected' : ''}" data-id="${t.id}" onclick="selectBuilderTemplate('${t.id}', 'force')">
                 <div>
                     <div class="template-card-header">
                         <div class="template-card-icon">${icon}</div>
@@ -2881,28 +2953,35 @@ function renderBuilderTemplateCards() {
     }).join('');
 }
 
-function selectBuilderTemplate(templateId) {
+function selectBuilderTemplate(templateId, overwriteValues = true) {
     BUILDER_STATE.selectedTemplateId = templateId;
     const t = (APP.templates || DEFAULT_TEMPLATES).find(x => x.id === templateId) || DEFAULT_TEMPLATES[0];
 
-    // Pre-populate Step 2 if fields are empty
-    if (!$('#bCampName').value) $('#bCampName').value = t.name.replace(/ —.*$/, '');
-    if (!$('#bCampSlug').value) $('#bCampSlug').value = t.id;
-    if (!$('#bCampTitleHe').value) $('#bCampTitleHe').value = t.nameHebrew || '';
-    if (!$('#bCampSubtitle').value) $('#bCampSubtitle').value = t.subtitle || '';
+    // Highlight selected card
+    $$('.template-card').forEach(card => {
+        card.classList.toggle('selected', card.dataset.id === templateId);
+    });
+
+    if (!overwriteValues) return;
+
+    // Pre-populate Step 2
+    if (!$('#bCampName').value || overwriteValues === 'force') $('#bCampName').value = t.name.replace(/ —.*$/, '');
+    if (!$('#bCampSlug').value || overwriteValues === 'force') $('#bCampSlug').value = t.id;
+    if (!$('#bCampTitleHe').value || overwriteValues === 'force') $('#bCampTitleHe').value = t.nameHebrew || '';
+    if (!$('#bCampSubtitle').value || overwriteValues === 'force') $('#bCampSubtitle').value = t.subtitle || '';
 
     $('#bStoryLayout').value = t.storyLayout || 'single-column';
     $('#bStoryHeGroup').style.display = t.storyLayout === 'bilingual-columns' ? 'block' : 'none';
 
-    if (!$('#bStoryEn').value) $('#bStoryEn').value = t.defaultStoryEn || '';
-    if (!$('#bStoryHe').value) $('#bStoryHe').value = t.defaultStoryHe || '';
+    if (!$('#bStoryEn').value || overwriteValues === 'force') $('#bStoryEn').value = t.defaultStoryEn || '';
+    if (!$('#bStoryHe').value || overwriteValues === 'force') $('#bStoryHe').value = t.defaultStoryHe || '';
 
     const color = t.accentColor || '#4dabf7';
     $('#bAccentPicker').value = color;
     $('#bAccentHex').value = color;
 
     const presets = Array.isArray(t.presetAmounts) ? t.presetAmounts.join(', ') : '18, 36, 72, 180, 360, 500';
-    if (!$('#bPresetsInput').value) $('#bPresetsInput').value = presets;
+    if (!$('#bPresetsInput').value || overwriteValues === 'force') $('#bPresetsInput').value = presets;
 
     const feats = t.features || {};
     $('#bFeatWall').checked = feats.wall !== false;
@@ -3032,6 +3111,7 @@ function updateActivePreview() {
 
 function applyBuilderToCampaignForm() {
     const c = BUILDER_STATE.currentConfig || getBuilderConfig();
+    APP._lastBuilderConfig = c;
     $('#campName').value = c.name;
     $('#campSlug').value = c.id;
     $('#campGateway').value = c.primaryGateway;
@@ -3046,6 +3126,44 @@ function applyBuilderToCampaignForm() {
     closePageBuilder();
     $('#campaignForm').classList.add('visible');
     showToast('Applied campaign URLs and settings to form!', 'success');
+}
+
+async function saveBuilderConfigToBackend() {
+    const config = getBuilderConfig();
+    if (!config.id) { showToast('Campaign slug is required', 'error'); return; }
+
+    const btn = $('#bSaveConfigBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Saving...';
+    showToast('Saving campaign config to backend...', 'info');
+
+    try {
+        const res = await authPost('updateCampaign', {
+            id: config.id,
+            campaignId: config.id,
+            name: config.name,
+            goalAmount: config.goalAmount,
+            pageConfig: config
+        });
+
+        if (res && res.status === 'success') {
+            showToast('Campaign configuration saved to backend!', 'success');
+            const c = APP.campaigns.find(x => x.id === config.id);
+            if (c) {
+                c.pageConfig = config;
+                c.name = config.name;
+                c.goalAmount = config.goalAmount;
+            }
+            APP._lastBuilderConfig = config;
+        } else {
+            showToast('Save failed: ' + (res && res.message ? res.message : 'Unknown error'), 'error');
+        }
+    } catch (e) {
+        showToast('Save error: ' + e.message, 'error');
+    }
+
+    btn.disabled = false;
+    btn.textContent = '💾 Save Config';
 }
 
 function downloadCurrentBuilderPage() {
@@ -3103,6 +3221,7 @@ async function publishBuilderPages() {
     try {
         const res = await authPost('publishPages', {
             campaignId: config.id,
+            pageConfig: config,
             pages: {
                 donation: pages.donation || undefined,
                 admin: pages.admin || undefined,
@@ -3113,6 +3232,10 @@ async function publishBuilderPages() {
 
         if (res && res.status === 'success') {
             showToast(res.message || 'Pages published successfully!', 'success');
+            const campObj = APP.campaigns.find(x => x.id === config.id);
+            if (campObj) campObj.pageConfig = config;
+            APP._lastBuilderConfig = config;
+
             if (res.published && res.published.length) {
                 console.log('[PUBLISH] Published files:', res.published);
             }
@@ -3140,12 +3263,28 @@ async function publishBuilderPages() {
  */
 function applyTemplateTokens(template, config) {
     const accentRgb = hexToRgb(config.accentColor || '#4dabf7');
+    const presetsJson = JSON.stringify(config.presetAmounts && config.presetAmounts.length ? config.presetAmounts : [18, 36, 72, 180, 360, 500]);
+    const storyEnJson = JSON.stringify(config.storyEn || '');
+    const storyHeJson = JSON.stringify(config.storyHe || '');
+    const goalAmt = (typeof config.goalAmount === 'number' && config.goalAmount > 0) ? config.goalAmount : 'null';
+    const wallEnabled = config.features && config.features.wall !== false ? 'true' : 'false';
+    const recurringEnabled = config.features && config.features.recurring !== false ? 'true' : 'false';
+    const galleryEnabled = config.features && !!config.features.gallery ? 'true' : 'false';
+
     const replacements = {
         '{{CAMPAIGN_ID}}':           config.id || '',
         '{{CAMPAIGN_NAME}}':         config.name || '',
         '{{CAMPAIGN_NAME_HE}}':      config.nameHebrew || '',
         '{{CAMPAIGN_SUBTITLE}}':     config.subtitle || '',
-        '{{CAMPAIGN_DESCRIPTION}}':  config.subtitle || config.name || '',
+        '{{CAMPAIGN_DESCRIPTION}}':  config.storyEn ? (config.storyEn.length > 200 ? config.storyEn.substring(0, 197) + '...' : config.storyEn) : (config.subtitle || config.name || ''),
+        '{{STORY_LAYOUT}}':          config.storyLayout || 'single-column',
+        '{{STORY_EN_JSON}}':         storyEnJson,
+        '{{STORY_HE_JSON}}':         storyHeJson,
+        '{{PRESET_AMOUNTS}}':        presetsJson,
+        '{{GOAL_AMOUNT}}':           String(goalAmt),
+        '{{WALL_ENABLED}}':          wallEnabled,
+        '{{RECURRING_ENABLED}}':     recurringEnabled,
+        '{{SHOW_PHOTO_GALLERY}}':    galleryEnabled,
         '{{ACCENT_COLOR}}':          config.accentColor || '#4dabf7',
         '{{ACCENT_LIGHT}}':          config.accentLight || '#74c0fc',
         '{{ACCENT_DARK}}':           config.accentDark || '#339af0',
@@ -3165,6 +3304,9 @@ function applyTemplateTokens(template, config) {
     for (const [token, value] of Object.entries(replacements)) {
         result = result.split(token).join(value);
     }
+    // Fallback replacements for backward compatibility
+    result = result.replace(/presetAmounts:\s*\[[0-9,\s]+\]/, 'presetAmounts: ' + presetsJson);
+    result = result.replace(/goalAmount:\s*null/, 'goalAmount: ' + goalAmt);
     return result;
 }
 

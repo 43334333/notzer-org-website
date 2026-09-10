@@ -149,16 +149,32 @@
            ============================================================ */
         .story-columns {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 30px;
             max-width: 960px;
             margin: 0 auto;
+        }
+        .story-columns.bilingual {
+            grid-template-columns: 1fr 1fr;
+        }
+        @media (max-width: 768px) {
+            .story-columns.bilingual {
+                grid-template-columns: 1fr;
+            }
         }
         .story-col { line-height: 1.7; }
         .story-col-yi {
             font-size: 0.85rem;
             border-left: 2px solid var(--border-color);
             padding-left: 25px;
+        }
+        @media (max-width: 768px) {
+            .story-col-yi {
+                border-left: none;
+                border-top: 2px solid var(--border-color);
+                padding-left: 0;
+                padding-top: 20px;
+            }
         }
 
         /* ============================================================
@@ -785,20 +801,11 @@
             <div class="story-columns" id="story-columns">
                 <!-- English story column -->
                 <div class="story-col" id="story-en">
-                    <p id="story-description"></p>
-                    <!-- ═══════════════════════════════════════════
-                         CUSTOMIZE: Replace or expand story content
-                         per campaign. The config description is used
-                         as a fallback if this section is not customized.
-                         ═══════════════════════════════════════════ -->
+                    <div id="story-description"></div>
                 </div>
 
                 <!-- Hebrew/Yiddish story column (optional) -->
-                <div class="story-col story-col-yi" dir="rtl" lang="yi" id="story-he">
-                    <!-- ═══════════════════════════════════════════
-                         CUSTOMIZE: Add Hebrew/Yiddish story content
-                         here per campaign. Leave empty if not needed.
-                         ═══════════════════════════════════════════ -->
+                <div class="story-col story-col-yi" dir="rtl" lang="yi" id="story-he" style="display: none;">
                 </div>
             </div>
 
@@ -1218,21 +1225,24 @@
         nameHebrew: '{{CAMPAIGN_NAME_HE}}',
         subtitle: '{{CAMPAIGN_SUBTITLE}}',
         description: '{{CAMPAIGN_DESCRIPTION}}',
+        storyLayout: '{{STORY_LAYOUT}}',
+        storyEn: {{STORY_EN_JSON}},
+        storyHe: {{STORY_HE_JSON}},
         heroImage: '{{HERO_IMAGE_URL}}',
         colorAccent: '{{ACCENT_COLOR}}',
         colorAccentLight: '{{ACCENT_LIGHT}}',
         colorAccentDark: '{{ACCENT_DARK}}',
-        presetAmounts: [18, 36, 72, 180, 360, 500],
-        recurringEnabled: true,
+        presetAmounts: {{PRESET_AMOUNTS}},
+        recurringEnabled: {{RECURRING_ENABLED}},
         primaryGateway: '{{PRIMARY_GATEWAY}}',
         cardknox: { ifieldsKey: '{{CARDKNOX_IFIELDS_KEY}}' },
         usaepay: { publicKey: '{{USAEPAY_PUBLIC_KEY}}' },
         appsScriptUrl: '{{APPS_SCRIPT_URL}}',
-        wallEnabled: true,
+        wallEnabled: {{WALL_ENABLED}},
         wallUrl: '/wall/{{CAMPAIGN_ID}}/',
-        goalAmount: null,
+        goalAmount: {{GOAL_AMOUNT}},
         showStory: true,
-        showPhotoGallery: true,
+        showPhotoGallery: {{SHOW_PHOTO_GALLERY}},
         showOtherWaysToGive: true,
         zelleEmail: '{{ZELLE_EMAIL}}',
         dafConfirmEmail: '{{DAF_CONFIRM_EMAIL}}',
@@ -1276,12 +1286,38 @@
         }
 
         // Story section
+        var storyCols = document.getElementById('story-columns');
+        var storyHeEl = document.getElementById('story-he');
+        var descEl = document.getElementById('story-description');
+
         if (!CAMPAIGN_CONFIG.showStory) {
-            document.getElementById('story-columns').style.display = 'none';
-        } else if (CAMPAIGN_CONFIG.description) {
-            var descEl = document.getElementById('story-description');
-            if (descEl && !descEl.textContent.trim()) {
-                descEl.textContent = CAMPAIGN_CONFIG.description;
+            if (storyCols) storyCols.style.display = 'none';
+        } else {
+            var enText = CAMPAIGN_CONFIG.storyEn || CAMPAIGN_CONFIG.description || '';
+            if (descEl && enText) {
+                descEl.innerHTML = enText.split(/\n\n+/).map(function(p) {
+                    return '<p style="margin-bottom: 1em;">' + p.replace(/\n/g, '<br>') + '</p>';
+                }).join('');
+            }
+
+            var isBilingual = (CAMPAIGN_CONFIG.storyLayout === 'bilingual-columns') && !!(CAMPAIGN_CONFIG.storyHe && CAMPAIGN_CONFIG.storyHe.trim());
+            if (storyHeEl) {
+                if (isBilingual) {
+                    storyHeEl.style.display = 'block';
+                    storyHeEl.innerHTML = CAMPAIGN_CONFIG.storyHe.split(/\n\n+/).map(function(p) {
+                        return '<p style="margin-bottom: 1em;">' + p.replace(/\n/g, '<br>') + '</p>';
+                    }).join('');
+                } else {
+                    storyHeEl.style.display = 'none';
+                }
+            }
+
+            if (storyCols) {
+                if (isBilingual) {
+                    storyCols.classList.add('bilingual');
+                } else {
+                    storyCols.classList.remove('bilingual');
+                }
             }
         }
 
