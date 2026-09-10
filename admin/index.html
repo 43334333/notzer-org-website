@@ -1584,6 +1584,11 @@ body::before {
                             <input type="text" id="bCampSubtitle" placeholder="e.g. Building a Jewish home with dignity and joy">
                         </div>
                         <div class="field">
+                            <label>Campaign Manager Email</label>
+                            <input type="email" id="bManagerEmail" placeholder="e.g. manager@notzer.org">
+                            <small style="font-size:0.72rem;color:var(--text-muted);">Receives donation notifications and campaign status updates</small>
+                        </div>
+                        <div class="field">
                             <label>Story Layout</label>
                             <select id="bStoryLayout">
                                 <option value="bilingual-columns">Bilingual Two-Column (English + Hebrew/Yiddish side-by-side)</option>
@@ -1639,7 +1644,7 @@ body::before {
                         </div>
                         <div class="field">
                             <label>Cloudflare Turnstile Site Key</label>
-                            <input type="text" id="bTurnstileKey" placeholder="0x4AAAAAAA2P0o3pM2P1w34O" value="0x4AAAAAAA2P0o3pM2P1w34O">
+                            <input type="text" id="bTurnstileKey" placeholder="0x4AAAAAADjo7NvJjpCgWLcN" value="0x4AAAAAADjo7NvJjpCgWLcN">
                         </div>
                         <div class="col-label" style="margin-top:16px;">Feature Toggles</div>
                         <div class="toggle-row"><label class="switch"><input type="checkbox" id="bFeatWall" checked><span class="slider"></span></label><div class="toggle-text"><strong>Donor Recognition Wall</strong>Create and link live donor wall (/wall/[slug]/)</div></div>
@@ -1682,6 +1687,7 @@ body::before {
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button type="button" class="btn btn-secondary" id="bSaveConfigBtn" style="display:none;">💾 Save Config</button>
+                <button type="button" class="btn btn-secondary" id="bNotifyManagerBtn" style="display:none;" onclick="notifyCampaignManagerFromBuilder()" title="Notify campaign manager by email that page is ready">📧 Notify Manager</button>
                 <button type="button" class="btn btn-secondary" id="bCopyCodeBtn" style="display:none;">📋 Copy HTML</button>
                 <button type="button" class="btn btn-secondary" id="bDownloadCurrentBtn" style="display:none;">⬇️ Download Page</button>
                 <button type="button" class="btn btn-success" id="bApplyToFormBtn" style="display:none;">✨ Apply URLs &amp; Data to Campaign Form</button>
@@ -2088,9 +2094,11 @@ function renderDashCampaigns(campaigns) {
         const id = c.id || c.campaignId;
         const pct = c.goalAmount ? Math.min(100, ((c.raised || 0) / c.goalAmount * 100)) : 0;
         const pageUrl = getCampaignPageUrl(c);
+        const keyParam = (c.wallKey || c.wallAccessKey) ? `?key=${encodeURIComponent(c.wallKey || c.wallAccessKey)}` : '';
         const adminUrl = c.adminUrl || `/admin/${id}/`;
-        const wallUrl = c.wallUrl || `/wall/${id}/`;
-        const bookkeeperUrl = `/admin/${id}/bookkeeper.html`;
+        const rawWall = c.wallUrl || `/wall/${id}/`;
+        const wallUrl = keyParam && !rawWall.includes('key=') ? (rawWall.includes('?') ? `${rawWall}&key=${encodeURIComponent(c.wallKey || c.wallAccessKey)}` : `${rawWall}${keyParam}`) : rawWall;
+        const bookkeeperUrl = `/admin/${id}/bookkeeper.html${keyParam}`;
         const sheetId = c.sheetId || c.campaignSheetId;
 
         return `<tr>
@@ -2253,9 +2261,10 @@ function renderCampaignTable(campaigns) {
             ? `<a href="https://docs.google.com/spreadsheets/d/${c.sheetId}/edit" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--accent-light);text-decoration:none;" title="Open Google Sheet ID: ${c.sheetId}">📊 Sheet ↗</a>`
             : `<button class="btn btn-secondary btn-sm" onclick="provisionSheetForCampaign('${c.id}')" title="Create dedicated Google Sheet" style="padding:2px 6px;font-size:0.72rem;">🪄 Provision Sheet</button>`;
         const pageUrlVal = getCampaignPageUrl(c);
+        const keyParam = (c.wallKey || c.wallAccessKey) ? `?key=${encodeURIComponent(c.wallKey || c.wallAccessKey)}` : '';
         const pageLink = `<a href="${pageUrlVal}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--text-secondary);text-decoration:none;" title="Open Page: ${pageUrlVal}">🌐 Page ↗</a>`;
-        const wallLink = `<a href="/wall/${c.id}/index.html" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--text-secondary);text-decoration:none;" title="Open Donor Wall">🧱 Wall ↗</a>`;
-        const bookkeeperLink = `<a href="/admin/${c.id}/bookkeeper.html" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:#4dabf7;text-decoration:none;" title="Open Bookkeeper Portal">📖 Bookkeeper ↗</a>`;
+        const wallLink = `<a href="/wall/${c.id}/${keyParam}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--text-secondary);text-decoration:none;" title="Open Donor Wall">🧱 Wall ↗</a>`;
+        const bookkeeperLink = `<a href="/admin/${c.id}/bookkeeper.html${keyParam}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:#4dabf7;text-decoration:none;" title="Open Bookkeeper Portal">📖 Bookkeeper ↗</a>`;
 
         const activateBtn = isActive
             ? `<button class="btn btn-sm btn-danger" onclick="toggleCampaignStatus('${c.id}', '${c.status}')">Deactivate</button>`
@@ -2291,6 +2300,7 @@ function renderCampaignTable(campaigns) {
             <td>
                 <div style="display:flex;gap:4px;flex-wrap:wrap;">
                     <button class="btn btn-primary btn-sm" onclick="openPageBuilderForCampaign('${c.id}')" title="Build and export HTML pages from template">🛠️ Build Pages</button>
+                    <button class="btn btn-secondary btn-sm" onclick="notifyCampaignManager('${c.id}')" title="Email campaign manager that page is ready">📧 Notify</button>
                     <button class="btn btn-secondary btn-sm" onclick="editCampaign('${c.id}')">Edit</button>
                     ${activateBtn}
                 </div>
@@ -2623,15 +2633,16 @@ const BUILDER_STATE = {
     generated: { donation: '', admin: '', wall: '', bookkeeper: '' },
     activePreviewTab: 'donation',
     showCode: false,
-    templates: { donation: null, admin: null, wall: null }
+    templates: { donation: null, admin: null, wall: null, bookkeeper: null }
 };
 
 // Load production HTML templates from /templates/ directory
 async function loadBuilderTemplates() {
     const templatePaths = {
-        donation: '/templates/donation-page/template.html',
-        admin:    '/templates/admin-page/template.html',
-        wall:     '/templates/wall-page/template.html'
+        donation:   '/templates/donation-page/template.html',
+        admin:      '/templates/admin-page/template.html',
+        wall:       '/templates/wall-page/template.html',
+        bookkeeper: '/templates/bookkeeper-page/template.html'
     };
     const loaded = [];
     for (const [key, path] of Object.entries(templatePaths)) {
@@ -2824,6 +2835,7 @@ function openPageBuilder(initialData = null, jumpToStep2 = false) {
         if (initialData.slug !== undefined) $('#bCampSlug').value = sanitizeSlug(initialData.slug);
         if (initialData.nameHebrew !== undefined) $('#bCampTitleHe').value = initialData.nameHebrew;
         if (initialData.subtitle !== undefined) $('#bCampSubtitle').value = initialData.subtitle;
+        if (initialData.managerEmail !== undefined && $('#bManagerEmail')) $('#bManagerEmail').value = initialData.managerEmail;
         if (initialData.storyLayout) {
             $('#bStoryLayout').value = initialData.storyLayout;
             $('#bStoryHeGroup').style.display = initialData.storyLayout === 'bilingual-columns' ? 'block' : 'none';
@@ -2904,7 +2916,8 @@ async function openPageBuilderForCampaign(campaignId) {
         gateway: (cfg && cfg.primaryGateway) || c.primaryGateway || 'cardknox',
         ckIfields: (cfg && cfg.cardknox && cfg.cardknox.ifieldsKey) || c.cardknoxIfieldsKey || '',
         uePublic: (cfg && cfg.usaepay && cfg.usaepay.publicKey) || c.usaepayPublicKey || '',
-        turnstileKey: (cfg && cfg.turnstileSiteKey) || '0x4AAAAAAA2P0o3pM2P1w34O',
+        turnstileKey: (cfg && cfg.turnstileSiteKey) || '0x4AAAAAADjo7NvJjpCgWLcN',
+        managerEmail: c.managerEmail || (cfg && cfg.managerEmail) || '',
         features: (cfg && cfg.features) || { wall: c.wallEnabled !== false, recurring: true }
     };
 
@@ -2934,6 +2947,7 @@ function setBuilderStep(step) {
     const isStep3 = step === 3;
     const isStep2Or3 = step === 2 || step === 3;
     $('#bSaveConfigBtn').style.display = isStep2Or3 ? 'inline-flex' : 'none';
+    if ($('#bNotifyManagerBtn')) $('#bNotifyManagerBtn').style.display = isStep3 ? 'inline-flex' : 'none';
     $('#bApplyToFormBtn').style.display = isStep3 ? 'inline-flex' : 'none';
     $('#bDownloadCurrentBtn').style.display = isStep3 ? 'inline-flex' : 'none';
     $('#bCopyCodeBtn').style.display = isStep3 ? 'inline-flex' : 'none';
@@ -3061,7 +3075,8 @@ function getBuilderConfig() {
         primaryGateway: $('#bGateway').value || 'cardknox',
         cardknoxIfieldsKey: $('#bCkIfields').value.trim(),
         usaepayPublicKey: $('#bUePublic').value.trim(),
-        turnstileSiteKey: $('#bTurnstileKey').value.trim() || '0x4AAAAAAA2P0o3pM2P1w34O',
+        turnstileSiteKey: $('#bTurnstileKey').value.trim() || '0x4AAAAAADjo7NvJjpCgWLcN',
+        managerEmail: $('#bManagerEmail') ? $('#bManagerEmail').value.trim() : '',
         appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzngv-LEqoOercDK5MfRtB8BpEFhH3sdnq16lyxzq2LN_8W0lUQpa-oUZB4CfGYE28y3g/exec',
         zelleEmail: 'donate@notzer.org',
         dafConfirmEmail: 'daf@notzer.org',
@@ -3127,6 +3142,7 @@ function updateActivePreview() {
         previewHtml = previewHtml
             .replace(/<head>/i, '<head><base href="/">')
             .replace(/<div class="page-wrapper" id="appMain" style="display:none;">/i, '<div class="page-wrapper" id="appMain" style="display:block;">')
+            .replace(/<div class="app-layout" id="appMain" style="display:none;">/i, '<div class="app-layout" id="appMain" style="display:flex;">')
             .replace(/await\s+requireAuth\([^)]*\);/g, '/* auth bypassed in builder preview */')
             .replace(/<script src="[^"]*auth\.js"><\/script>/i, `
                 <script>
@@ -3156,6 +3172,7 @@ function applyBuilderToCampaignForm() {
     $('#campGateway').value = c.primaryGateway;
     if (c.cardknoxIfieldsKey) $('#campCkIfields').value = c.cardknoxIfieldsKey;
     if (c.usaepayPublicKey) $('#campUePublic').value = c.usaepayPublicKey;
+    if (c.managerEmail && $('#campManagerEmail')) $('#campManagerEmail').value = c.managerEmail;
     $('#campGoal').value = c.goalAmount || '';
     $('#campPageUrl').value = `/campaigns/${c.id}/`;
     $('#campAdminUrl').value = `/admin/${c.id}/`;
@@ -3182,6 +3199,7 @@ async function saveBuilderConfigToBackend() {
             campaignId: config.id,
             name: config.name,
             goalAmount: config.goalAmount,
+            managerEmail: config.managerEmail,
             pageConfig: config
         });
 
@@ -3192,6 +3210,7 @@ async function saveBuilderConfigToBackend() {
                 c.pageConfig = config;
                 c.name = config.name;
                 c.goalAmount = config.goalAmount;
+                c.managerEmail = config.managerEmail;
             }
             APP._lastBuilderConfig = config;
         } else {
@@ -3260,6 +3279,8 @@ async function publishBuilderPages() {
     try {
         const res = await authPost('publishPages', {
             campaignId: config.id,
+            goalAmount: config.goalAmount,
+            managerEmail: config.managerEmail,
             pageConfig: config,
             pages: {
                 donation: pages.donation || undefined,
@@ -3295,7 +3316,36 @@ async function publishBuilderPages() {
     btn.textContent = '🚀 Publish to Site';
 }
 
-// â”€â”€ HTML PAGE CODE GENERATORS (Template-Based) â”€â”€
+async function notifyCampaignManager(campaignId, overrideEmail) {
+    const c = (APP.campaigns && APP.campaigns.find(x => x.id === campaignId)) || {};
+    const defaultEmail = overrideEmail || c.managerEmail || '';
+    const recipient = prompt(`Notify campaign manager that pages are live?\n\nEnter or confirm recipient email address for "${c.name || campaignId}":`, defaultEmail);
+    if (!recipient || !recipient.trim()) return;
+
+    showToast('Sending campaign notification email...', 'info');
+    try {
+        const res = await authPost('notifyCampaignManager', {
+            campaignId: campaignId,
+            managerEmail: recipient.trim()
+        });
+        if (res && res.status === 'success') {
+            showToast(res.message || 'Notification sent to campaign manager!', 'success');
+            if (c) c.managerEmail = recipient.trim();
+        } else {
+            showToast('Failed to notify manager: ' + (res && res.message ? res.message : 'Unknown error'), 'error');
+        }
+    } catch (e) {
+        showToast('Notification error: ' + e.message, 'error');
+    }
+}
+
+async function notifyCampaignManagerFromBuilder() {
+    const cfg = BUILDER_STATE.currentConfig || getBuilderConfig();
+    if (!cfg.id) { showToast('Campaign slug is required', 'error'); return; }
+    await notifyCampaignManager(cfg.id, cfg.managerEmail);
+}
+
+// ── HTML PAGE CODE GENERATORS (Template-Based) ──
 
 /**
  * Apply {{TOKEN}} replacements to a template string using builder config.
@@ -3332,7 +3382,7 @@ function applyTemplateTokens(template, config) {
         '{{CARDKNOX_IFIELDS_KEY}}':  config.cardknoxIfieldsKey || '',
         '{{USAEPAY_PUBLIC_KEY}}':    config.usaepayPublicKey || '',
         '{{PRIMARY_GATEWAY}}':       config.primaryGateway || 'cardknox',
-        '{{TURNSTILE_SITE_KEY}}':    config.turnstileSiteKey || '0x4AAAAAAA2P0o3pM2P1w34O',
+        '{{TURNSTILE_SITE_KEY}}':    config.turnstileSiteKey || '0x4AAAAAADjo7NvJjpCgWLcN',
         '{{ZELLE_EMAIL}}':           config.zelleEmail || 'donate@notzer.org',
         '{{DAF_CONFIRM_EMAIL}}':     config.dafConfirmEmail || 'daf@notzer.org',
         '{{HERO_IMAGE_URL}}':        config.heroImageUrl || '',
@@ -3383,12 +3433,9 @@ function generateWallPageHtml(config) {
 }
 
 function generateBookkeeperPageHtml(config) {
-    const tmpl = BUILDER_STATE.templates.admin;
+    const tmpl = BUILDER_STATE.templates.bookkeeper;
     if (tmpl) {
-        let html = applyTemplateTokens(tmpl, config);
-        html = html.replace(/<title>.*?<\/title>/i, `<title>Bookkeeper - ${escapeHtml(config.name)}</title>`);
-        html = html.replace(/<h1>Admin — Manual Donation Entry<\/h1>/i, `<h1>Bookkeeper — Manual Donation Entry</h1>`);
-        return html;
+        return applyTemplateTokens(tmpl, config);
     }
     return `<!DOCTYPE html><html><head><title>Bookkeeper - ${escapeHtml(config.name)}</title></head>
 <body style="background:#121212;color:#fff;font-family:sans-serif;text-align:center;padding:40px;">

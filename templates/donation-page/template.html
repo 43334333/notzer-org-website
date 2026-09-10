@@ -151,11 +151,35 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 30px;
-            max-width: 960px;
+            max-width: 780px;
             margin: 0 auto;
+            text-align: center;
+        }
+        .story-columns:not(.bilingual) .story-col {
+            text-align: center;
+            max-width: 780px;
+            margin: 0 auto;
+        }
+        .story-columns:not(.bilingual) #story-description {
+            text-align: center;
+        }
+        .story-columns:not(.bilingual) #story-description p {
+            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
         }
         .story-columns.bilingual {
             grid-template-columns: 1fr 1fr;
+            max-width: 960px;
+            text-align: initial;
+        }
+        .story-columns.bilingual .story-col {
+            text-align: initial;
+        }
+        .story-columns.bilingual #story-description p {
+            text-align: initial;
+            margin-left: 0;
+            margin-right: 0;
         }
         @media (max-width: 768px) {
             .story-columns.bilingual {
@@ -1103,7 +1127,7 @@
                     </div>
 
                     <!-- Cloudflare Turnstile -->
-                    <div class="cf-turnstile" id="turnstile-widget" data-callback="onTurnstileSuccess" data-theme="dark"></div>
+                    <div class="cf-turnstile" id="turnstile-widget" data-sitekey="{{TURNSTILE_SITE_KEY}}" data-callback="onTurnstileSuccess" data-theme="dark"></div>
 
                     <button type="submit" class="donate-btn" id="donate-btn" disabled>Donate Now</button>
 
