@@ -981,7 +981,7 @@ async function fetchDonors() {
 
 async function fetchTeams() {
     try {
-        const url = `${WALL_CONFIG.appsScriptUrl}?action=getTeams&key=${accessKey}`;
+        const url = `${WALL_CONFIG.appsScriptUrl}?action=getTeams&campaign=${encodeURIComponent(WALL_CONFIG.campaignId)}&key=${encodeURIComponent(accessKey || '')}`;
         const response = await fetch(url);
         const data = await response.json();
         if (data.status === 'success' && data.teams && data.teams.length > 0) {
@@ -1377,17 +1377,10 @@ function showAccessDenied(message) {
         document.documentElement.style.setProperty('--accent-rgb', WALL_CONFIG.accentRgb);
     }
 
-    // Check for key
-    if (!accessKey) {
-        document.getElementById('loading-screen').style.display = 'none';
-        showAccessDenied('No access key provided. Please use the link you were given.');
-        return;
-    }
-
     // Fetch teams list
     fetchTeams();
 
-    // Initial load
+    // Initial load (server validates access key if configured)
     loadData();
 
     // Auto-refresh

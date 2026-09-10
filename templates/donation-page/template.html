@@ -2608,7 +2608,7 @@
         if (!wrapper || !search || !dropdown) return;
 
         // Load teams from backend
-        fetch(CAMPAIGN_CONFIG.appsScriptUrl + '?action=getTeams')
+        fetch(CAMPAIGN_CONFIG.appsScriptUrl + '?action=getTeams&campaign=' + encodeURIComponent(CAMPAIGN_CONFIG.campaignId))
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.status === 'success' && data.teams) {
@@ -2686,15 +2686,23 @@
     })();
 
     // ════════════════════════════════════════════════════════════════
-    // GOAL PROGRESS (fetched from backend)
+    // CAMPAIGN STATS & GOAL PROGRESS (fetched from backend)
     // ════════════════════════════════════════════════════════════════
-    (function loadGoalProgress() {
-        if (!CAMPAIGN_CONFIG.goalAmount || CAMPAIGN_CONFIG.goalAmount <= 0) return;
-
-        fetch(CAMPAIGN_CONFIG.appsScriptUrl + '?action=getStats')
+    (function loadCampaignStats() {
+        fetch(CAMPAIGN_CONFIG.appsScriptUrl + '?action=getStats&campaignId=' + encodeURIComponent(CAMPAIGN_CONFIG.campaignId))
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                if (data && data.totalRaised !== undefined) {
+                if (!data) return;
+
+                // Dynamically sync wall card visibility with backend setting
+                if (data.wallEnabled !== undefined) {
+                    var wallCard = document.getElementById('wall-link-card');
+                    if (wallCard) {
+                        wallCard.style.display = data.wallEnabled ? 'block' : 'none';
+                    }
+                }
+
+                if (data.totalRaised !== undefined && CAMPAIGN_CONFIG.goalAmount && CAMPAIGN_CONFIG.goalAmount > 0) {
                     var raised = parseFloat(data.totalRaised) || 0;
                     var goal = CAMPAIGN_CONFIG.goalAmount;
                     var pct = Math.min(Math.round((raised / goal) * 100), 100);
