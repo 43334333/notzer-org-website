@@ -1047,6 +1047,7 @@ body::before {
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-secondary" id="manageDirectoryBtn">🌐 Directory Show/Hide</button>
             <button class="btn btn-secondary" id="manageTemplatesBtn">📐 Templates Sheet</button>
+            <button class="btn btn-secondary" id="manageFeeDefaultsBtn">⚙️ Fee Defaults</button>
             <button class="btn btn-primary" id="openPageBuilderBtn">🛠️ Page Builder & Template Chooser</button>
             <button class="btn btn-secondary" id="createCampaignBtn">+ Create Campaign</button>
         </div>
@@ -1715,6 +1716,45 @@ body::before {
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" id="closeTemplatesManagerFooterBtn">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ FEE DEFAULTS MANAGER MODAL ═══════════════ -->
+<div class="modal-overlay" id="feeDefaultsModal">
+    <div class="modal-card" style="max-width:760px;">
+        <div class="modal-header">
+            <h3 class="modal-title">⚙️ Master Fee Schedule Defaults</h3>
+            <button class="modal-close" id="closeFeeDefaultsBtn">&times;</button>
+        </div>
+        <div class="modal-body" style="padding:20px;">
+            <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:14px;">
+                These defaults are saved in the <strong>Fee_Config_Defaults</strong> tab of the Master Platform Google Sheet.
+                Any updates saved here or edited directly in the sheet will automatically populate the <code>Fee_Config</code> schedule for all newly provisioned campaign sheets.
+            </p>
+            <div class="table-wrapper" style="max-height:380px;overflow-y:auto;margin-bottom:14px;">
+                <table class="data-table" id="feeDefaultsTable">
+                    <thead>
+                        <tr>
+                            <th style="width:40%;">Payment Method</th>
+                            <th style="width:25%;">Rate (%)</th>
+                            <th style="width:25%;">Flat Fee ($)</th>
+                            <th style="width:10%;text-align:center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="feeDefaultsTableRows">
+                        <tr><td colspan="4" class="empty-state">Loading fee defaults...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="addFeeDefaultRowBtn">+ Add Payment Method</button>
+        </div>
+        <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;">
+            <span id="feeDefaultsSaveStatus" style="font-size:0.82rem;color:var(--text-muted);"></span>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary" id="closeFeeDefaultsFooterBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveFeeDefaultsBtn">💾 Save Defaults to Master Sheet</button>
+            </div>
         </div>
     </div>
 </div>
@@ -2818,6 +2858,13 @@ function initPageBuilder() {
     $('#manageTemplatesBtn').addEventListener('click', openTemplatesManager);
     $('#closeTemplatesManagerBtn').addEventListener('click', closeTemplatesManager);
     $('#closeTemplatesManagerFooterBtn').addEventListener('click', closeTemplatesManager);
+
+    // Fee Defaults Manager Modal
+    if ($('#manageFeeDefaultsBtn')) $('#manageFeeDefaultsBtn').addEventListener('click', openFeeDefaultsManager);
+    if ($('#closeFeeDefaultsBtn')) $('#closeFeeDefaultsBtn').addEventListener('click', closeFeeDefaultsManager);
+    if ($('#closeFeeDefaultsFooterBtn')) $('#closeFeeDefaultsFooterBtn').addEventListener('click', closeFeeDefaultsManager);
+    if ($('#addFeeDefaultRowBtn')) $('#addFeeDefaultRowBtn').addEventListener('click', addFeeDefaultRow);
+    if ($('#saveFeeDefaultsBtn')) $('#saveFeeDefaultsBtn').addEventListener('click', saveFeeDefaults);
 }
 
 function openPageBuilder(initialData = null, jumpToStep2 = false) {
@@ -3477,6 +3524,147 @@ function renderTemplatesManagerTable() {
             </tr>
         `;
     }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// FEE DEFAULTS MANAGER
+// ═══════════════════════════════════════════════════════════
+let FEE_DEFAULTS_STATE = {
+    data: []
+};
+
+async function openFeeDefaultsManager() {
+    $('#feeDefaultsModal').classList.add('visible');
+    $('#feeDefaultsSaveStatus').textContent = '';
+    await loadFeeDefaults();
+}
+
+function closeFeeDefaultsManager() {
+    $('#feeDefaultsModal').classList.remove('visible');
+}
+
+async function loadFeeDefaults() {
+    const tbody = $('#feeDefaultsTableRows');
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Loading fee defaults from Master Sheet...</td></tr>';
+    try {
+        const res = await authGet('getFeeConfigDefaults');
+        if (res && res.status === 'success' && Array.isArray(res.defaults)) {
+            FEE_DEFAULTS_STATE.data = res.defaults;
+            renderFeeDefaultsTable();
+        } else {
+            tbody.innerHTML = `<tr><td colspan="4" class="empty-state" style="color:var(--error);">${res?.message || 'Failed to load fee defaults'}</td></tr>`;
+        }
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" class="empty-state" style="color:var(--error);">Error loading fee defaults: ${err.message}</td></tr>`;
+    }
+}
+
+function renderFeeDefaultsTable() {
+    const tbody = $('#feeDefaultsTableRows');
+    const items = FEE_DEFAULTS_STATE.data || [];
+    if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No fee default methods found. Click "+ Add Payment Method" below.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = items.map((item, idx) => {
+        const ratePct = typeof item.rate === 'number' ? (item.rate * 100).toFixed(2) : (parseFloat(item.rate) * 100 || 0).toFixed(2);
+        const flatVal = typeof item.flat === 'number' ? item.flat.toFixed(2) : (parseFloat(item.flat) || 0).toFixed(2);
+        return `
+            <tr data-index="${idx}">
+                <td style="padding:6px 8px;">
+                    <input type="text" class="fee-def-method" value="${escapeHtml(item.method || '')}" placeholder="Payment Method" style="width:100%;padding:6px 10px;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);font-size:0.85rem;">
+                </td>
+                <td style="padding:6px 8px;">
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <input type="number" step="0.01" min="0" max="100" class="fee-def-rate" value="${ratePct}" style="width:90px;padding:6px 8px;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);font-size:0.85rem;text-align:right;">
+                        <span style="color:var(--text-muted);font-size:0.85rem;">%</span>
+                    </div>
+                </td>
+                <td style="padding:6px 8px;">
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <span style="color:var(--text-muted);font-size:0.85rem;">$</span>
+                        <input type="number" step="0.01" min="0" class="fee-def-flat" value="${flatVal}" style="width:90px;padding:6px 8px;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);font-size:0.85rem;text-align:right;">
+                    </div>
+                </td>
+                <td style="padding:6px 8px;text-align:center;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="deleteFeeDefaultRow(${idx})" title="Delete method" style="color:var(--error);padding:4px 8px;font-size:0.8rem;">✕</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function syncFeeDefaultsFromInputs() {
+    const rows = $$('#feeDefaultsTableRows tr[data-index]');
+    const updated = [];
+    rows.forEach(row => {
+        const methodInput = row.querySelector('.fee-def-method');
+        const rateInput = row.querySelector('.fee-def-rate');
+        const flatInput = row.querySelector('.fee-def-flat');
+        if (methodInput) {
+            const m = methodInput.value.trim();
+            if (m) {
+                const rate = (parseFloat(rateInput?.value) || 0) / 100;
+                const flat = parseFloat(flatInput?.value) || 0;
+                updated.push({ method: m, rate: rate, flat: flat });
+            }
+        }
+    });
+    FEE_DEFAULTS_STATE.data = updated;
+    return updated;
+}
+
+function addFeeDefaultRow() {
+    syncFeeDefaultsFromInputs();
+    FEE_DEFAULTS_STATE.data.push({ method: '', rate: 0, flat: 0 });
+    renderFeeDefaultsTable();
+    const rows = $$('#feeDefaultsTableRows tr');
+    if (rows.length) {
+        const lastInput = rows[rows.length - 1].querySelector('.fee-def-method');
+        if (lastInput) lastInput.focus();
+    }
+}
+
+function deleteFeeDefaultRow(idx) {
+    syncFeeDefaultsFromInputs();
+    if (idx >= 0 && idx < FEE_DEFAULTS_STATE.data.length) {
+        FEE_DEFAULTS_STATE.data.splice(idx, 1);
+        renderFeeDefaultsTable();
+    }
+}
+
+async function saveFeeDefaults() {
+    const defaults = syncFeeDefaultsFromInputs();
+    if (!defaults.length) {
+        showToast('At least one payment method is required', 'error');
+        return;
+    }
+    const saveBtn = $('#saveFeeDefaultsBtn');
+    const statusSpan = $('#feeDefaultsSaveStatus');
+    saveBtn.disabled = true;
+    saveBtn.textContent = '⏳ Saving...';
+    statusSpan.textContent = 'Saving to Master Sheet...';
+
+    try {
+        const res = await authPost('updateFeeConfigDefaults', { defaults: defaults });
+        if (res && res.status === 'success') {
+            showToast('Master fee defaults saved successfully!', 'success');
+            statusSpan.textContent = '✓ Saved to Fee_Config_Defaults tab';
+            statusSpan.style.color = 'var(--success)';
+            setTimeout(() => { if (statusSpan) statusSpan.textContent = ''; }, 4000);
+        } else {
+            showToast(res?.message || 'Failed to save fee defaults', 'error');
+            statusSpan.textContent = res?.message || 'Save failed';
+            statusSpan.style.color = 'var(--error)';
+        }
+    } catch (err) {
+        showToast('Error saving fee defaults: ' + err.message, 'error');
+        statusSpan.textContent = 'Error: ' + err.message;
+        statusSpan.style.color = 'var(--error)';
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Save Defaults to Master Sheet';
+    }
 }
 
 
