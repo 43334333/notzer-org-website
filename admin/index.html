@@ -2846,7 +2846,9 @@ function openPageBuilder(initialData = null, jumpToStep2 = false) {
             $('#bAccentPicker').value = initialData.accentColor;
             $('#bAccentHex').value = initialData.accentColor;
         }
-        if (initialData.goal !== undefined) $('#bGoalAmount').value = initialData.goal || '';
+        if (initialData.goal !== undefined && initialData.goal !== null && initialData.goal !== '') {
+            $('#bGoalAmount').value = initialData.goal;
+        }
         if (initialData.presetAmounts) {
             $('#bPresetsInput').value = Array.isArray(initialData.presetAmounts) ? initialData.presetAmounts.join(', ') : String(initialData.presetAmounts);
         }
@@ -3016,6 +3018,7 @@ function selectBuilderTemplate(templateId, overwriteValues = true) {
 
     const presets = Array.isArray(t.presetAmounts) ? t.presetAmounts.join(', ') : '18, 36, 72, 180, 360, 500';
     if (!$('#bPresetsInput').value || overwriteValues === 'force') $('#bPresetsInput').value = presets;
+    if (!$('#bGoalAmount').value || overwriteValues === 'force') $('#bGoalAmount').value = t.defaultGoal || 50000;
 
     const feats = t.features || {};
     $('#bFeatWall').checked = feats.wall !== false;
