@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="../../js/auth.js"></script>
     <style>
         /* ── Reset & Base ──────────────────────────────── */
@@ -554,6 +555,34 @@
         .badge-scheduled .badge-dot { background: #74c0fc; }
         .badge-overdue .badge-dot { background: #ff6b6b; }
         .badge-paid .badge-dot { background: #34d399; }
+        .badge-pending {
+            background: rgba(251, 191, 36, 0.12);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.25);
+        }
+        .badge-pending .badge-dot { background: #fbbf24; }
+        .badge-cleared {
+            background: rgba(52, 211, 153, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.25);
+        }
+        .badge-cleared .badge-dot { background: #34d399; }
+        .badge-reversed {
+            background: rgba(255, 82, 82, 0.12);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 82, 82, 0.25);
+        }
+        .badge-reversed .badge-dot { background: #ff6b6b; }
+        .badge-high {
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+        .badge-medium {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
 
         /* ── Empty State ───────────────────────────────── */
         .empty-state {
@@ -1079,6 +1108,229 @@
             to { opacity: 0; transform: translateX(30%); }
         }
 
+        /* ── Tab Navigation ────────────────────────────── */
+        .bk-tab-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 0.75rem;
+            overflow-x: auto;
+        }
+        .bk-tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            color: #999;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .bk-tab-btn:hover {
+            background: rgba(255,255,255,0.07);
+            color: #ddd;
+            border-color: rgba(255,255,255,0.15);
+        }
+        .bk-tab-btn.active {
+            background: rgba(77, 171, 247, 0.12);
+            color: #fff;
+            border-color: #4dabf7;
+            font-weight: 600;
+            box-shadow: 0 0 16px rgba(77, 171, 247, 0.15);
+        }
+        .bk-tab-panel {
+            width: 100%;
+        }
+
+        /* ── Action Buttons ────────────────────────────── */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            border: none;
+            white-space: nowrap;
+        }
+        .action-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .primary-btn {
+            background: linear-gradient(135deg, #4dabf7, #228be6);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(77, 171, 247, 0.25);
+        }
+        .primary-btn:not(:disabled):hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(77, 171, 247, 0.35);
+        }
+        .secondary-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #ddd;
+        }
+        .secondary-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .danger-btn {
+            background: rgba(255, 82, 82, 0.15);
+            border: 1px solid rgba(255, 82, 82, 0.3);
+            color: #ff6b6b;
+        }
+        .danger-btn:hover {
+            background: rgba(255, 82, 82, 0.25);
+            color: #fff;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 6px;
+            color: #888;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+        }
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+
+        /* ── Form Controls & Grids ─────────────────────── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .form-group {
+            margin-bottom: 0.75rem;
+            text-align: left;
+        }
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 0.35rem;
+            font-weight: 500;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        .form-control:focus {
+            border-color: #4dabf7;
+        }
+        select.form-control {
+            background-color: #1a1a2e;
+            color: #fff;
+        }
+        select.form-control option {
+            background-color: #1a1a2e;
+            color: #fff;
+        }
+
+        /* ── Reconciliation Dropzone & Summary ─────────── */
+        .recon-summary-card {
+            background: rgba(30, 30, 50, 0.7);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(20px);
+        }
+        .recon-summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .recon-summary-header h3 {
+            font-size: 1.2rem;
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .recon-summary-header p {
+            color: #888;
+            font-size: 0.85rem;
+        }
+        .recon-balance-badge {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 0.75rem 1.25rem;
+            text-align: right;
+        }
+        .balance-label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .balance-val {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #34d399;
+            font-variant-numeric: tabular-nums;
+        }
+        .upload-dropzone {
+            border: 2px dashed rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            background: rgba(255,255,255,0.02);
+            transition: all 0.2s;
+            margin-bottom: 1.5rem;
+        }
+        .upload-dropzone.dragover {
+            border-color: #4dabf7;
+            background: rgba(77, 171, 247, 0.06);
+        }
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .upload-dropzone h4 {
+            font-size: 1rem;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+        .upload-dropzone p {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.75rem;
+        }
+
         /* ── Responsive ────────────────────────────────── */
         @media (max-width: 960px) {
             .app-layout {
@@ -1183,7 +1435,7 @@
             <div class="page-header-left">
                 <img src="/NC_Logo_03.png" alt="Notzer Chesed">
                 <div>
-                    <h1>Bookkeeper — Scheduled Payments</h1>
+                    <h1 id="pageTitle">Bookkeeper — Scheduled Payments</h1>
                     <p class="subtitle">Keren Hachnosas Kallah M. Twersky Campaign</p>
                 </div>
             </div>
@@ -1192,88 +1444,432 @@
             </a>
         </header>
 
-        <!-- Stats Bar -->
-        <div class="stats-bar">
-            <div class="stat-card">
-                <div class="stat-value" id="statTotal">—</div>
-                <div class="stat-label">Total Scheduled</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="statDueWeek">—</div>
-                <div class="stat-label">Due This Week</div>
-            </div>
-            <div class="stat-card" id="statOverdueCard">
-                <div class="stat-value" id="statOverdue">—</div>
-                <div class="stat-label">Overdue</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="statOutstanding">—</div>
-                <div class="stat-label">Total Outstanding</div>
-            </div>
-        </div>
-
-        <!-- Filter Bar -->
-        <div class="filter-bar">
-            <div class="filter-pills" id="filterPills">
-                <button class="filter-pill active" data-filter="all">
-                    All<span class="pill-count" id="countAll">0</span>
-                </button>
-                <button class="filter-pill" data-filter="scheduled">
-                    Scheduled<span class="pill-count" id="countScheduled">0</span>
-                </button>
-                <button class="filter-pill" data-filter="overdue">
-                    Overdue<span class="pill-count" id="countOverdue">0</span>
-                </button>
-            </div>
-            <div class="search-wrapper">
-                <span class="search-icon">🔍</span>
-                <input type="text" class="search-input" id="searchInput" placeholder="Search by donor name…">
-            </div>
-            <button class="refresh-btn" id="refreshBtn" onclick="loadPayments()">
-                <span class="refresh-icon">↻</span> Refresh
+        <!-- Tab Navigation -->
+        <div class="bk-tab-nav" id="bkTabNav">
+            <button class="bk-tab-btn active" data-bktab="scheduled" onclick="switchBkTab('scheduled')">
+                📅 Scheduled Payments
+            </button>
+            <button class="bk-tab-btn" data-bktab="deposits" onclick="switchBkTab('deposits')">
+                📥 Deposits & Transfers
+            </button>
+            <button class="bk-tab-btn" data-bktab="withdrawals" onclick="switchBkTab('withdrawals')">
+                📤 Withdrawals
+            </button>
+            <button class="bk-tab-btn" data-bktab="reconciliation" onclick="switchBkTab('reconciliation')">
+                ⚖️ Reconciliation
             </button>
         </div>
 
-        <!-- Data Table -->
-        <div class="table-card">
-            <div class="table-scroll">
-                <table class="data-table" id="paymentsTable">
-                    <thead>
-                        <tr>
-                            <th style="width:40px;">
-                                <label class="custom-checkbox">
-                                    <input type="checkbox" id="selectAll">
-                                    <span class="checkmark"></span>
-                                </label>
-                            </th>
-                            <th class="sortable sorted" data-sort="dueDate">
-                                Due Date <span class="sort-arrow">▲</span>
-                            </th>
-                            <th>Donor</th>
-                            <th>Amount</th>
-                            <th>Total Pledge</th>
-                            <th>Payment #</th>
-                            <th>Method</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <!-- Rows injected by JS -->
-                    </tbody>
-                </table>
+        <!-- ── Tab 1: Scheduled Payments Panel ── -->
+        <div class="bk-tab-panel active" id="bkTabScheduled">
+            <!-- Stats Bar -->
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-value" id="statTotal">—</div>
+                    <div class="stat-label">Total Scheduled</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statDueWeek">—</div>
+                    <div class="stat-label">Due This Week</div>
+                </div>
+                <div class="stat-card" id="statOverdueCard">
+                    <div class="stat-value" id="statOverdue">—</div>
+                    <div class="stat-label">Overdue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statOutstanding">—</div>
+                    <div class="stat-label">Total Outstanding</div>
+                </div>
             </div>
 
-            <!-- Loading State -->
-            <div class="loading-state" id="loadingState">
-                <div class="table-spinner"></div>
-                <p>Loading scheduled payments…</p>
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-pills" id="filterPills">
+                    <button class="filter-pill active" data-filter="all">
+                        All<span class="pill-count" id="countAll">0</span>
+                    </button>
+                    <button class="filter-pill" data-filter="scheduled">
+                        Scheduled<span class="pill-count" id="countScheduled">0</span>
+                    </button>
+                    <button class="filter-pill" data-filter="overdue">
+                        Overdue<span class="pill-count" id="countOverdue">0</span>
+                    </button>
+                </div>
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search by donor name…">
+                </div>
+                <button class="refresh-btn" id="refreshBtn" onclick="loadPayments()">
+                    <span class="refresh-icon">↻</span> Refresh
+                </button>
             </div>
 
-            <!-- Empty State -->
-            <div class="empty-state" id="emptyState" style="display:none;">
-                <div class="empty-icon">📭</div>
-                <h3>No scheduled payments yet</h3>
-                <p>Recurring donations and installments will appear here as they are scheduled.</p>
+            <!-- Data Table -->
+            <div class="table-card">
+                <div class="table-scroll">
+                    <table class="data-table" id="paymentsTable">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;">
+                                    <label class="custom-checkbox">
+                                        <input type="checkbox" id="selectAll">
+                                        <span class="checkmark"></span>
+                                    </label>
+                                </th>
+                                <th class="sortable sorted" data-sort="dueDate">
+                                    Due Date <span class="sort-arrow">▲</span>
+                                </th>
+                                <th>Donor</th>
+                                <th>Amount</th>
+                                <th>Total Pledge</th>
+                                <th>Payment #</th>
+                                <th>Method</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Rows injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Loading State -->
+                <div class="loading-state" id="loadingState">
+                    <div class="table-spinner"></div>
+                    <p>Loading scheduled payments…</p>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState" style="display:none;">
+                    <div class="empty-icon">📭</div>
+                    <h3>No scheduled payments yet</h3>
+                    <p>Recurring donations and installments will appear here as they are scheduled.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Tab 2: Deposits & Transfers Panel ── -->
+        <div class="bk-tab-panel" id="bkTabDeposits" style="display:none;">
+            <!-- KPI bar -->
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-value" id="depKpiPending">$0.00</div>
+                    <div class="stat-label">Pending Transfer</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="depKpiTransferred">$0.00</div>
+                    <div class="stat-label">Transferred to Date</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="depKpiFees">$0.00</div>
+                    <div class="stat-label">Processor Fees</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="depKpiGross">$0.00</div>
+                    <div class="stat-label">Gross Processed</div>
+                </div>
+            </div>
+
+            <!-- Filter & Action Bar -->
+            <div class="filter-bar">
+                <div class="filter-pills" id="depFilterPills">
+                    <button class="filter-pill active" data-filter="pending" onclick="setDepFilter('pending')">
+                        Pending Deposits<span class="pill-count" id="countDepPending">0</span>
+                    </button>
+                    <button class="filter-pill" data-filter="cleared" onclick="setDepFilter('cleared')">
+                        Deposited<span class="pill-count" id="countDepCleared">0</span>
+                    </button>
+                    <button class="filter-pill" data-filter="all" onclick="setDepFilter('all')">
+                        All<span class="pill-count" id="countDepAll">0</span>
+                    </button>
+                </div>
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" id="depSearchInput" placeholder="Search transactions…" oninput="filterDepositTransactions()">
+                </div>
+                <button class="refresh-btn" id="depRefreshBtn" onclick="loadDepositsTab()">
+                    <span class="refresh-icon">↻</span> Refresh
+                </button>
+                <button class="action-btn primary-btn" id="depCreateBatchBtn" onclick="openCreateDepositModal()" disabled>
+                    + Create Deposit Batch (<span id="depSelectedCount">0</span>)
+                </button>
+            </div>
+
+            <!-- Deposit Transactions Table -->
+            <div class="table-card">
+                <div class="table-scroll">
+                    <table class="data-table" id="depositTxTable">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;">
+                                    <label class="custom-checkbox">
+                                        <input type="checkbox" id="selectAllDeposits" onchange="toggleAllDepositSelection(this)">
+                                        <span class="checkmark"></span>
+                                    </label>
+                                </th>
+                                <th>Date</th>
+                                <th>Donor</th>
+                                <th>Gross</th>
+                                <th>Fee</th>
+                                <th>Net to Transfer</th>
+                                <th>Method</th>
+                                <th>Deposit Status</th>
+                                <th>Deposit Batch ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="depositTxBody">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="loading-state" id="depLoadingState" style="display:none;">
+                    <div class="table-spinner"></div>
+                    <p>Loading transactions…</p>
+                </div>
+                <div class="empty-state" id="depEmptyState" style="display:none;">
+                    <div class="empty-icon">📥</div>
+                    <h3>No transactions found</h3>
+                    <p>Transactions matching the selected filter will appear here.</p>
+                </div>
+            </div>
+
+            <!-- Deposit History Section -->
+            <div class="table-card" style="margin-top: 2rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 1.25rem 1.5rem 0.75rem;">
+                    <h3 style="font-size:1.05rem; color:#fff; font-weight:600;">Deposit Batch History</h3>
+                    <span style="font-size:0.8rem; color:#888;" id="depHistoryCount">0 batches</span>
+                </div>
+                <div class="table-scroll">
+                    <table class="data-table" id="depositHistoryTable">
+                        <thead>
+                            <tr>
+                                <th>Batch ID</th>
+                                <th>Date Created</th>
+                                <th>Deposit Date</th>
+                                <th>Count</th>
+                                <th>Gross</th>
+                                <th>Fees</th>
+                                <th>Net Transferred</th>
+                                <th>Target Account</th>
+                                <th>Transfer Ref</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="depositHistoryBody">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="depHistoryEmpty" style="display:none;">
+                    <p style="color:#666; font-size:0.9rem;">No deposit batches created yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Tab 3: Withdrawals Panel ── -->
+        <div class="bk-tab-panel" id="bkTabWithdrawals" style="display:none;">
+            <!-- KPI bar -->
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-value" id="disbKpiTotal">$0.00</div>
+                    <div class="stat-label">Total Disbursed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="disbKpiCleared">$0.00</div>
+                    <div class="stat-label">Cleared</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="disbKpiPending">$0.00</div>
+                    <div class="stat-label">Outstanding / Pending</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="disbKpiCount">0</div>
+                    <div class="stat-label">Total Withdrawals</div>
+                </div>
+            </div>
+
+            <!-- Action Bar -->
+            <div class="filter-bar">
+                <div class="filter-pills" id="disbFilterPills">
+                    <button class="filter-pill active" data-filter="all" onclick="setDisbFilter('all')">
+                        All<span class="pill-count" id="countDisbAll">0</span>
+                    </button>
+                    <button class="filter-pill" data-filter="pending" onclick="setDisbFilter('pending')">
+                        Pending<span class="pill-count" id="countDisbPending">0</span>
+                    </button>
+                    <button class="filter-pill" data-filter="cleared" onclick="setDisbFilter('cleared')">
+                        Cleared<span class="pill-count" id="countDisbCleared">0</span>
+                    </button>
+                </div>
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" id="disbSearchInput" placeholder="Search payee, purpose, ref…" oninput="filterDisbursements()">
+                </div>
+                <button class="refresh-btn" id="disbRefreshBtn" onclick="loadWithdrawalsTab()">
+                    <span class="refresh-icon">↻</span> Refresh
+                </button>
+                <button class="action-btn primary-btn" onclick="openDisbursementModal()">
+                    + New Withdrawal
+                </button>
+            </div>
+
+            <!-- Withdrawals Table -->
+            <div class="table-card">
+                <div class="table-scroll">
+                    <table class="data-table" id="disbursementsTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Payee</th>
+                                <th>Category / Type</th>
+                                <th>Method</th>
+                                <th>Check / Ref #</th>
+                                <th>Amount</th>
+                                <th>Authorized By</th>
+                                <th>Status</th>
+                                <th style="width:130px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="disbursementsBody">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="loading-state" id="disbLoadingState" style="display:none;">
+                    <div class="table-spinner"></div>
+                    <p>Loading withdrawals…</p>
+                </div>
+                <div class="empty-state" id="disbEmptyState" style="display:none;">
+                    <div class="empty-icon">📤</div>
+                    <h3>No withdrawals recorded</h3>
+                    <p>Click "+ New Withdrawal" to record an expense or grant disbursement.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Tab 4: Reconciliation Panel ── -->
+        <div class="bk-tab-panel" id="bkTabReconciliation" style="display:none;">
+            <!-- Top Summary Banner -->
+            <div class="recon-summary-card">
+                <div class="recon-summary-header">
+                    <div>
+                        <h3>Bank Account Reconciliation</h3>
+                        <p>Upload a monthly bank statement (.csv, .xlsx) to reconcile against campaign deposits and disbursements.</p>
+                    </div>
+                    <div class="recon-balance-badge">
+                        <div class="balance-label">Current Book Balance</div>
+                        <div class="balance-val" id="reconBookBalance">$0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Zone -->
+            <div class="upload-dropzone" id="reconDropzone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)">
+                <div class="upload-icon">📄</div>
+                <h4>Drag & Drop Bank Statement Here</h4>
+                <p>Supports CSV, XLSX, and XLS formats from Chase, Bank of America, TD Bank, etc.</p>
+                <label class="action-btn secondary-btn" style="display:inline-block; cursor:pointer; margin-top:0.5rem;">
+                    Browse File
+                    <input type="file" id="stmtFileInput" accept=".csv, .xlsx, .xls" style="display:none;" onchange="handleFileSelect(event)">
+                </label>
+                <div id="reconFileName" style="margin-top:0.75rem; color:#4dabf7; font-size:0.85rem; font-weight:500;"></div>
+            </div>
+
+            <!-- Reconciliation Matching & Comparison Panel -->
+            <div id="reconMatchContainer" style="display:none; margin-top: 2rem;">
+                <!-- Comparison KPIs -->
+                <div class="stats-bar" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="stat-card">
+                        <div class="stat-value" id="reconStmtCredits">$0.00</div>
+                        <div class="stat-label">Statement Credits (<span id="reconStmtCreditCount">0</span>)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="reconStmtDebits">$0.00</div>
+                        <div class="stat-label">Statement Debits (<span id="reconStmtDebitCount">0</span>)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="reconMatchedCount">0</div>
+                        <div class="stat-label">Matches Found</div>
+                    </div>
+                    <div class="stat-card" id="reconDiffCard">
+                        <div class="stat-value" id="reconVariance">$0.00</div>
+                        <div class="stat-label">Difference / Variance</div>
+                    </div>
+                </div>
+
+                <!-- Matched Items Table -->
+                <div class="table-card" style="margin-bottom: 1.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding: 1.25rem 1.5rem 0.75rem;">
+                        <h3 style="font-size:1.05rem; color:#fff; font-weight:600;">Matched Transactions</h3>
+                        <button class="action-btn primary-btn" id="confirmMatchesBtn" onclick="confirmReconcileMatches()">
+                            ✓ Confirm Reconciled Items (<span id="confirmMatchesCount">0</span>)
+                        </button>
+                    </div>
+                    <div class="table-scroll">
+                        <table class="data-table" id="reconMatchesTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" id="selectAllRecon" onchange="toggleAllRecon(this)">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </th>
+                                    <th>Confidence</th>
+                                    <th>Statement Date</th>
+                                    <th>Statement Description</th>
+                                    <th>Statement Amount</th>
+                                    <th>Matched Book Record</th>
+                                    <th>Book Amount</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reconMatchesBody">
+                                <!-- Injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Unmatched Items Section (2 columns) -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+                    <div class="table-card">
+                        <div style="padding: 1rem 1.25rem 0.5rem;">
+                            <h4 style="font-size:0.95rem; color:#ffb020; font-weight:600;">Unmatched Statement Items</h4>
+                        </div>
+                        <div class="table-scroll">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="unmatchedStmtBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <div style="padding: 1rem 1.25rem 0.5rem;">
+                            <h4 style="font-size:0.95rem; color:#a78bfa; font-weight:600;">Unmatched Book Items (Outstanding)</h4>
+                        </div>
+                        <div class="table-scroll">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Ref / Payee</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="unmatchedBookBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1343,6 +1939,146 @@
         <div class="modal-footer">
             <button class="modal-btn modal-btn-cancel" onclick="closeConfirmModal()">Cancel</button>
             <button class="modal-btn modal-btn-confirm" id="modalConfirmBtn" onclick="processSelectedPayments()">Confirm & Process</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Create Deposit Batch Modal ═══ -->
+<div class="modal-overlay" id="createDepositModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Create Deposit Batch</h3>
+            <button class="modal-close" onclick="closeCreateDepositModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="recon-summary-card" style="margin-bottom:1.25rem; padding:1rem 1.25rem;">
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; text-align:center;">
+                    <div>
+                        <div style="font-size:0.75rem; color:#888;">Transactions</div>
+                        <div style="font-size:1.1rem; font-weight:700; color:#fff;" id="depModalTxCount">0</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem; color:#888;">Gross Amount</div>
+                        <div style="font-size:1.1rem; font-weight:700; color:#fff;" id="depModalGross">$0.00</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem; color:#888;">Fees Withheld</div>
+                        <div style="font-size:1.1rem; font-weight:700; color:#ff6b6b;" id="depModalFees">$0.00</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.75rem; color:#888;">Net Transferred</div>
+                        <div style="font-size:1.1rem; font-weight:700; color:#34d399;" id="depModalNet">$0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="createDepositForm" onsubmit="submitDepositBatch(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="depDepositDate">Deposit / Transfer Date *</label>
+                        <input type="date" class="form-control" id="depDepositDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="depTargetAccount">Target Bank Account *</label>
+                        <input type="text" class="form-control" id="depTargetAccount" placeholder="e.g. Chase Operating (*1234)" required list="depAccountSuggestions">
+                        <datalist id="depAccountSuggestions">
+                            <option value="Chase Operating (*1234)">
+                            <option value="Chase Reserve (*5678)">
+                            <option value="TD Bank Main (*9012)">
+                            <option value="Signature Bank">
+                        </datalist>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="depTransferRef">Transfer / Settlement Ref #</label>
+                        <input type="text" class="form-control" id="depTransferRef" placeholder="e.g. ACH-SETTLE-2026-09-11">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="depMemo">Memo / Batch Notes</label>
+                        <textarea class="form-control" id="depMemo" rows="2" placeholder="Optional notes about this transfer settlement"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 1rem 0 0; border-top:none;">
+                    <button type="button" class="modal-btn modal-btn-cancel" onclick="closeCreateDepositModal()">Cancel</button>
+                    <button type="submit" class="modal-btn modal-btn-confirm" id="depSubmitBatchBtn">Create & Mark Cleared</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Create / Edit Withdrawal Modal ═══ -->
+<div class="modal-overlay" id="disbursementModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="disbModalTitle">New Withdrawal</h3>
+            <button class="modal-close" onclick="closeDisbursementModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="disbursementForm" onsubmit="saveDisbursement(event)">
+                <input type="hidden" id="disbExpenseId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="disbDate">Date *</label>
+                        <input type="date" class="form-control" id="disbDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="disbAmount">Amount ($) *</label>
+                        <input type="number" step="0.01" min="0.01" class="form-control" id="disbAmount" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="disbPayee">Payee / Recipient *</label>
+                        <input type="text" class="form-control" id="disbPayee" placeholder="Name of person or vendor" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="disbType">Category / Type *</label>
+                        <select class="form-control" id="disbType" required>
+                            <option value="Expense">Expense</option>
+                            <option value="Grant / Assistance">Grant / Assistance</option>
+                            <option value="Rent">Rent</option>
+                            <option value="Medical">Medical</option>
+                            <option value="Food & Groceries">Food & Groceries</option>
+                            <option value="Stipend">Stipend</option>
+                            <option value="Vendor / Professional">Vendor / Professional</option>
+                            <option value="Administration">Administration</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="disbMethod">Payment Method *</label>
+                        <select class="form-control" id="disbMethod" required>
+                            <option value="Check">Check</option>
+                            <option value="ACH / Bank Transfer">ACH / Bank Transfer</option>
+                            <option value="Wire">Wire</option>
+                            <option value="Debit Card">Debit Card</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="disbCheckRef">Check / Reference #</label>
+                        <input type="text" class="form-control" id="disbCheckRef" placeholder="e.g. Check #1042">
+                    </div>
+                    <div class="form-group">
+                        <label for="disbStatus">Status *</label>
+                        <select class="form-control" id="disbStatus" required>
+                            <option value="Pending">Pending (Outstanding)</option>
+                            <option value="Cleared">Cleared</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="disbPurpose">Purpose / Description</label>
+                        <input type="text" class="form-control" id="disbPurpose" placeholder="Description of purpose or invoice note">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="disbAuthorizedBy">Authorized By</label>
+                        <input type="text" class="form-control" id="disbAuthorizedBy" placeholder="Rabbi / Committee Member name">
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 1rem 0 0; border-top:none;">
+                    <button type="button" class="modal-btn modal-btn-cancel" onclick="closeDisbursementModal()">Cancel</button>
+                    <button type="submit" class="modal-btn modal-btn-confirm" id="disbSaveBtn">Save Withdrawal</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -2238,6 +2974,1104 @@ function debounce(fn, ms) {
         clearTimeout(timer);
         timer = setTimeout(() => fn.apply(this, args), ms);
     };
+}
+
+// ══════════════════════════════════════════════════════
+// BOOKKEEPER FINANCIAL OPERATIONS SUITE (PART 2)
+// ══════════════════════════════════════════════════════
+
+// ── Shared API & Currency Helpers ──────────────────
+async function authPost(action, data = {}) {
+    const authParams = (typeof getAuthParams === 'function') ? getAuthParams() : { authToken: '', authMethod: '' };
+    const token = authParams.authToken || CONFIG.key || '';
+    const authMeth = authParams.authMethod || 'otp';
+
+    const payload = Object.assign({
+        action: action,
+        campaign: CONFIG.campaignId,
+        campaignId: CONFIG.campaignId,
+        key: CONFIG.key,
+        authToken: token,
+        authMethod: authMeth
+    }, data);
+
+    const resp = await fetch(CONFIG.apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+    });
+    return await resp.json();
+}
+
+function formatCurrency(val) {
+    const num = parseFloat(val) || 0;
+    return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ── Tab Switching ──────────────────────────────────
+let currentBkTab = 'scheduled';
+
+function switchBkTab(tabId) {
+    currentBkTab = tabId;
+    document.querySelectorAll('.bk-tab-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.bk-tab-btn').forEach(b => b.classList.remove('active'));
+
+    const btn = document.querySelector(`[data-bktab="${tabId}"]`);
+    if (btn) btn.classList.add('active');
+
+    const panelId = 'bkTab' + tabId.charAt(0).toUpperCase() + tabId.slice(1);
+    const panel = document.getElementById(panelId);
+    if (panel) panel.style.display = 'block';
+
+    const bp = document.getElementById('batchPanel');
+    if (bp) bp.style.display = (tabId === 'scheduled') ? '' : 'none';
+
+    const titleEl = document.getElementById('pageTitle');
+    if (titleEl) {
+        if (tabId === 'scheduled') titleEl.textContent = 'Bookkeeper — Scheduled Payments';
+        else if (tabId === 'deposits') titleEl.textContent = 'Bookkeeper — Deposits & Transfers';
+        else if (tabId === 'withdrawals') titleEl.textContent = 'Bookkeeper — Withdrawals & Expenses';
+        else if (tabId === 'reconciliation') titleEl.textContent = 'Bookkeeper — Bank Reconciliation';
+    }
+
+    if (tabId === 'scheduled' && allPayments.length === 0) loadPayments();
+    if (tabId === 'deposits') loadDepositsTab();
+    if (tabId === 'withdrawals') loadWithdrawalsTab();
+    if (tabId === 'reconciliation') loadReconciliationTab();
+}
+
+// ── Deposits Tab ───────────────────────────────────
+let allDepositTx = [];
+let filteredDepositTx = [];
+let selectedDepositRefs = new Set();
+let depFilter = 'pending';
+let allBatches = [];
+
+async function loadDepositsTab() {
+    const refreshBtn = document.getElementById('depRefreshBtn');
+    const loading = document.getElementById('depLoadingState');
+    const empty = document.getElementById('depEmptyState');
+    const tbody = document.getElementById('depositTxBody');
+
+    if (refreshBtn) refreshBtn.classList.add('spinning');
+    if (tbody) tbody.innerHTML = '';
+    if (empty) empty.style.display = 'none';
+    if (loading) loading.style.display = 'flex';
+
+    try {
+        const [txResp, batchesResp] = await Promise.all([
+            authPost('getTransactions', { pageSize: 1000 }),
+            authPost('getDepositBatches')
+        ]);
+
+        if (txResp.status === 'success' && Array.isArray(txResp.transactions)) {
+            allDepositTx = txResp.transactions;
+        } else {
+            allDepositTx = [];
+        }
+
+        if (batchesResp.status === 'success' && Array.isArray(batchesResp.batches)) {
+            allBatches = batchesResp.batches;
+        } else {
+            allBatches = [];
+        }
+
+        updateDepositKPIs();
+        filterDepositTransactions();
+        renderDepositHistory();
+    } catch (err) {
+        console.error('loadDepositsTab error:', err);
+        showToast('error', 'Failed to load deposits: ' + err.message);
+    } finally {
+        if (refreshBtn) refreshBtn.classList.remove('spinning');
+        if (loading) loading.style.display = 'none';
+    }
+}
+
+function updateDepositKPIs() {
+    let pendingGross = 0, pendingNet = 0;
+    let clearedGross = 0, clearedNet = 0;
+    let totalFees = 0, totalGross = 0;
+
+    let pendingCount = 0, clearedCount = 0;
+
+    allDepositTx.forEach(tx => {
+        const gross = parseFloat(tx.amount) || 0;
+        const fees = parseFloat(tx.fees) || 0;
+        const net = parseFloat(tx.net) || (gross - fees);
+        const isCleared = (tx.funded || '').toLowerCase() === 'cleared';
+
+        totalGross += gross;
+        totalFees += fees;
+
+        if (isCleared) {
+            clearedCount++;
+            clearedGross += gross;
+            clearedNet += net;
+        } else {
+            pendingCount++;
+            pendingGross += gross;
+            pendingNet += net;
+        }
+    });
+
+    const kpiPending = document.getElementById('depKpiPending');
+    const kpiTransferred = document.getElementById('depKpiTransferred');
+    const kpiFees = document.getElementById('depKpiFees');
+    const kpiGross = document.getElementById('depKpiGross');
+
+    if (kpiPending) kpiPending.textContent = formatCurrency(pendingNet);
+    if (kpiTransferred) kpiTransferred.textContent = formatCurrency(clearedNet);
+    if (kpiFees) kpiFees.textContent = formatCurrency(totalFees);
+    if (kpiGross) kpiGross.textContent = formatCurrency(totalGross);
+
+    const countPendingEl = document.getElementById('countDepPending');
+    const countClearedEl = document.getElementById('countDepCleared');
+    const countAllEl = document.getElementById('countDepAll');
+
+    if (countPendingEl) countPendingEl.textContent = pendingCount;
+    if (countClearedEl) countClearedEl.textContent = clearedCount;
+    if (countAllEl) countAllEl.textContent = allDepositTx.length;
+}
+
+function setDepFilter(f) {
+    depFilter = f;
+    document.querySelectorAll('#depFilterPills .filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === f);
+    });
+    filterDepositTransactions();
+}
+
+function filterDepositTransactions() {
+    const search = (document.getElementById('depSearchInput')?.value || '').trim().toLowerCase();
+
+    filteredDepositTx = allDepositTx.filter(tx => {
+        const isCleared = (tx.funded || '').toLowerCase() === 'cleared';
+        if (depFilter === 'pending' && isCleared) return false;
+        if (depFilter === 'cleared' && !isCleared) return false;
+
+        if (search) {
+            const donor = (tx.donorName || '').toLowerCase();
+            const ref = (tx.reference || '').toLowerCase();
+            const batch = (tx.depositBatchId || '').toLowerCase();
+            if (!donor.includes(search) && !ref.includes(search) && !batch.includes(search)) return false;
+        }
+        return true;
+    });
+
+    renderDepositTransactions();
+}
+
+function renderDepositTransactions() {
+    const tbody = document.getElementById('depositTxBody');
+    const empty = document.getElementById('depEmptyState');
+    if (!tbody) return;
+
+    if (filteredDepositTx.length === 0) {
+        tbody.innerHTML = '';
+        if (empty) empty.style.display = 'block';
+        return;
+    }
+
+    if (empty) empty.style.display = 'none';
+
+    tbody.innerHTML = filteredDepositTx.map(tx => {
+        const isSelected = selectedDepositRefs.has(tx.reference);
+        const isCleared = (tx.funded || '').toLowerCase() === 'cleared';
+        const gross = parseFloat(tx.amount) || 0;
+        const fee = parseFloat(tx.fees) || 0;
+        const net = parseFloat(tx.net) || (gross - fee);
+        const statusBadge = isCleared 
+            ? `<span class="badge badge-cleared"><span class="badge-dot"></span>Deposited</span>`
+            : `<span class="badge badge-pending"><span class="badge-dot"></span>Pending</span>`;
+        const batchIdDisplay = tx.depositBatchId ? `<code style="font-size:0.75rem; color:#888;">${escapeHtml(tx.depositBatchId)}</code>` : '—';
+        const disabledAttr = isCleared ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '';
+
+        return `<tr class="${isSelected ? 'selected' : ''}">
+            <td>
+                <label class="custom-checkbox">
+                    <input type="checkbox" ${isSelected ? 'checked' : ''} ${disabledAttr} onchange="toggleDepositSelection('${escapeHtml(tx.reference)}')">
+                    <span class="checkmark"></span>
+                </label>
+            </td>
+            <td>${formatDate(tx.date || tx.timestamp)}</td>
+            <td class="donor-name">${escapeHtml(tx.donorName || 'Anonymous')}</td>
+            <td class="amount-cell">${formatCurrency(gross)}</td>
+            <td style="color:#ff6b6b; font-size:0.85rem;">${fee > 0 ? '-' + formatCurrency(fee) : '$0.00'}</td>
+            <td style="color:#34d399; font-weight:600;">${formatCurrency(net)}</td>
+            <td>${escapeHtml(tx.method || 'Card')}</td>
+            <td>${statusBadge}</td>
+            <td>${batchIdDisplay}</td>
+        </tr>`;
+    }).join('');
+
+    updateDepositSelectAllCheckbox();
+}
+
+function toggleDepositSelection(ref) {
+    if (!ref) return;
+    if (selectedDepositRefs.has(ref)) {
+        selectedDepositRefs.delete(ref);
+    } else {
+        selectedDepositRefs.add(ref);
+    }
+    updateDepositSelectedCount();
+    renderDepositTransactions();
+}
+
+function toggleAllDepositSelection(masterCheckbox) {
+    const checked = masterCheckbox.checked;
+    filteredDepositTx.forEach(tx => {
+        const isCleared = (tx.funded || '').toLowerCase() === 'cleared';
+        if (!isCleared && tx.reference) {
+            if (checked) selectedDepositRefs.add(tx.reference);
+            else selectedDepositRefs.delete(tx.reference);
+        }
+    });
+    updateDepositSelectedCount();
+    renderDepositTransactions();
+}
+
+function updateDepositSelectAllCheckbox() {
+    const master = document.getElementById('selectAllDeposits');
+    if (!master) return;
+    const selectable = filteredDepositTx.filter(tx => (tx.funded || '').toLowerCase() !== 'cleared');
+    if (selectable.length === 0) {
+        master.checked = false;
+        master.indeterminate = false;
+        return;
+    }
+    const allSelected = selectable.every(tx => selectedDepositRefs.has(tx.reference));
+    const someSelected = selectable.some(tx => selectedDepositRefs.has(tx.reference));
+    master.checked = allSelected;
+    master.indeterminate = someSelected && !allSelected;
+}
+
+function updateDepositSelectedCount() {
+    const count = selectedDepositRefs.size;
+    const countEl = document.getElementById('depSelectedCount');
+    const btn = document.getElementById('depCreateBatchBtn');
+    if (countEl) countEl.textContent = count;
+    if (btn) btn.disabled = (count === 0);
+}
+
+function openCreateDepositModal() {
+    if (selectedDepositRefs.size === 0) return;
+
+    let gross = 0, fees = 0;
+    allDepositTx.forEach(tx => {
+        if (selectedDepositRefs.has(tx.reference)) {
+            const g = parseFloat(tx.amount) || 0;
+            const f = parseFloat(tx.fees) || 0;
+            gross += g;
+            fees += f;
+        }
+    });
+    const net = gross - fees;
+
+    document.getElementById('depModalTxCount').textContent = selectedDepositRefs.size;
+    document.getElementById('depModalGross').textContent = formatCurrency(gross);
+    document.getElementById('depModalFees').textContent = formatCurrency(fees);
+    document.getElementById('depModalNet').textContent = formatCurrency(net);
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('depDepositDate').value = todayStr;
+    document.getElementById('depTransferRef').value = 'ACH-' + todayStr.replace(/-/g, '') + '-' + Math.floor(100 + Math.random() * 900);
+    document.getElementById('depMemo').value = '';
+
+    document.getElementById('createDepositModal').classList.add('visible');
+}
+
+function closeCreateDepositModal() {
+    document.getElementById('createDepositModal').classList.remove('visible');
+}
+
+async function submitDepositBatch(e) {
+    e.preventDefault();
+    const refs = Array.from(selectedDepositRefs);
+    if (refs.length === 0) return;
+
+    const depositDate = document.getElementById('depDepositDate').value;
+    const targetAccount = document.getElementById('depTargetAccount').value.trim();
+    const transferRef = document.getElementById('depTransferRef').value.trim();
+    const memo = document.getElementById('depMemo').value.trim();
+    const submitBtn = document.getElementById('depSubmitBatchBtn');
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating Batch…';
+
+    try {
+        const resp = await authPost('createDepositBatch', {
+            transactionRefs: refs,
+            depositDate: depositDate,
+            targetAccount: targetAccount,
+            transferRef: transferRef,
+            memo: memo
+        });
+
+        if (resp.status === 'success') {
+            showToast('success', `Deposit batch created: ${resp.batchId} (${resp.transactionCount} transactions)`);
+            selectedDepositRefs.clear();
+            updateDepositSelectedCount();
+            closeCreateDepositModal();
+            await loadDepositsTab();
+        } else {
+            showToast('error', resp.message || 'Failed to create deposit batch');
+        }
+    } catch (err) {
+        showToast('error', 'Error creating batch: ' + err.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create & Mark Cleared';
+    }
+}
+
+function renderDepositHistory() {
+    const tbody = document.getElementById('depositHistoryBody');
+    const empty = document.getElementById('depHistoryEmpty');
+    const countEl = document.getElementById('depHistoryCount');
+    if (!tbody) return;
+
+    if (countEl) countEl.textContent = `${allBatches.length} batch${allBatches.length !== 1 ? 'es' : ''}`;
+
+    if (allBatches.length === 0) {
+        tbody.innerHTML = '';
+        if (empty) empty.style.display = 'block';
+        return;
+    }
+
+    if (empty) empty.style.display = 'none';
+
+    tbody.innerHTML = allBatches.map(b => {
+        const isReversed = b.status === 'Reversed';
+        const statusBadge = isReversed
+            ? `<span class="badge badge-reversed"><span class="badge-dot"></span>Reversed</span>`
+            : `<span class="badge badge-cleared"><span class="badge-dot"></span>Completed</span>`;
+
+        const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+        const canReverse = !isReversed && (!user || ['super_admin', 'campaign_owner'].includes(user.role));
+        const actionBtn = canReverse 
+            ? `<button class="action-btn danger-btn" style="padding:0.25rem 0.6rem; font-size:0.75rem;" onclick="reverseDepositBatch('${escapeHtml(b.batchId)}')">Reverse</button>`
+            : '—';
+
+        return `<tr>
+            <td><code style="color:#74c0fc; font-weight:600;">${escapeHtml(b.batchId)}</code></td>
+            <td>${formatDate(b.dateCreated)}</td>
+            <td>${formatDate(b.depositDate)}</td>
+            <td>${b.transactionCount}</td>
+            <td>${formatCurrency(b.grossAmount)}</td>
+            <td style="color:#ff6b6b;">-${formatCurrency(b.totalFees)}</td>
+            <td style="color:#34d399; font-weight:600;">${formatCurrency(b.netTransferred)}</td>
+            <td>${escapeHtml(b.targetAccount || '—')}</td>
+            <td>${escapeHtml(b.transferRef || '—')}</td>
+            <td>${statusBadge}</td>
+            <td>${actionBtn}</td>
+        </tr>`;
+    }).join('');
+}
+
+async function reverseDepositBatch(batchId) {
+    if (!confirm(`Are you sure you want to reverse deposit batch ${batchId}? This will remove cleared status from all linked transactions.`)) {
+        return;
+    }
+
+    try {
+        const resp = await authPost('reverseDepositBatch', { batchId: batchId });
+        if (resp.status === 'success') {
+            showToast('success', resp.message || `Batch ${batchId} reversed`);
+            await loadDepositsTab();
+        } else {
+            showToast('error', resp.message || 'Failed to reverse deposit batch');
+        }
+    } catch (err) {
+        showToast('error', 'Error reversing batch: ' + err.message);
+    }
+}
+
+// ── Withdrawals Tab ────────────────────────────────
+let allDisbursements = [];
+let filteredDisbursements = [];
+let disbFilter = 'all';
+
+async function loadWithdrawalsTab() {
+    const refreshBtn = document.getElementById('disbRefreshBtn');
+    const loading = document.getElementById('disbLoadingState');
+    const empty = document.getElementById('disbEmptyState');
+    const tbody = document.getElementById('disbursementsBody');
+
+    if (refreshBtn) refreshBtn.classList.add('spinning');
+    if (tbody) tbody.innerHTML = '';
+    if (empty) empty.style.display = 'none';
+    if (loading) loading.style.display = 'flex';
+
+    try {
+        const resp = await authPost('getDisbursements', { status: 'all' });
+        if (resp.status === 'success' && Array.isArray(resp.disbursements)) {
+            allDisbursements = resp.disbursements;
+        } else {
+            allDisbursements = [];
+        }
+
+        updateDisbursementKPIs();
+        filterDisbursements();
+    } catch (err) {
+        console.error('loadWithdrawalsTab error:', err);
+        showToast('error', 'Failed to load withdrawals: ' + err.message);
+    } finally {
+        if (refreshBtn) refreshBtn.classList.remove('spinning');
+        if (loading) loading.style.display = 'none';
+    }
+}
+
+function updateDisbursementKPIs() {
+    let total = 0, cleared = 0, pending = 0;
+    let pendingCount = 0, clearedCount = 0;
+
+    allDisbursements.forEach(d => {
+        const amt = parseFloat(d.amount) || 0;
+        const isCleared = (d.status || '').toLowerCase() === 'cleared';
+        total += amt;
+        if (isCleared) {
+            cleared += amt;
+            clearedCount++;
+        } else {
+            pending += amt;
+            pendingCount++;
+        }
+    });
+
+    const totalEl = document.getElementById('disbKpiTotal');
+    const clearedEl = document.getElementById('disbKpiCleared');
+    const pendingEl = document.getElementById('disbKpiPending');
+    const countEl = document.getElementById('disbKpiCount');
+
+    if (totalEl) totalEl.textContent = formatCurrency(total);
+    if (clearedEl) clearedEl.textContent = formatCurrency(cleared);
+    if (pendingEl) pendingEl.textContent = formatCurrency(pending);
+    if (countEl) countEl.textContent = allDisbursements.length;
+
+    const countAllEl = document.getElementById('countDisbAll');
+    const countPendingEl = document.getElementById('countDisbPending');
+    const countClearedEl = document.getElementById('countDisbCleared');
+
+    if (countAllEl) countAllEl.textContent = allDisbursements.length;
+    if (countPendingEl) countPendingEl.textContent = pendingCount;
+    if (countClearedEl) countClearedEl.textContent = clearedCount;
+}
+
+function setDisbFilter(f) {
+    disbFilter = f;
+    document.querySelectorAll('#disbFilterPills .filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === f);
+    });
+    filterDisbursements();
+}
+
+function filterDisbursements() {
+    const search = (document.getElementById('disbSearchInput')?.value || '').trim().toLowerCase();
+
+    filteredDisbursements = allDisbursements.filter(d => {
+        const isCleared = (d.status || '').toLowerCase() === 'cleared';
+        if (disbFilter === 'pending' && isCleared) return false;
+        if (disbFilter === 'cleared' && !isCleared) return false;
+
+        if (search) {
+            const payee = (d.payee || '').toLowerCase();
+            const purpose = (d.purpose || '').toLowerCase();
+            const ref = (d.checkRef || '').toLowerCase();
+            const type = (d.type || '').toLowerCase();
+            if (!payee.includes(search) && !purpose.includes(search) && !ref.includes(search) && !type.includes(search)) return false;
+        }
+        return true;
+    });
+
+    renderDisbursements();
+}
+
+function renderDisbursements() {
+    const tbody = document.getElementById('disbursementsBody');
+    const empty = document.getElementById('disbEmptyState');
+    if (!tbody) return;
+
+    if (filteredDisbursements.length === 0) {
+        tbody.innerHTML = '';
+        if (empty) empty.style.display = 'block';
+        return;
+    }
+
+    if (empty) empty.style.display = 'none';
+
+    tbody.innerHTML = filteredDisbursements.map(d => {
+        const isCleared = (d.status || '').toLowerCase() === 'cleared';
+        const statusBadge = isCleared
+            ? `<button class="badge badge-cleared" style="cursor:pointer; border-radius:6px;" onclick="toggleDisbursementStatus('${escapeHtml(d.expenseId)}', 'Pending')" title="Click to mark Pending"><span class="badge-dot"></span>Cleared</button>`
+            : `<button class="badge badge-pending" style="cursor:pointer; border-radius:6px;" onclick="toggleDisbursementStatus('${escapeHtml(d.expenseId)}', 'Cleared')" title="Click to mark Cleared"><span class="badge-dot"></span>Pending</button>`;
+
+        const rawJson = escapeHtml(JSON.stringify(d));
+
+        return `<tr>
+            <td>${formatDate(d.dateFormatted || d.date)}</td>
+            <td class="donor-name">${escapeHtml(d.payee || '—')}</td>
+            <td><span style="font-size:0.8rem; color:#aaa;">${escapeHtml(d.type || 'Expense')}</span></td>
+            <td>${escapeHtml(d.method || 'Check')}</td>
+            <td>${escapeHtml(d.checkRef || '—')}</td>
+            <td class="amount-cell" style="color:#ff6b6b;">${formatCurrency(d.amount)}</td>
+            <td>${escapeHtml(d.authorizedBy || '—')}</td>
+            <td>${statusBadge}</td>
+            <td>
+                <button class="icon-btn" onclick="openDisbursementModal(${rawJson})" title="Edit">✏️</button>
+                <button class="icon-btn" onclick="deleteDisbursement('${escapeHtml(d.expenseId)}', '${escapeHtml(d.payee || '')}')" title="Delete" style="color:#ff6b6b;">🗑️</button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function openDisbursementModal(item = null) {
+    const titleEl = document.getElementById('disbModalTitle');
+    const idInput = document.getElementById('disbExpenseId');
+    const dateInput = document.getElementById('disbDate');
+    const amtInput = document.getElementById('disbAmount');
+    const payeeInput = document.getElementById('disbPayee');
+    const typeInput = document.getElementById('disbType');
+    const methodInput = document.getElementById('disbMethod');
+    const refInput = document.getElementById('disbCheckRef');
+    const statusInput = document.getElementById('disbStatus');
+    const purposeInput = document.getElementById('disbPurpose');
+    const authInput = document.getElementById('disbAuthorizedBy');
+
+    if (item) {
+        titleEl.textContent = 'Edit Withdrawal';
+        idInput.value = item.expenseId || '';
+        dateInput.value = item.dateFormatted || (item.date ? String(item.date).split('T')[0] : '');
+        amtInput.value = item.amount || '';
+        payeeInput.value = item.payee || '';
+        typeInput.value = item.type || 'Expense';
+        methodInput.value = item.method || 'Check';
+        refInput.value = item.checkRef || '';
+        statusInput.value = item.status || 'Pending';
+        purposeInput.value = item.purpose || '';
+        authInput.value = item.authorizedBy || '';
+    } else {
+        titleEl.textContent = 'New Withdrawal';
+        idInput.value = '';
+        dateInput.value = new Date().toISOString().split('T')[0];
+        amtInput.value = '';
+        payeeInput.value = '';
+        typeInput.value = 'Expense';
+        methodInput.value = 'Check';
+        refInput.value = '';
+        statusInput.value = 'Pending';
+        purposeInput.value = '';
+        authInput.value = '';
+    }
+
+    document.getElementById('disbursementModal').classList.add('visible');
+}
+
+function closeDisbursementModal() {
+    document.getElementById('disbursementModal').classList.remove('visible');
+}
+
+async function saveDisbursement(e) {
+    e.preventDefault();
+    const saveBtn = document.getElementById('disbSaveBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+
+    const expenseId = document.getElementById('disbExpenseId').value.trim();
+    const payload = {
+        expenseId: expenseId || undefined,
+        date: document.getElementById('disbDate').value,
+        amount: parseFloat(document.getElementById('disbAmount').value) || 0,
+        payee: document.getElementById('disbPayee').value.trim(),
+        type: document.getElementById('disbType').value,
+        method: document.getElementById('disbMethod').value,
+        checkRef: document.getElementById('disbCheckRef').value.trim(),
+        status: document.getElementById('disbStatus').value,
+        purpose: document.getElementById('disbPurpose').value.trim(),
+        authorizedBy: document.getElementById('disbAuthorizedBy').value.trim()
+    };
+
+    try {
+        const resp = await authPost('saveDisbursement', payload);
+        if (resp.status === 'success') {
+            showToast('success', resp.message || 'Withdrawal saved successfully');
+            closeDisbursementModal();
+            await loadWithdrawalsTab();
+        } else {
+            showToast('error', resp.message || 'Failed to save withdrawal');
+        }
+    } catch (err) {
+        showToast('error', 'Error saving withdrawal: ' + err.message);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Withdrawal';
+    }
+}
+
+async function toggleDisbursementStatus(expenseId, newStatus) {
+    try {
+        const resp = await authPost('updateDisbursementStatus', { expenseId: expenseId, status: newStatus });
+        if (resp.status === 'success') {
+            showToast('success', `Status updated to ${newStatus}`);
+            await loadWithdrawalsTab();
+        } else {
+            showToast('error', resp.message || 'Failed to update status');
+        }
+    } catch (err) {
+        showToast('error', 'Error: ' + err.message);
+    }
+}
+
+async function deleteDisbursement(expenseId, payee) {
+    if (!confirm(`Delete withdrawal record for "${payee}"? This cannot be undone.`)) {
+        return;
+    }
+    try {
+        const resp = await authPost('deleteDisbursement', { expenseId: expenseId });
+        if (resp.status === 'success') {
+            showToast('success', resp.message || 'Withdrawal deleted');
+            await loadWithdrawalsTab();
+        } else {
+            showToast('error', resp.message || 'Failed to delete withdrawal');
+        }
+    } catch (err) {
+        showToast('error', 'Error deleting: ' + err.message);
+    }
+}
+
+// ── Reconciliation Tab ─────────────────────────────
+let reconBookData = null;
+let parsedStatement = null;
+let reconMatches = [];
+let selectedReconMatchIndices = new Set();
+
+async function loadReconciliationTab() {
+    try {
+        const resp = await authPost('getReconciliationData');
+        if (resp.status === 'success') {
+            reconBookData = resp;
+            const balanceEl = document.getElementById('reconBookBalance');
+            if (balanceEl) balanceEl.textContent = formatCurrency(resp.bookBalance);
+
+            if (parsedStatement) {
+                runAutoMatch();
+            }
+        } else {
+            showToast('error', resp.message || 'Failed to fetch reconciliation data');
+        }
+    } catch (err) {
+        showToast('error', 'Reconciliation error: ' + err.message);
+    }
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    document.getElementById('reconDropzone')?.classList.add('dragover');
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    document.getElementById('reconDropzone')?.classList.remove('dragover');
+}
+
+function handleFileDrop(e) {
+    e.preventDefault();
+    document.getElementById('reconDropzone')?.classList.remove('dragover');
+    if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+        processStatementFile(e.dataTransfer.files[0]);
+    }
+}
+
+function handleFileSelect(e) {
+    if (e.target.files && e.target.files.length > 0) {
+        processStatementFile(e.target.files[0]);
+    }
+}
+
+function processStatementFile(file) {
+    if (!file) return;
+    const nameEl = document.getElementById('reconFileName');
+    if (nameEl) nameEl.textContent = `Processing: ${file.name} (${(file.size / 1024).toFixed(1)} KB)…`;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            if (typeof XLSX === 'undefined') {
+                throw new Error('SheetJS library not loaded');
+            }
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+            if (!rows || rows.length < 2) {
+                throw new Error('File does not contain enough data rows');
+            }
+
+            parseStatementRows(rows, file.name);
+        } catch (err) {
+            console.error('File parse error:', err);
+            showToast('error', 'Failed to parse file: ' + err.message);
+            if (nameEl) nameEl.textContent = 'Error parsing file: ' + err.message;
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function parseStatementRows(rows, fileName) {
+    let headerIdx = 0;
+    while (headerIdx < rows.length && rows[headerIdx].filter(c => String(c).trim() !== '').length < 2) {
+        headerIdx++;
+    }
+
+    const headers = rows[headerIdx].map(h => String(h || '').trim().toLowerCase());
+    let dateCol = -1, descCol = -1, amtCol = -1, creditCol = -1, debitCol = -1;
+
+    for (let c = 0; c < headers.length; c++) {
+        const h = headers[c];
+        if (dateCol === -1 && (h.includes('date') || h.includes('posting') || h.includes('time'))) dateCol = c;
+        else if (descCol === -1 && (h.includes('desc') || h.includes('payee') || h.includes('memo') || h.includes('detail') || h.includes('name'))) descCol = c;
+        else if (creditCol === -1 && (h.includes('credit') || h.includes('deposit'))) creditCol = c;
+        else if (debitCol === -1 && (h.includes('debit') || h.includes('withdrawal'))) debitCol = c;
+        else if (amtCol === -1 && (h.includes('amount') || h.includes('amt') || h.includes('total'))) amtCol = c;
+    }
+
+    if (dateCol === -1) dateCol = 0;
+    if (descCol === -1) descCol = 1;
+    if (amtCol === -1 && creditCol === -1 && debitCol === -1) amtCol = 2;
+
+    const parsedLines = [];
+    for (let r = headerIdx + 1; r < rows.length; r++) {
+        const row = rows[r];
+        if (!row || row.length === 0) continue;
+
+        const rawDate = row[dateCol];
+        const rawDesc = String(row[descCol] || '').trim();
+
+        let amt = 0;
+        if (creditCol !== -1 || debitCol !== -1) {
+            const cr = parseFloat(String(row[creditCol] || '').replace(/[\$,]/g, '')) || 0;
+            const dr = parseFloat(String(row[debitCol] || '').replace(/[\$,]/g, '')) || 0;
+            amt = cr > 0 ? cr : -Math.abs(dr);
+        } else if (amtCol !== -1) {
+            amt = parseFloat(String(row[amtCol] || '').replace(/[\$,]/g, '')) || 0;
+        }
+
+        if (amt === 0 && !rawDesc) continue;
+
+        let dateStr = '';
+        if (rawDate instanceof Date && !isNaN(rawDate.getTime())) {
+            dateStr = rawDate.toISOString().split('T')[0];
+        } else if (rawDate) {
+            dateStr = String(rawDate).split('T')[0];
+        }
+
+        parsedLines.push({
+            date: dateStr,
+            description: rawDesc,
+            amount: amt,
+            type: amt >= 0 ? 'credit' : 'debit'
+        });
+    }
+
+    parsedStatement = parsedLines;
+    const nameEl = document.getElementById('reconFileName');
+    if (nameEl) nameEl.textContent = `Loaded ${fileName}: ${parsedLines.length} statement rows parsed`;
+
+    runAutoMatch();
+}
+
+function runAutoMatch() {
+    if (!parsedStatement || !reconBookData) return;
+
+    const stmtCredits = parsedStatement.filter(l => l.amount > 0);
+    const stmtDebits = parsedStatement.filter(l => l.amount < 0);
+
+    const bookDeposits = [...(reconBookData.deposits || [])];
+    const bookDisbursements = [...(reconBookData.disbursements || [])];
+
+    const matchedPairs = [];
+    const unmatchedStmt = [];
+    const usedBookDepositIds = new Set();
+    const usedBookExpenseIds = new Set();
+
+    // 1. Match Credits with Book Deposits
+    stmtCredits.forEach(sc => {
+        let bestMatch = null;
+        let bestConf = null;
+
+        for (const bd of bookDeposits) {
+            if (usedBookDepositIds.has(bd.batchId)) continue;
+            const amtDiff = Math.abs(bd.amount - sc.amount);
+            if (amtDiff < 0.02) {
+                const daysDiff = dateDiffDays(sc.date, bd.dateFormatted || bd.date);
+                if (daysDiff <= 5) {
+                    bestMatch = bd;
+                    bestConf = 'High';
+                    break;
+                } else if (daysDiff <= 30 && !bestMatch) {
+                    bestMatch = bd;
+                    bestConf = 'Medium';
+                }
+            }
+        }
+
+        if (bestMatch) {
+            usedBookDepositIds.add(bestMatch.batchId);
+            matchedPairs.push({
+                confidence: bestConf,
+                stmtDate: sc.date,
+                stmtDesc: sc.description,
+                stmtAmount: sc.amount,
+                bookRef: bestMatch.batchId,
+                bookAmount: bestMatch.amount,
+                type: 'credit',
+                depositBatchId: bestMatch.batchId
+            });
+        } else {
+            unmatchedStmt.push(sc);
+        }
+    });
+
+    // 2. Match Debits with Book Disbursements
+    stmtDebits.forEach(sd => {
+        let bestMatch = null;
+        let bestConf = null;
+        const absStmtAmt = Math.abs(sd.amount);
+
+        for (const bd of bookDisbursements) {
+            if (usedBookExpenseIds.has(bd.expenseId)) continue;
+            const amtDiff = Math.abs(bd.amount - absStmtAmt);
+            if (amtDiff < 0.02) {
+                const daysDiff = dateDiffDays(sd.date, bd.dateFormatted || bd.date);
+                if (daysDiff <= 5) {
+                    bestMatch = bd;
+                    bestConf = 'High';
+                    break;
+                } else if (daysDiff <= 30 && !bestMatch) {
+                    bestMatch = bd;
+                    bestConf = 'Medium';
+                }
+            }
+        }
+
+        if (bestMatch) {
+            usedBookExpenseIds.add(bestMatch.expenseId);
+            matchedPairs.push({
+                confidence: bestConf,
+                stmtDate: sd.date,
+                stmtDesc: sd.description,
+                stmtAmount: sd.amount,
+                bookRef: (bd.payee || 'Expense') + ' (' + bestMatch.expenseId + ')',
+                bookAmount: -bestMatch.amount,
+                type: 'debit',
+                expenseId: bestMatch.expenseId
+            });
+        } else {
+            unmatchedStmt.push(sd);
+        }
+    });
+
+    const unmatchedBook = [];
+    bookDeposits.forEach(bd => {
+        if (!usedBookDepositIds.has(bd.batchId)) {
+            unmatchedBook.push({ date: bd.dateFormatted || bd.date, ref: 'Deposit: ' + bd.batchId, amount: bd.amount });
+        }
+    });
+    bookDisbursements.forEach(bd => {
+        if (!usedBookExpenseIds.has(bd.expenseId) && (bd.status || '').toLowerCase() !== 'cleared') {
+            unmatchedBook.push({ date: bd.dateFormatted || bd.date, ref: 'Pending: ' + (bd.payee || bd.expenseId), amount: -bd.amount });
+        }
+    });
+
+    reconMatches = matchedPairs;
+    selectedReconMatchIndices = new Set();
+    reconMatches.forEach((m, idx) => {
+        if (m.confidence === 'High') selectedReconMatchIndices.add(idx);
+    });
+
+    renderReconciliationResults(matchedPairs, unmatchedStmt, unmatchedBook);
+}
+
+function dateDiffDays(d1, d2) {
+    if (!d1 || !d2) return 999;
+    try {
+        const t1 = new Date(d1).getTime();
+        const t2 = new Date(d2).getTime();
+        if (isNaN(t1) || isNaN(t2)) return 999;
+        return Math.abs(t1 - t2) / (1000 * 60 * 60 * 24);
+    } catch {
+        return 999;
+    }
+}
+
+function renderReconciliationResults(matches, unmatchedStmt, unmatchedBook) {
+    document.getElementById('reconMatchContainer').style.display = 'block';
+
+    let totalStmtCredits = 0, totalStmtDebits = 0;
+    parsedStatement.forEach(l => {
+        if (l.amount > 0) totalStmtCredits += l.amount;
+        else totalStmtDebits += Math.abs(l.amount);
+    });
+
+    const stmtCreditsEl = document.getElementById('reconStmtCredits');
+    const stmtCreditCountEl = document.getElementById('reconStmtCreditCount');
+    const stmtDebitsEl = document.getElementById('reconStmtDebits');
+    const stmtDebitCountEl = document.getElementById('reconStmtDebitCount');
+    const matchedCountEl = document.getElementById('reconMatchedCount');
+
+    if (stmtCreditsEl) stmtCreditsEl.textContent = formatCurrency(totalStmtCredits);
+    if (stmtCreditCountEl) stmtCreditCountEl.textContent = parsedStatement.filter(l => l.amount > 0).length;
+    if (stmtDebitsEl) stmtDebitsEl.textContent = formatCurrency(totalStmtDebits);
+    if (stmtDebitCountEl) stmtDebitCountEl.textContent = parsedStatement.filter(l => l.amount < 0).length;
+    if (matchedCountEl) matchedCountEl.textContent = matches.length;
+
+    const netStmt = totalStmtCredits - totalStmtDebits;
+    const bookBal = reconBookData ? reconBookData.bookBalance : 0;
+    const diff = Math.round((netStmt - bookBal) * 100) / 100;
+    const diffEl = document.getElementById('reconVariance');
+    if (diffEl) {
+        diffEl.textContent = formatCurrency(diff);
+        diffEl.style.color = (Math.abs(diff) < 0.02) ? '#34d399' : '#ffb020';
+    }
+
+    const tbodyMatches = document.getElementById('reconMatchesBody');
+    if (tbodyMatches) {
+        if (matches.length === 0) {
+            tbodyMatches.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#888; padding:2rem;">No automatic matches found. Check statement date range or format.</td></tr>';
+        } else {
+            tbodyMatches.innerHTML = matches.map((m, idx) => {
+                const isSelected = selectedReconMatchIndices.has(idx);
+                const confBadge = m.confidence === 'High' 
+                    ? '<span class="badge badge-high"><span class="badge-dot"></span>Exact Match</span>'
+                    : '<span class="badge badge-medium"><span class="badge-dot"></span>Amount Match</span>';
+                const amtColor = m.type === 'credit' ? '#34d399' : '#ff6b6b';
+
+                return `<tr class="${isSelected ? 'selected' : ''}">
+                    <td>
+                        <label class="custom-checkbox">
+                            <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleReconMatch(${idx})">
+                            <span class="checkmark"></span>
+                        </label>
+                    </td>
+                    <td>${confBadge}</td>
+                    <td>${formatDate(m.stmtDate)}</td>
+                    <td class="donor-name">${escapeHtml(m.stmtDesc || 'Statement Line')}</td>
+                    <td style="color:${amtColor}; font-weight:600;">${formatCurrency(m.stmtAmount)}</td>
+                    <td><code style="color:#74c0fc;">${escapeHtml(m.bookRef)}</code></td>
+                    <td style="color:${amtColor}; font-weight:600;">${formatCurrency(m.bookAmount)}</td>
+                    <td><span style="font-size:0.75rem; text-transform:uppercase; color:#888;">${escapeHtml(m.type)}</span></td>
+                </tr>`;
+            }).join('');
+        }
+    }
+
+    const tbodyUnStmt = document.getElementById('unmatchedStmtBody');
+    if (tbodyUnStmt) {
+        if (unmatchedStmt.length === 0) {
+            tbodyUnStmt.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888; padding:1.5rem;">All statement items matched.</td></tr>';
+        } else {
+            tbodyUnStmt.innerHTML = unmatchedStmt.map(u => `<tr>
+                <td>${formatDate(u.date)}</td>
+                <td>${escapeHtml(u.description)}</td>
+                <td style="color:${u.amount >= 0 ? '#34d399' : '#ff6b6b'}; font-weight:600;">${formatCurrency(u.amount)}</td>
+            </tr>`).join('');
+        }
+    }
+
+    const tbodyUnBook = document.getElementById('unmatchedBookBody');
+    if (tbodyUnBook) {
+        if (unmatchedBook.length === 0) {
+            tbodyUnBook.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888; padding:1.5rem;">All book records matched.</td></tr>';
+        } else {
+            tbodyUnBook.innerHTML = unmatchedBook.map(u => `<tr>
+                <td>${formatDate(u.date)}</td>
+                <td>${escapeHtml(u.ref)}</td>
+                <td style="color:${u.amount >= 0 ? '#34d399' : '#ff6b6b'}; font-weight:600;">${formatCurrency(u.amount)}</td>
+            </tr>`).join('');
+        }
+    }
+
+    updateConfirmMatchesCount();
+}
+
+function toggleReconMatch(idx) {
+    if (selectedReconMatchIndices.has(idx)) {
+        selectedReconMatchIndices.delete(idx);
+    } else {
+        selectedReconMatchIndices.add(idx);
+    }
+    updateConfirmMatchesCount();
+    const rows = document.querySelectorAll('#reconMatchesBody tr');
+    if (rows[idx]) {
+        rows[idx].classList.toggle('selected', selectedReconMatchIndices.has(idx));
+    }
+}
+
+function toggleAllRecon(masterCheckbox) {
+    const checked = masterCheckbox.checked;
+    reconMatches.forEach((m, idx) => {
+        if (checked) selectedReconMatchIndices.add(idx);
+        else selectedReconMatchIndices.delete(idx);
+    });
+    updateConfirmMatchesCount();
+    document.querySelectorAll('#reconMatchesBody tr').forEach((row, idx) => {
+        row.classList.toggle('selected', checked);
+        const cb = row.querySelector('input[type="checkbox"]');
+        if (cb) cb.checked = checked;
+    });
+}
+
+function updateConfirmMatchesCount() {
+    const count = selectedReconMatchIndices.size;
+    const countEl = document.getElementById('confirmMatchesCount');
+    const btn = document.getElementById('confirmMatchesBtn');
+    if (countEl) countEl.textContent = count;
+    if (btn) btn.disabled = (count === 0);
+
+    const master = document.getElementById('selectAllRecon');
+    if (master && reconMatches.length > 0) {
+        master.checked = (count === reconMatches.length);
+        master.indeterminate = (count > 0 && count < reconMatches.length);
+    }
+}
+
+async function confirmReconcileMatches() {
+    const selected = Array.from(selectedReconMatchIndices).map(idx => reconMatches[idx]);
+    if (selected.length === 0) return;
+
+    const depositBatchIds = [];
+    const expenseIds = [];
+
+    selected.forEach(m => {
+        if (m.depositBatchId) depositBatchIds.push(m.depositBatchId);
+        if (m.expenseId) expenseIds.push(m.expenseId);
+    });
+
+    const btn = document.getElementById('confirmMatchesBtn');
+    btn.disabled = true;
+    btn.textContent = 'Confirming…';
+
+    try {
+        const resp = await authPost('confirmReconcileMatches', {
+            depositBatchIds: depositBatchIds,
+            expenseIds: expenseIds
+        });
+
+        if (resp.status === 'success') {
+            showToast('success', resp.message || `Reconciled ${selected.length} items`);
+            await loadReconciliationTab();
+        } else {
+            showToast('error', resp.message || 'Failed to confirm reconciliation');
+        }
+    } catch (err) {
+        showToast('error', 'Error confirming reconciliation: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = `✓ Confirm Reconciled Items (${selectedReconMatchIndices.size})`;
+    }
 }
 </script>
 </body>

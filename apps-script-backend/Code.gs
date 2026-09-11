@@ -545,17 +545,61 @@ function doPost(e) {
       }
       return jsonResponse(updateScheduledPayment(data));
     }
+    if (action === 'getTransactions') {
+      var txnCampId = data.campaignId || data.campaign || '';
+      if (!txnCampId) return jsonResponse({ status: 'error', message: 'campaignId is required.' });
+      if (!checkPermission(user, 'bookkeeper', txnCampId)) {
+        return jsonResponse({ status: 'error', message: 'Access denied for this campaign.' });
+      }
+      return jsonResponse(getTransactionsMaster_(txnCampId, data));
+    }
     if (action === 'markTransactionFunded') {
-      if (!checkPermission(user, 'campaign_manager', data.campaignId)) {
+      if (!checkPermission(user, 'bookkeeper', data.campaignId)) {
         return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
       }
       return jsonResponse(markTransactionFunded(data));
     }
     if (action === 'bulkMarkFunded') {
-      if (!checkPermission(user, 'campaign_manager', data.campaignId)) {
+      if (!checkPermission(user, 'bookkeeper', data.campaignId)) {
         return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
       }
       return jsonResponse(bulkMarkFunded(data));
+    }
+    if (action === 'getDepositBatches') {
+      if (!checkPermission(user, 'bookkeeper')) return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
+      return jsonResponse(getDepositBatchesMaster_(data.campaignId || data.campaign));
+    }
+    if (action === 'createDepositBatch') {
+      if (!checkPermission(user, 'bookkeeper')) return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
+      return jsonResponse(createDepositBatchMaster_(data.campaignId || data.campaign, data, user.email));
+    }
+    if (action === 'reverseDepositBatch') {
+      if (!checkPermission(user, 'campaign_owner')) return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
+      return jsonResponse(reverseDepositBatchMaster_(data.campaignId || data.campaign, data));
+    }
+    if (action === 'getDisbursements') {
+      if (!checkPermission(user, 'bookkeeper')) return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
+      return jsonResponse(getDisbursementsMaster_(data.campaignId || data.campaign, data));
+    }
+    if (action === 'saveDisbursement') {
+      if (!checkPermission(user, 'bookkeeper')) return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
+      return jsonResponse(saveDisbursementMaster_(data.campaignId || data.campaign, data, user.email));
+    }
+    if (action === 'updateDisbursementStatus') {
+      if (!checkPermission(user, 'bookkeeper')) return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
+      return jsonResponse(updateDisbursementStatusMaster_(data.campaignId || data.campaign, data));
+    }
+    if (action === 'deleteDisbursement') {
+      if (!checkPermission(user, 'campaign_owner')) return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
+      return jsonResponse(deleteDisbursementMaster_(data.campaignId || data.campaign, data));
+    }
+    if (action === 'getReconciliationData') {
+      if (!checkPermission(user, 'bookkeeper')) return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
+      return jsonResponse(getReconciliationDataMaster_(data.campaignId || data.campaign));
+    }
+    if (action === 'confirmReconcileMatches') {
+      if (!checkPermission(user, 'bookkeeper')) return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
+      return jsonResponse(confirmReconcileMatchesMaster_(data.campaignId || data.campaign, data));
     }
     if (action === 'processBookkeeperPayment') {
       if (!checkPermission(user, 'bookkeeper', data.campaignId)) {
@@ -3881,6 +3925,1085 @@ function bulkMarkFunded(data) {
     return { status: 'error', message: 'Failed to bulk mark transactions as funded.' };
   }
 }
+
+
+// ============================================================
+// TRANSACTIONS — READ FROM TAB 2 TRANSACTIONS
+// ============================================================
+/**
+ * Retrieve transaction records from a campaign's Transactions sheet.
+ * Tab 2 schema (14 cols):
+ * A: Timestamp, B: Reference, C: Amount Charged, D: Fees, E: Net,
+ * F: Donor Name, G: Pledge ID, H: Customer ID, I: Result, J: Method,
+ * K: Card Type, L: Payment #, M: Funded, N: Funded Date
+ *
+ * @param {string} campaignId - Campaign ID/slug
+ * @param {Object} [filters] - { page, pageSize, search, status, result, method, funded, dateFrom, dateTo }
+ * @returns {Object} { status, transactions, total, page, pageSize, summary }
+ */
+function getTransactionsMaster_(campaignId, filters) {
+  try {
+    filters = filters || {};
+    var campaignRow = getCampaignRow(campaignId);
+    if (!campaignRow) {
+      return { status: 'error', message: 'Campaign not found: ' + campaignId };
+    }
+
+    var sheetId = String(campaignRow[3] || '').trim();
+    if (!sheetId) {
+      return { status: 'error', message: 'No sheet configured for this campaign.' };
+    }
+
+    var ss = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName('Transactions');
+    if (!sheet || sheet.getLastRow() < 2) {
+      return {
+        status: 'success',
+        transactions: [],
+        total: 0,
+        page: 1,
+        pageSize: parseInt(filters.pageSize) || 50,
+        summary: { count: 0, totalCharged: 0, totalFees: 0, totalNet: 0 }
+      };
+    }
+
+    var lastRow = sheet.getLastRow();
+    var lastCol = Math.max(15, sheet.getLastColumn());
+    var data = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+
+    var page = parseInt(filters.page) || 1;
+    var pageSize = parseInt(filters.pageSize) || 50;
+    var searchFilter = (filters.search || '').trim().toLowerCase();
+    var resultFilter = (filters.result || '').trim().toLowerCase();
+    var methodFilter = (filters.method || '').trim().toLowerCase();
+    var fundedFilter = (filters.funded || '').trim().toLowerCase();
+    var dateFrom = filters.dateFrom ? new Date(filters.dateFrom) : null;
+    var dateTo = filters.dateTo ? new Date(filters.dateTo + 'T23:59:59') : null;
+
+    var filtered = [];
+    var sumCharged = 0;
+    var sumFees = 0;
+    var sumNet = 0;
+
+    // Scan newest first (from bottom row up to row 2)
+    for (var i = data.length - 1; i >= 0; i--) {
+      var row = data[i];
+      var rawTimestamp = row[0];
+      var refNum = String(row[1] || '').trim();
+      var amountCharged = parseFloat(row[2]) || 0;
+      var fees = parseFloat(row[3]) || 0;
+      var net = parseFloat(row[4]) || 0;
+      var donorName = String(row[5] || '').trim();
+      var pledgeId = String(row[6] || '').trim();
+      var customerId = String(row[7] || '').trim();
+      var result = String(row[8] || '').trim();
+      var method = String(row[9] || '').trim();
+      var cardType = String(row[10] || '').trim();
+      var paymentNum = String(row[11] || '').trim();
+      var funded = String(row[12] || '').trim();
+      var fundedDate = row[13] ? formatDateEdt_(row[13]) : '';
+      var depositBatchId = String(row[14] || '').trim();
+
+      var txDate = rawTimestamp ? (rawTimestamp instanceof Date ? rawTimestamp : new Date(rawTimestamp)) : null;
+
+      // Apply search filter
+      if (searchFilter) {
+        var match = donorName.toLowerCase().indexOf(searchFilter) !== -1 ||
+                    refNum.toLowerCase().indexOf(searchFilter) !== -1 ||
+                    pledgeId.toLowerCase().indexOf(searchFilter) !== -1 ||
+                    customerId.toLowerCase().indexOf(searchFilter) !== -1;
+        if (!match) continue;
+      }
+
+      // Apply result filter
+      if (resultFilter && result.toLowerCase() !== resultFilter) continue;
+
+      // Apply method filter (checks method and cardType)
+      if (methodFilter && method.toLowerCase().indexOf(methodFilter) === -1 && cardType.toLowerCase().indexOf(methodFilter) === -1) continue;
+
+      // Apply funded filter
+      if (fundedFilter) {
+        var isCleared = funded.toLowerCase() === 'cleared';
+        if ((fundedFilter === 'pending' || fundedFilter === 'unfunded') && isCleared) continue;
+        if ((fundedFilter === 'cleared' || fundedFilter === 'funded') && !isCleared) continue;
+        if (fundedFilter !== 'pending' && fundedFilter !== 'unfunded' && fundedFilter !== 'cleared' && fundedFilter !== 'funded' && funded.toLowerCase() !== fundedFilter) continue;
+      }
+
+      // Apply date filters
+      if (dateFrom && txDate && txDate < dateFrom) continue;
+      if (dateTo && txDate && txDate > dateTo) continue;
+
+      sumCharged += amountCharged;
+      sumFees += fees;
+      sumNet += net;
+
+      filtered.push({
+        id: refNum || ('TXN-' + (i + 2)),
+        timestamp: formatDateEdt_(txDate),
+        date: txDate ? Utilities.formatDate(txDate, Session.getScriptTimeZone() || 'America/New_York', 'yyyy-MM-dd HH:mm') : '',
+        reference: refNum,
+        amount: amountCharged,
+        fees: fees,
+        net: net,
+        donorName: donorName,
+        pledgeId: pledgeId,
+        customerId: customerId,
+        result: result,
+        method: method,
+        cardType: cardType,
+        paymentNum: paymentNum,
+        funded: funded,
+        fundedDate: fundedDate,
+        depositBatchId: depositBatchId
+      });
+    }
+
+    var total = filtered.length;
+    var startIdx = (page - 1) * pageSize;
+    var paginated = filtered.slice(startIdx, startIdx + pageSize);
+
+    return {
+      status: 'success',
+      transactions: paginated,
+      total: total,
+      page: page,
+      pageSize: pageSize,
+      summary: {
+        count: total,
+        totalCharged: Math.round(sumCharged * 100) / 100,
+        totalFees: Math.round(sumFees * 100) / 100,
+        totalNet: Math.round(sumNet * 100) / 100
+      }
+    };
+  } catch (err) {
+    Logger.log('getTransactionsMaster_ error: ' + err.toString());
+    return { status: 'error', message: 'Failed to retrieve transactions: ' + err.toString() };
+  }
+}
+
+
+// ============================================================
+// SCHEDULED PAYMENTS — READ WITH OVERDUE AUTO-FLAGGING
+
+
+// ============================================================
+// BOOKKEEPER FINANCIAL OPERATIONS SUITE (PART 2)
+// Helper Functions: Deposits, Expenses, and Transaction Columns
+// ============================================================
+
+/**
+ * Ensure the Deposits sheet exists with the proper 12-column schema.
+ * Schema: [Batch ID, Date Created, Deposit Date, Transaction Count, Gross Amount, Total Fees, Net Transferred, Target Account, Transfer Ref, Memo, Created By, Status]
+ * @param {Spreadsheet} ss - Campaign Spreadsheet
+ * @returns {Sheet} The Deposits sheet
+ */
+function ensureDepositsSheet_(ss) {
+  var sheet = ss.getSheetByName('Deposits');
+  var headers = [
+    'Batch ID', 'Date Created', 'Deposit Date', 'Transaction Count',
+    'Gross Amount', 'Total Fees', 'Net Transferred', 'Target Account',
+    'Transfer Ref', 'Memo', 'Created By', 'Status'
+  ];
+  if (!sheet) {
+    sheet = ss.insertSheet('Deposits');
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+  if (sheet.getLastColumn() === 0 || sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+/**
+ * Ensure the Expenses sheet (Tab 8) exists and is expanded to the 12-column schema.
+ * Old schema: [Date, Amount, Payee, Type, Purpose, Authorized By, Given by]
+ * New schema: [Date, Amount, Payee, Type, Purpose, Method, Check/Ref #, Authorized By, Given By, Status, Cleared Date, Expense ID]
+ * @param {Spreadsheet} ss - Campaign Spreadsheet
+ * @returns {Sheet} The Expenses sheet
+ */
+function ensureExpandedExpensesSheet_(ss) {
+  var expSheet = ss.getSheetByName('Expenses');
+  var newHeaders = [
+    'Date', 'Amount', 'Payee', 'Type', 'Purpose',
+    'Method', 'Check/Ref #', 'Authorized By', 'Given By',
+    'Status', 'Cleared Date', 'Expense ID'
+  ];
+  if (!expSheet) {
+    expSheet = ss.insertSheet('Expenses');
+    expSheet.getRange(1, 1, 1, newHeaders.length).setValues([newHeaders]);
+    expSheet.getRange(1, 1, 1, newHeaders.length).setFontWeight('bold');
+    expSheet.setFrozenRows(1);
+    return expSheet;
+  }
+
+  var lastCol = expSheet.getLastColumn();
+  if (lastCol >= 12) {
+    return expSheet; // Already migrated or expanded
+  }
+
+  var lastRow = expSheet.getLastRow();
+  if (lastRow < 2) {
+    expSheet.getRange(1, 1, 1, newHeaders.length).setValues([newHeaders]);
+    expSheet.getRange(1, 1, 1, newHeaders.length).setFontWeight('bold');
+    expSheet.setFrozenRows(1);
+    return expSheet;
+  }
+
+  // Read existing 7 cols: Date, Amount, Payee, Type, Purpose, Authorized By, Given by
+  var oldData = expSheet.getRange(2, 1, lastRow - 1, Math.max(7, lastCol)).getValues();
+  var restructured = [];
+  var dateStr = Utilities.formatDate(new Date(), 'America/New_York', 'yyyyMMdd');
+
+  for (var i = 0; i < oldData.length; i++) {
+    var r = oldData[i];
+    var dDate = r[0];
+    var dAmt = r[1];
+    var dPayee = r[2];
+    var dType = r[3];
+    var dPurpose = r[4];
+    var dAuthBy = r[5];
+    var dGivenBy = r[6];
+    var expenseId = 'DISB-' + dateStr + '-' + (1000 + i);
+
+    restructured.push([
+      dDate,
+      dAmt,
+      dPayee,
+      dType,
+      dPurpose,
+      'Other',     // Method
+      '',          // Check/Ref #
+      dAuthBy,     // Authorized By
+      dGivenBy,    // Given By
+      'Cleared',   // Status
+      dDate || '', // Cleared Date
+      expenseId    // Expense ID
+    ]);
+  }
+
+  // Clear existing content and rewrite with 12 cols
+  expSheet.getRange(1, 1, 1, newHeaders.length).setValues([newHeaders]);
+  expSheet.getRange(1, 1, 1, newHeaders.length).setFontWeight('bold');
+  expSheet.setFrozenRows(1);
+  if (restructured.length > 0) {
+    expSheet.getRange(2, 1, restructured.length, newHeaders.length).setValues(restructured);
+  }
+  return expSheet;
+}
+
+/**
+ * Ensure Transactions sheet has column O for 'Deposit Batch ID'.
+ * @param {Sheet} txSheet - Transactions sheet
+ */
+function ensureTransactionDepositCol_(txSheet) {
+  if (!txSheet) return;
+  var lastCol = txSheet.getLastColumn();
+  if (lastCol < 15) {
+    txSheet.getRange(1, 15).setValue('Deposit Batch ID');
+    txSheet.getRange(1, 15).setFontWeight('bold');
+  } else {
+    var col15Header = String(txSheet.getRange(1, 15).getValue() || '').trim();
+    if (!col15Header) {
+      txSheet.getRange(1, 15).setValue('Deposit Batch ID');
+      txSheet.getRange(1, 15).setFontWeight('bold');
+    }
+  }
+}
+
+
+// ============================================================
+// FINANCIAL SUITE ENDPOINTS: DEPOSITS, DISBURSEMENTS & RECONCILIATION
+// ============================================================
+
+/**
+ * Retrieve all deposit batches for a campaign.
+ * @param {string} campaignId
+ * @returns {{ status: string, batches?: Array, summary?: Object, message?: string }}
+ */
+function getDepositBatchesMaster_(campaignId) {
+  try {
+    if (!campaignId) {
+      return { status: 'error', message: 'campaignId is required.' };
+    }
+    var campaignRow = getCampaignRow(campaignId);
+    if (!campaignRow) {
+      return { status: 'error', message: 'Campaign not found: ' + campaignId };
+    }
+    var sheetId = String(campaignRow[3] || '').trim();
+    if (!sheetId) {
+      return { status: 'error', message: 'No sheet configured for this campaign.' };
+    }
+
+    var ss = SpreadsheetApp.openById(sheetId);
+    var depSheet = ensureDepositsSheet_(ss);
+    var lastRow = depSheet.getLastRow();
+
+    if (lastRow < 2) {
+      return {
+        status: 'success',
+        batches: [],
+        summary: { totalBatches: 0, totalGross: 0, totalFees: 0, totalNet: 0 }
+      };
+    }
+
+    var data = depSheet.getRange(2, 1, lastRow - 1, 12).getValues();
+    var batches = [];
+    var totalGross = 0;
+    var totalFees = 0;
+    var totalNet = 0;
+
+    // Scan newest first
+    for (var i = data.length - 1; i >= 0; i--) {
+      var r = data[i];
+      var batchId = String(r[0] || '').trim();
+      if (!batchId) continue;
+
+      var rawCreated = r[1];
+      var rawDeposit = r[2];
+      var txCount = parseInt(r[3]) || 0;
+      var gross = parseFloat(r[4]) || 0;
+      var fees = parseFloat(r[5]) || 0;
+      var net = parseFloat(r[6]) || 0;
+      var targetAccount = String(r[7] || '').trim();
+      var transferRef = String(r[8] || '').trim();
+      var memo = String(r[9] || '').trim();
+      var createdBy = String(r[10] || '').trim();
+      var status = String(r[11] || 'Completed').trim();
+
+      if (status !== 'Reversed') {
+        totalGross += gross;
+        totalFees += fees;
+        totalNet += net;
+      }
+
+      batches.push({
+        batchId: batchId,
+        dateCreated: rawCreated ? formatDateEdt_(rawCreated) : '',
+        depositDate: rawDeposit ? (rawDeposit instanceof Date ? Utilities.formatDate(rawDeposit, 'America/New_York', 'yyyy-MM-dd') : String(rawDeposit).split('T')[0]) : '',
+        transactionCount: txCount,
+        grossAmount: Math.round(gross * 100) / 100,
+        totalFees: Math.round(fees * 100) / 100,
+        netTransferred: Math.round(net * 100) / 100,
+        targetAccount: targetAccount,
+        transferRef: transferRef,
+        memo: memo,
+        createdBy: createdBy,
+        status: status
+      });
+    }
+
+    return {
+      status: 'success',
+      batches: batches,
+      summary: {
+        totalBatches: batches.length,
+        totalGross: Math.round(totalGross * 100) / 100,
+        totalFees: Math.round(totalFees * 100) / 100,
+        totalNet: Math.round(totalNet * 100) / 100
+      }
+    };
+  } catch (err) {
+    Logger.log('getDepositBatchesMaster_ error: ' + err.toString());
+    return { status: 'error', message: 'Failed to get deposit batches: ' + err.toString() };
+  }
+}
+
+/**
+ * Create a new deposit batch and link transactions to it.
+ * @param {string} campaignId
+ * @param {Object} data - { transactionRefs: string[], depositDate, targetAccount, transferRef, memo }
+ * @param {string} callerEmail
+ * @returns {{ status: string, batchId?: string, transactionCount?: number, gross?: number, fees?: number, net?: number, message?: string }}
+ */
+function createDepositBatchMaster_(campaignId, data, callerEmail) {
+  try {
+    if (!campaignId) {
+      return { status: 'error', message: 'campaignId is required.' };
+    }
+    if (!data.transactionRefs || !Array.isArray(data.transactionRefs) || data.transactionRefs.length === 0) {
+      return { status: 'error', message: 'transactionRefs array is required.' };
+    }
+
+    var campaignRow = getCampaignRow(campaignId);
+    if (!campaignRow) {
+      return { status: 'error', message: 'Campaign not found: ' + campaignId };
+    }
+    var sheetId = String(campaignRow[3] || '').trim();
+    if (!sheetId) {
+      return { status: 'error', message: 'No sheet configured for this campaign.' };
+    }
+
+    var ss = SpreadsheetApp.openById(sheetId);
+    var txSheet = ss.getSheetByName('Transactions');
+    if (!txSheet || txSheet.getLastRow() < 2) {
+      return { status: 'error', message: 'No transactions found.' };
+    }
+
+    ensureTransactionDepositCol_(txSheet);
+    var depSheet = ensureDepositsSheet_(ss);
+
+    // Generate batch ID: DEP-YYYYMMDD-XXXX
+    var randSuffix = Math.floor(1000 + Math.random() * 9000);
+    var batchId = 'DEP-' + Utilities.formatDate(new Date(), 'America/New_York', 'yyyyMMdd') + '-' + randSuffix;
+
+    var lastRow = txSheet.getLastRow();
+    var lastCol = Math.max(15, txSheet.getLastColumn());
+    var txData = txSheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+
+    var refsToFind = {};
+    for (var r = 0; r < data.transactionRefs.length; r++) {
+      refsToFind[String(data.transactionRefs[r]).trim()] = true;
+    }
+
+    var matchedCount = 0;
+    var totalGross = 0;
+    var totalFees = 0;
+    var fundedDate = new Date();
+
+    for (var i = 0; i < txData.length; i++) {
+      var ref = String(txData[i][1] || '').trim(); // col B: Reference
+      if (refsToFind[ref]) {
+        var charged = parseFloat(txData[i][2]) || 0; // col C: Amount Charged
+        var fee = parseFloat(txData[i][3]) || 0;     // col D: Fees
+        txData[i][12] = 'Cleared';                   // col M: Funded
+        txData[i][13] = fundedDate;                  // col N: Funded Date
+        txData[i][14] = batchId;                     // col O: Deposit Batch ID
+        totalGross += charged;
+        totalFees += fee;
+        matchedCount++;
+      }
+    }
+
+    if (matchedCount === 0) {
+      return { status: 'error', message: 'None of the specified transactions were found.' };
+    }
+
+    // Write back updated transactions
+    txSheet.getRange(2, 1, txData.length, lastCol).setValues(txData);
+
+    var totalNet = totalGross - totalFees;
+    var depDateVal = data.depositDate ? new Date(data.depositDate) : fundedDate;
+
+    // Append to Deposits tab
+    // [Batch ID, Date Created, Deposit Date, Transaction Count, Gross Amount, Total Fees, Net Transferred, Target Account, Transfer Ref, Memo, Created By, Status]
+    depSheet.appendRow([
+      batchId,
+      fundedDate,
+      depDateVal,
+      matchedCount,
+      Math.round(totalGross * 100) / 100,
+      Math.round(totalFees * 100) / 100,
+      Math.round(totalNet * 100) / 100,
+      data.targetAccount || '',
+      data.transferRef || '',
+      data.memo || '',
+      callerEmail || '',
+      'Completed'
+    ]);
+
+    return {
+      status: 'success',
+      batchId: batchId,
+      transactionCount: matchedCount,
+      gross: Math.round(totalGross * 100) / 100,
+      fees: Math.round(totalFees * 100) / 100,
+      net: Math.round(totalNet * 100) / 100
+    };
+  } catch (err) {
+    Logger.log('createDepositBatchMaster_ error: ' + err.toString());
+    return { status: 'error', message: 'Failed to create deposit batch: ' + err.toString() };
+  }
+}
+
+/**
+ * Reverse a deposit batch: clears Cleared status and Deposit Batch ID on transactions,
+ * and sets batch status to 'Reversed' on Deposits tab.
+ * @param {string} campaignId
+ * @param {Object} data - { batchId }
+ * @returns {{ status: string, reversedCount?: number, message?: string }}
+ */
+function reverseDepositBatchMaster_(campaignId, data) {
+  try {
+    if (!campaignId || !data.batchId) {
+      return { status: 'error', message: 'campaignId and batchId are required.' };
+    }
+
+    var campaignRow = getCampaignRow(campaignId);
+    if (!campaignRow) {
+      return { status: 'error', message: 'Campaign not found: ' + campaignId };
+    }
+    var sheetId = String(campaignRow[3] || '').trim();
+    if (!sheetId) {
+      return { status: 'error', message: 'No sheet configured for this campaign.' };
+    }
+
+    var ss = SpreadsheetApp.openById(sheetId);
+    var txSheet = ss.getSheetByName('Transactions');
+    var depSheet = ensureDepositsSheet_(ss);
+    var batchIdToReverse = String(data.batchId).trim();
+
+    var reversedCount = 0;
+    if (txSheet && txSheet.getLastRow() >= 2) {
+      var lastRow = txSheet.getLastRow();
+      var lastCol = Math.max(15, txSheet.getLastColumn());
+      var txData = txSheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+
+      for (var i = 0; i < txData.length; i++) {
+        var txBatchId = String(txData[i][14] || '').trim(); // col O
+        if (txBatchId === batchIdToReverse) {
+          txData[i][12] = ''; // col M: Funded
+          txData[i][13] = ''; // col N: Funded Date
+          txData[i][14] = ''; // col O: Deposit Batch ID
+          reversedCount++;
+        }
+      }
+
+      if (reversedCount > 0) {
+        txSheet.getRange(2, 1, txData.length, lastCol).setValues(txData);
+      }
+    }
+
+    // Update Deposits sheet row status to 'Reversed'
+    if (depSheet.getLastRow() >= 2) {
+      var depLastRow = depSheet.getLastRow();
+      var depBatchIds = depSheet.getRange(2, 1, depLastRow - 1, 1).getValues();
+      for (var j = 0; j < depBatchIds.length; j++) {
+        if (String(depBatchIds[j][0] || '').trim() === batchIdToReverse) {
+          depSheet.getRange(j + 2, 12).setValue('Reversed'); // col L: Status
+          break;
+        }
+      }
+    }
+
+    return {
+      status: 'success',
+      reversedCount: reversedCount,
+      message: 'Batch ' + batchIdToReverse + ' reversed successfully (' + reversedCount + ' transactions cleared).'
+    };
+  } catch (err) {
+    Logger.log('reverseDepositBatchMaster_ error: ' + err.toString());
+    return { status: 'error', message: 'Failed to reverse deposit batch: ' + err.toString() };
+  }
+}
+
+/**
+ * Get disbursements (Expenses tab) with filtering and summary.
+ * @param {string} campaignId
+ * @param {Object} data - { status?, search?, startDate?, endDate? }
+ * @returns {{ status: string, disbursements?: Array, summary?: Object, message?: string }}
+ */
+function getDisbursementsMaster_(campaignId, data) {
+  try {
+    if (!campaignId) {
+      return { status: 'error', message: 'campaignId is required.' };
+    }
+    data = data || {};
+    var campaignRow = getCampaignRow(campaignId);
+    if (!campaignRow) {
+      return { status: 'error', message: 'Campaign not found: ' + campaignId };
+    }
+    var sheetId = String(campaignRow[3] || '').trim();
+    if (!sheetId) {
+      return { status: 'error', message: 'No sheet configured for this campaign.' };
+    }
+
+    var ss = SpreadsheetApp.openById(sheetId);
+    var expSheet = ensureExpandedExpensesSheet_(ss);
+    var lastRow = expSheet.getLastRow();
+
+    if (lastRow < 2) {
+      return {
+        status: 'success',
+        disbursements: [],
+        summary: { totalAmount: 0, clearedAmount: 0, pendingAmount: 0, count: 0 }
+      };
+    }
+
+    var expData = expSheet.getRange(2, 1, lastRow - 1, 12).getValues();
+    var statusFilter = (data.status || '').trim().toLowerCase();
+    var searchFilter = (data.search || '').trim().toLowerCase();
+    var startDate = data.startDate ? new Date(data.startDate) : null;
+    var endDate = data.endDate ? new Date(data.endDate + 'T23:59:59') : null;
+
+    var disbursements = [];
+    var totalAmount = 0;
+    var clearedAmount = 0;
+    var pendingAmount = 0;
+
+    // Scan newest first
+    for (var i = expData.length - 1; i >= 0; i--) {
+      var r = expData[i];
+      var rDate = r[0];
+      var amt = parseFloat(r[1]) || 0;
+      var payee = String(r[2] || '').trim();
+      var type = String(r[3] || '').trim();
+      var purpose = String(r[4] || '').trim();
+      var method = String(r[5] || '').trim();
+      var checkRef = String(r[6] || '').trim();
+      var authBy = String(r[7] || '').trim();
+      var givenBy = String(r[8] || '').trim();
+      var status = String(r[9] || 'Cleared').trim();
+      var clrDate = r[10];
+      var expenseId = String(r[11] || ('DISB-' + (i + 2))).trim();
+
+      var itemDate = rDate ? (rDate instanceof Date ? rDate : new Date(rDate)) : null;
+
+      // Status filter
+      if (statusFilter && statusFilter !== 'all') {
+        if (status.toLowerCase() !== statusFilter) continue;
+      }
+
+      // Date range filter
+      if (startDate && itemDate && itemDate < startDate) continue;
+      if (endDate && itemDate && itemDate > endDate) continue;
+
+      // Search filter
+      if (searchFilter) {
+        var strToSearch = (payee + ' ' + type + ' ' + purpose + ' ' + checkRef + ' ' + authBy + ' ' + expenseId).toLowerCase();
+        if (strToSearch.indexOf(searchFilter) === -1) continue;
+      }
+
+      totalAmount += amt;
+      if (status.toLowerCase() === 'cleared') {
+        clearedAmount += amt;
+      } else {
+        pendingAmount += amt;
+      }
+
+      disbursements.push({
+        expenseId: expenseId,
+        date: rDate ? formatDateEdt_(rDate) : '',
+        dateFormatted: itemDate && !isNaN(itemDate.getTime()) ? Utilities.formatDate(itemDate, 'America/New_York', 'yyyy-MM-dd') : '',
+        amount: Math.round(amt * 100) / 100,
+        payee: payee,
+        type: type,
+        purpose: purpose,
+        method: method,
+        checkRef: checkRef,
+        authorizedBy: authBy,
+        givenBy: givenBy,
+        status: status,
+        clearedDate: clrDate ? formatDateEdt_(clrDate) : ''
+      });
+    }
+
+    return {
+      status: 'success',
+      disbursements: disbursements,
+      summary: {
+        totalAmount: Math.round(totalAmount * 100) / 100,
+        clearedAmount: Math.round(clearedAmount * 100) / 100,
+        pendingAmount: Math.round(pendingAmount * 100) / 100,
+        count: disbursements.length
+      }
+    };
+  } catch (err) {
+    Logger.log('getDisbursementsMaster_ error: ' + err.toString());
+    return { status: 'error', message: 'Failed to get disbursements: ' + err.toString() };
+  }
+}
+
+/**
+ * Create or update a disbursement record in Expenses.
+ * @param {string} campaignId
+ * @param {Object} data - { expenseId?, date, amount, payee, type, purpose, method, checkRef, authorizedBy, status }
+ * @param {string} callerEmail
+ * @returns {{ status: string, expenseId?: string, message?: string }}
+ */
+function saveDisbursementMaster_(campaignId, data, callerEmail) {
+  try {
+    if (!campaignId) {
+      return { status: 'error', message: 'campaignId is required.' };
+    }
+    var campaignRow = getCampaignRow(campaignId);
+    if (!campaignRow) {
+      return { status: 'error', message: 'Campaign not found: ' + campaignId };
+    }
+    var sheetId = String(campaignRow[3] || '').trim();
+    if (!sheetId) {
+      return { status: 'error', message: 'No sheet configured for this campaign.' };
+    }
+
+    var ss = SpreadsheetApp.openById(sheetId);
+    var expSheet = ensureExpandedExpensesSheet_(ss);
+    var amount = parseFloat(data.amount) || 0;
+    var status = data.status ? (data.status.charAt(0).toUpperCase() + data.status.slice(1).toLowerCase()) : 'Pending';
+    var dDate = data.date ? new Date(data.date) : new Date();
+    var clearedDate = (status === 'Cleared') ? new Date() : '';
+
+    if (data.expenseId) {
+      // Update existing row
+      var targetId = String(data.expenseId).trim();
+      var lastRow = expSheet.getLastRow();
+      var foundRow = -1;
+      if (lastRow >= 2) {
+        var idValues = expSheet.getRange(2, 12, lastRow - 1, 1).getValues();
+        for (var i = 0; i < idValues.length; i++) {
+          if (String(idValues[i][0] || '').trim() === targetId) {
+            foundRow = i + 2;
+            break;
+          }
+        }
+      }
+
+      if (foundRow > 0) {
+        var existingRowVals = expSheet.getRange(foundRow, 1, 1, 12).getValues()[0];
+        // If already Cleared and remaining Cleared, preserve previous cleared date if valid
+        if (status === 'Cleared' && existingRowVals[9] === 'Cleared' && existingRowVals[10]) {
+          clearedDate = existingRowVals[10];
+        }
+        var updatedRow = [
+          dDate,
+          amount,
+          data.payee || '',
+          data.type || 'Expense',
+          data.purpose || '',
+          data.method || 'Check',
+          data.checkRef || '',
+          data.authorizedBy || '',
+          existingRowVals[8] || callerEmail || '', // Given By
+          status,
+          clearedDate,
+          targetId
+        ];
+        expSheet.getRange(foundRow, 1, 1, 12).setValues([updatedRow]);
+        return { status: 'success', expenseId: targetId, message: 'Disbursement updated.' };
+      }
+    }
+
+    // New disbursement
+    var randSuffix = Math.floor(1000 + Math.random() * 9000);
+    var newId = 'DISB-' + Utilities.formatDate(new Date(), 'America/New_York', 'yyyyMMdd') + '-' + randSuffix;
+    var newRow = [
+      dDate,
+      amount,
+      data.payee || '',
+      data.type || 'Expense',
+      data.purpose || '',
+      data.method || 'Check',
+      data.checkRef || '',
+      data.authorizedBy || '',
+      callerEmail || '',
+      status,
+      clearedDate,
+      newId
+    ];
+    expSheet.appendRow(newRow);
+
+    return { status: 'success', expenseId: newId, message: 'Disbursement saved.' };
+  } catch (err) {
+    Logger.log('saveDisbursementMaster_ error: ' + err.toString());
+    return { status: 'error', message: 'Failed to save disbursement: ' + err.toString() };
+  }
+}
+
+/**
+ * Update the status of a disbursement (Pending or Cleared).
+ * @param {string} campaignId
+ * @param {Object} data - { expenseId, status }
+ * @returns {{ status: string, message?: string }}
+ */
+function updateDisbursementStatusMaster_(campaignId, data) {
+  try {
+    if (!campaignId || !data.expenseId) {
+      return { status: 'error', message: 'campaignId and expenseId are required.' };
+    }
+    var campaignRow = getCampaignRow(campaignId);
+    if (!campaignRow) {
+      return { status: 'error', message: 'Campaign not found: ' + campaignId };
+    }
+    var sheetId = String(campaignRow[3] || '').trim();
+    if (!sheetId) {
+      return { status: 'error', message: 'No sheet configured for this campaign.' };
+    }
+
+    var ss = SpreadsheetApp.openById(sheetId);
+    var expSheet = ensureExpandedExpensesSheet_(ss);
+    var targetId = String(data.expenseId).trim();
+    var newStatus = (data.status || 'Pending').toLowerCase() === 'cleared' ? 'Cleared' : 'Pending';
+
+    var lastRow = expSheet.getLastRow();
+    if (lastRow < 2) {
+      return { status: 'error', message: 'Disbursement not found.' };
+    }
+
+    var idValues = expSheet.getRange(2, 12, lastRow - 1, 1).getValues();
+    for (var i = 0; i < idValues.length; i++) {
+      if (String(idValues[i][0] || '').trim() === targetId) {
+        var rowNum = i + 2;
+        expSheet.getRange(rowNum, 10).setValue(newStatus); // col J: Status
+        if (newStatus === 'Cleared') {
+          expSheet.getRange(rowNum, 11).setValue(new Date()); // col K: Cleared Date
+        } else {
+          expSheet.getRange(rowNum, 11).setValue(''); // col K: Cleared Date
+        }
+        return { status: 'success', message: 'Status updated to ' + newStatus + '.' };
+      }
+    }
+
+    return { status: 'error', message: 'Disbursement ID not found: ' + targetId };
+  } catch (err) {
+    Logger.log('updateDisbursementStatusMaster_ error: ' + err.toString());
+    return { status: 'error', message: 'Failed to update disbursement status: ' + err.toString() };
+  }
+}
+
+/**
+ * Delete a disbursement row by expenseId.
+ * @param {string} campaignId
+ * @param {Object} data - { expenseId }
+ * @returns {{ status: string, message?: string }}
+ */
+function deleteDisbursementMaster_(campaignId, data) {
+  try {
+    if (!campaignId || !data.expenseId) {
+      return { status: 'error', message: 'campaignId and expenseId are required.' };
+    }
+    var campaignRow = getCampaignRow(campaignId);
+    if (!campaignRow) {
+      return { status: 'error', message: 'Campaign not found: ' + campaignId };
+    }
+    var sheetId = String(campaignRow[3] || '').trim();
+    if (!sheetId) {
+      return { status: 'error', message: 'No sheet configured for this campaign.' };
+    }
+
+    var ss = SpreadsheetApp.openById(sheetId);
+    var expSheet = ensureExpandedExpensesSheet_(ss);
+    var targetId = String(data.expenseId).trim();
+    var lastRow = expSheet.getLastRow();
+
+    if (lastRow < 2) {
+      return { status: 'error', message: 'Disbursement not found.' };
+    }
+
+    var idValues = expSheet.getRange(2, 12, lastRow - 1, 1).getValues();
+    for (var i = 0; i < idValues.length; i++) {
+      if (String(idValues[i][0] || '').trim() === targetId) {
+        expSheet.deleteRow(i + 2);
+        return { status: 'success', message: 'Disbursement deleted successfully.' };
+      }
+    }
+
+    return { status: 'error', message: 'Disbursement ID not found: ' + targetId };
+  } catch (err) {
+    Logger.log('deleteDisbursementMaster_ error: ' + err.toString());
+    return { status: 'error', message: 'Failed to delete disbursement: ' + err.toString() };
+  }
+}
+
+/**
+ * Get comprehensive reconciliation data:
+ * Completed deposits (credits), disbursements (debits), and transactions summary.
+ * @param {string} campaignId
+ * @returns {{ status: string, deposits?: Array, disbursements?: Array, transactionSummary?: Object, bookBalance?: number, message?: string }}
+ */
+function getReconciliationDataMaster_(campaignId) {
+  try {
+    if (!campaignId) {
+      return { status: 'error', message: 'campaignId is required.' };
+    }
+    var campaignRow = getCampaignRow(campaignId);
+    if (!campaignRow) {
+      return { status: 'error', message: 'Campaign not found: ' + campaignId };
+    }
+    var sheetId = String(campaignRow[3] || '').trim();
+    if (!sheetId) {
+      return { status: 'error', message: 'No sheet configured for this campaign.' };
+    }
+
+    var ss = SpreadsheetApp.openById(sheetId);
+    var depSheet = ensureDepositsSheet_(ss);
+    var expSheet = ensureExpandedExpensesSheet_(ss);
+    var txSheet = ss.getSheetByName('Transactions');
+
+    // 1. Deposits (Completed batches -> credits)
+    var deposits = [];
+    var totalDepositsNet = 0;
+    if (depSheet.getLastRow() >= 2) {
+      var depData = depSheet.getRange(2, 1, depSheet.getLastRow() - 1, 12).getValues();
+      for (var d = 0; d < depData.length; d++) {
+        var dr = depData[d];
+        var batchId = String(dr[0] || '').trim();
+        if (!batchId) continue;
+        var status = String(dr[11] || 'Completed').trim();
+        var netAmt = parseFloat(dr[6]) || 0;
+        var depDate = dr[2];
+        var memo = String(dr[9] || '').trim();
+        var ref = String(dr[8] || '').trim();
+
+        if (status === 'Completed') {
+          totalDepositsNet += netAmt;
+        }
+
+        deposits.push({
+          batchId: batchId,
+          date: depDate ? formatDateEdt_(depDate) : '',
+          dateFormatted: depDate && depDate instanceof Date ? Utilities.formatDate(depDate, 'America/New_York', 'yyyy-MM-dd') : '',
+          amount: Math.round(netAmt * 100) / 100,
+          grossAmount: Math.round((parseFloat(dr[4]) || 0) * 100) / 100,
+          fees: Math.round((parseFloat(dr[5]) || 0) * 100) / 100,
+          count: parseInt(dr[3]) || 0,
+          targetAccount: String(dr[7] || '').trim(),
+          transferRef: ref,
+          memo: memo,
+          status: status
+        });
+      }
+    }
+
+    // 2. Disbursements (Expenses -> debits)
+    var disbursements = [];
+    var totalClearedExpenses = 0;
+    if (expSheet.getLastRow() >= 2) {
+      var expData = expSheet.getRange(2, 1, expSheet.getLastRow() - 1, 12).getValues();
+      for (var e = 0; e < expData.length; e++) {
+        var er = expData[e];
+        var expenseId = String(er[11] || ('DISB-' + (e + 2))).trim();
+        var expAmt = parseFloat(er[1]) || 0;
+        var expStatus = String(er[9] || 'Cleared').trim();
+        var expDate = er[0];
+
+        if (expStatus.toLowerCase() === 'cleared') {
+          totalClearedExpenses += expAmt;
+        }
+
+        disbursements.push({
+          expenseId: expenseId,
+          date: expDate ? formatDateEdt_(expDate) : '',
+          dateFormatted: expDate && expDate instanceof Date ? Utilities.formatDate(expDate, 'America/New_York', 'yyyy-MM-dd') : '',
+          amount: Math.round(expAmt * 100) / 100,
+          payee: String(er[2] || '').trim(),
+          type: String(er[3] || '').trim(),
+          purpose: String(er[4] || '').trim(),
+          method: String(er[5] || '').trim(),
+          checkRef: String(er[6] || '').trim(),
+          status: expStatus,
+          clearedDate: er[10] ? formatDateEdt_(er[10]) : ''
+        });
+      }
+    }
+
+    // 3. Transactions summary
+    var fundedCount = 0, fundedNet = 0;
+    var pendingCount = 0, pendingNet = 0;
+    var totalTxnCount = 0, totalTxnNet = 0;
+
+    if (txSheet && txSheet.getLastRow() >= 2) {
+      var lastRow = txSheet.getLastRow();
+      var txData = txSheet.getRange(2, 1, lastRow - 1, Math.max(14, txSheet.getLastColumn())).getValues();
+      for (var t = 0; t < txData.length; t++) {
+        var tr = txData[t];
+        var result = String(tr[8] || '').trim().toLowerCase();
+        // Skip failed transactions
+        if (result === 'failed' || result === 'declined' || result === 'error') continue;
+
+        var net = parseFloat(tr[4]) || 0;
+        var isCleared = String(tr[12] || '').trim().toLowerCase() === 'cleared';
+
+        totalTxnCount++;
+        totalTxnNet += net;
+
+        if (isCleared) {
+          fundedCount++;
+          fundedNet += net;
+        } else {
+          pendingCount++;
+          pendingNet += net;
+        }
+      }
+    }
+
+    var bookBalance = Math.round((totalDepositsNet - totalClearedExpenses) * 100) / 100;
+
+    return {
+      status: 'success',
+      deposits: deposits,
+      disbursements: disbursements,
+      transactionSummary: {
+        funded: { count: fundedCount, amount: Math.round(fundedNet * 100) / 100 },
+        pending: { count: pendingCount, amount: Math.round(pendingNet * 100) / 100 },
+        total: { count: totalTxnCount, amount: Math.round(totalTxnNet * 100) / 100 }
+      },
+      bookBalance: bookBalance
+    };
+  } catch (err) {
+    Logger.log('getReconciliationDataMaster_ error: ' + err.toString());
+    return { status: 'error', message: 'Failed to get reconciliation data: ' + err.toString() };
+  }
+}
+
+/**
+ * Confirm reconciliation matches: marks matched disbursements as Cleared.
+ * @param {string} campaignId
+ * @param {Object} data - { depositBatchIds: string[], expenseIds: string[] }
+ * @returns {{ status: string, confirmedDeposits: number, confirmedDisbursements: number, message?: string }}
+ */
+function confirmReconcileMatchesMaster_(campaignId, data) {
+  try {
+    if (!campaignId) {
+      return { status: 'error', message: 'campaignId is required.' };
+    }
+    var campaignRow = getCampaignRow(campaignId);
+    if (!campaignRow) {
+      return { status: 'error', message: 'Campaign not found: ' + campaignId };
+    }
+    var sheetId = String(campaignRow[3] || '').trim();
+    if (!sheetId) {
+      return { status: 'error', message: 'No sheet configured for this campaign.' };
+    }
+
+    var ss = SpreadsheetApp.openById(sheetId);
+    var expSheet = ensureExpandedExpensesSheet_(ss);
+
+    var depositBatchIds = Array.isArray(data.depositBatchIds) ? data.depositBatchIds : [];
+    var expenseIds = Array.isArray(data.expenseIds) ? data.expenseIds : [];
+
+    var confirmedDisbursements = 0;
+    if (expenseIds.length > 0 && expSheet.getLastRow() >= 2) {
+      var expMap = {};
+      for (var e = 0; e < expenseIds.length; e++) {
+        expMap[String(expenseIds[e]).trim()] = true;
+      }
+
+      var lastRow = expSheet.getLastRow();
+      var expData = expSheet.getRange(2, 1, lastRow - 1, 12).getValues();
+      var clearedDate = new Date();
+
+      for (var i = 0; i < expData.length; i++) {
+        var exId = String(expData[i][11] || '').trim();
+        if (expMap[exId]) {
+          expData[i][9] = 'Cleared';    // col J: Status
+          expData[i][10] = clearedDate; // col K: Cleared Date
+          confirmedDisbursements++;
+        }
+      }
+
+      if (confirmedDisbursements > 0) {
+        expSheet.getRange(2, 1, expData.length, 12).setValues(expData);
+      }
+    }
+
+    return {
+      status: 'success',
+      confirmedDeposits: depositBatchIds.length,
+      confirmedDisbursements: confirmedDisbursements,
+      message: 'Reconciliation confirmed: ' + depositBatchIds.length + ' deposit(s), ' + confirmedDisbursements + ' disbursement(s) verified.'
+    };
+  } catch (err) {
+    Logger.log('confirmReconcileMatchesMaster_ error: ' + err.toString());
+    return { status: 'error', message: 'Failed to confirm reconciliation matches: ' + err.toString() };
+  }
+}
+
+
+// ============================================================
+// GENERAL DONATION — PROCESS (PUBLIC, Turnstile-protected)
 
 
 // ============================================================
