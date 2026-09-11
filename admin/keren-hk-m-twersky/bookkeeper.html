@@ -1135,13 +1135,19 @@
 
         <!-- Tab switches for Sign-In vs Access Key -->
         <div class="auth-tab-bar">
-            <button type="button" class="auth-tab-btn active" id="tabBtnPassword" onclick="switchAuthTab('password')">Password</button>
+            <button type="button" class="auth-tab-btn active" id="tabBtnGoogle" onclick="switchAuthTab('google')">Google</button>
+            <button type="button" class="auth-tab-btn" id="tabBtnPassword" onclick="switchAuthTab('password')">Password</button>
             <button type="button" class="auth-tab-btn" id="tabBtnKey" onclick="switchAuthTab('key')">Access Key</button>
-            <button type="button" class="auth-tab-btn" id="tabBtnGoogle" onclick="switchAuthTab('google')">Google</button>
+        </div>
+
+        <!-- Google Sign-In Panel (Default) -->
+        <div id="bkGooglePanel" style="display:block; text-align:center; padding:1.25rem 0 0.5rem;">
+            <p style="font-size:0.85rem; color:#aaa; margin-bottom:1rem;">Sign in with your authorized Google account</p>
+            <div id="bkGoogleBtnContainer" style="display:flex; justify-content:center;"></div>
         </div>
 
         <!-- Password Sign-In Panel -->
-        <form id="bkPasswordForm" onsubmit="handleBkPasswordLogin(event)" style="display:block;">
+        <form id="bkPasswordForm" onsubmit="handleBkPasswordLogin(event)" style="display:none;">
             <div class="auth-field">
                 <label for="bkEmail">Email Address</label>
                 <input type="email" id="bkEmail" class="auth-input" placeholder="bookkeeper@example.com" required autocomplete="username">
@@ -1157,15 +1163,10 @@
         <form id="bkKeyForm" onsubmit="handleBkKeyUnlock(event)" style="display:none;">
             <div class="auth-field">
                 <label for="bkKeyInput">Campaign Access Key</label>
-                <input type="password" id="bkKeyInput" class="auth-input" placeholder="Enter access key (e.g. 5786)" required>
+                <input type="password" id="bkKeyInput" class="auth-input" placeholder="Enter campaign access key" required>
             </div>
             <button type="submit" class="auth-submit-btn" id="bkKeyBtn">Unlock Portal</button>
         </form>
-
-        <!-- Google Sign-In Panel -->
-        <div id="bkGooglePanel" style="display:none; text-align:center; padding:1rem 0;">
-            <div id="bkGoogleBtnContainer" style="display:flex; justify-content:center;"></div>
-        </div>
 
         <div id="bkAuthError" style="display:none; margin-top:1rem; padding:0.6rem 0.8rem; background:rgba(255,82,82,0.1); border:1px solid rgba(255,82,82,0.3); border-radius:6px; color:#ff5252; font-size:0.85rem; text-align:center;"></div>
     </div>
@@ -1552,9 +1553,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         document.getElementById('appMain').style.display = 'none';
         document.getElementById('accessDenied').style.display = 'flex';
-        if (typeof initGoogleSignIn === 'function') {
-            initGoogleSignIn('bkGoogleBtnContainer');
-        }
+        switchAuthTab('google');
     }
 });
 

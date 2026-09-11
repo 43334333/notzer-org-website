@@ -2413,6 +2413,8 @@ function renderCampaignTable(campaigns) {
         const keyParam = (c.wallKey || c.wallAccessKey) ? `?key=${encodeURIComponent(c.wallKey || c.wallAccessKey)}` : '';
         const pageLink = `<a href="${pageUrlVal}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--text-secondary);text-decoration:none;" title="Open Page: ${pageUrlVal}">🌐 Page ↗</a>`;
         const wallLink = `<a href="/wall/${c.id}/${keyParam}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--text-secondary);text-decoration:none;" title="Open Donor Wall">🧱 Wall ↗</a>`;
+        const adminUrlVal = c.adminUrl || `/admin/${c.id}/${keyParam}`;
+        const adminLink = `<a href="${adminUrlVal}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:#ffa94d;text-decoration:none;" title="Open Campaign Settings & Admin Portal">⚙️ Admin ↗</a>`;
         const bookkeeperLink = `<a href="/admin/${c.id}/bookkeeper.html${keyParam}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:#4dabf7;text-decoration:none;" title="Open Bookkeeper Portal">📖 Bookkeeper ↗</a>`;
 
         const activateBtn = isActive
@@ -2440,10 +2442,11 @@ function renderCampaignTable(campaigns) {
             <td style="text-transform:capitalize;">${c.primaryGateway || '—'}</td>
             <td>
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                    ${sheetLink}
+                    ${adminLink}
+                    ${bookkeeperLink}
                     ${pageLink}
                     ${wallLink}
-                    ${bookkeeperLink}
+                    ${sheetLink}
                 </div>
             </td>
             <td>

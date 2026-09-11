@@ -896,7 +896,7 @@
         <div class="footer-text">
             This page is not publicly listed. Data refreshes automatically.<br>
             Last updated: <span class="refresh-time" id="last-refresh">—</span><br>
-            <a href="/donate/" class="footer-link" style="margin-top: 8px; display: inline-block;">Make a Donation →</a>
+            <a href="{{DONATION_PAGE_URL}}" id="makeDonationLink" class="footer-link" style="margin-top: 8px; display: inline-block;">Make a Donation →</a>
         </div>
     </footer>
 
@@ -1365,6 +1365,12 @@ function showAccessDenied(message) {
     document.getElementById('campaign-title').textContent =
         WALL_CONFIG.campaignName + ' — Donor Wall';
     document.title = 'Donor Wall — ' + WALL_CONFIG.campaignName;
+
+    // Set donation link
+    const donationLink = document.getElementById('makeDonationLink');
+    if (donationLink && WALL_CONFIG.donationPageUrl) {
+        donationLink.href = WALL_CONFIG.donationPageUrl;
+    }
 
     // Apply accent colors from config (override CSS variables)
     if (WALL_CONFIG.accentColor) {

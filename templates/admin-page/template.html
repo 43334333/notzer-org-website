@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>Admin Entry — {{CAMPAIGN_NAME}}</title>
+    <title>Campaign Settings — {{CAMPAIGN_NAME}}</title>
     <link rel="icon" type="image/png" href="../../NC_Logo_03.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -101,7 +101,7 @@
 
         /* ── Page Wrapper ──────────────────────────────── */
         .page-wrapper {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
             padding: 2rem 1.25rem 4rem;
         }
@@ -138,6 +138,8 @@
             gap: 0;
             margin-bottom: 2rem;
             border-bottom: 1px solid rgba(255,255,255,0.08);
+            overflow-x: auto;
+            scrollbar-width: thin;
         }
         .tab-btn {
             padding: 0.75rem 1.5rem;
@@ -1069,16 +1071,18 @@
     <!-- Header -->
     <header class="page-header">
         <img src="../../NC_Logo_03.png" alt="Notzer Chesed">
-        <h1>Admin — Manual Donation Entry</h1>
+        <h1>Campaign Settings</h1>
         <p class="subtitle" id="campaignSubtitle"></p>
     </header>
 
     <!-- Tab Navigation -->
     <nav class="tab-nav" id="tabNav">
         <button class="tab-btn active" data-tab="donationEntry">Donation Entry</button>
+        <button class="tab-btn" data-tab="transactions">Transactions</button>
         <button class="tab-btn" data-tab="pledges">Pledges</button>
         <button class="tab-btn" data-tab="scheduledPayments">Scheduled Payments</button>
         <button class="tab-btn" data-tab="teams">Teams</button>
+        <button class="tab-btn" data-tab="reports">Reports</button>
         <button class="tab-btn" data-tab="users" id="usersTabBtn" style="display:none;">Users</button>
     </nav>
 
@@ -1292,6 +1296,87 @@
         </div>
     </div>
 
+    <!-- ═══ Tab: Transactions ═══ -->
+    <div class="tab-panel" id="tab-transactions">
+        <div class="summary-cards" id="transactionsSummaryCards">
+            <div class="summary-card accent-blue">
+                <div class="card-value" id="txnTotalCount">0</div>
+                <div class="card-label">Total Transactions</div>
+            </div>
+            <div class="summary-card accent-green">
+                <div class="card-value" id="txnTotalGross">$0.00</div>
+                <div class="card-label">Total Gross</div>
+            </div>
+            <div class="summary-card accent-orange">
+                <div class="card-value" id="txnTotalFees">$0.00</div>
+                <div class="card-label">Total Fees</div>
+            </div>
+            <div class="summary-card accent-blue">
+                <div class="card-value" id="txnTotalNet">$0.00</div>
+                <div class="card-label">Total Net</div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem;">
+                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; flex:1;">
+                    <input type="text" id="txnSearchInput" placeholder="Search donor, ref, pledge ID…" class="form-input" style="min-width:200px; max-width:280px; padding:0.45rem 0.8rem; font-size:0.85rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff;">
+                    <select id="txnMethodFilter" style="padding:0.45rem 0.8rem; font-size:0.85rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#ccc;">
+                        <option value="">All Methods</option>
+                        <option value="card">Credit Card</option>
+                        <option value="cardknox">Cardknox</option>
+                        <option value="usaepay">USAePay</option>
+                        <option value="check">Check</option>
+                        <option value="cash">Cash</option>
+                        <option value="zelle">Zelle</option>
+                        <option value="daf">DAF</option>
+                        <option value="tdf">TDF</option>
+                    </select>
+                    <select id="txnResultFilter" style="padding:0.45rem 0.8rem; font-size:0.85rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#ccc;">
+                        <option value="">All Results</option>
+                        <option value="a">Approved (A)</option>
+                        <option value="d">Declined (D)</option>
+                        <option value="manual">Manual</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <button type="button" class="btn-secondary" id="refreshTxnBtn" style="padding:0.45rem 0.9rem; font-size:0.85rem;" onclick="loadTransactions(1)">↻ Refresh</button>
+                </div>
+            </div>
+
+            <div class="data-table-wrapper">
+                <table class="data-table" id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Reference #</th>
+                            <th>Donor Name</th>
+                            <th>Method</th>
+                            <th>Amount</th>
+                            <th>Fees</th>
+                            <th>Net</th>
+                            <th>Result</th>
+                            <th>Pledge ID</th>
+                            <th>Funded</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTableBody">
+                        <tr><td colspan="10" class="table-loading">Loading transactions…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div id="txnPagination" style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.06); font-size:0.82rem; color:#888;">
+                <span id="txnPageInfo">Showing 0-0 of 0</span>
+                <div style="display:flex; gap:0.5rem;">
+                    <button type="button" class="btn-secondary" id="txnPrevBtn" onclick="changeTxnPage(-1)" disabled style="padding:0.35rem 0.75rem; font-size:0.8rem;">← Previous</button>
+                    <button type="button" class="btn-secondary" id="txnNextBtn" onclick="changeTxnPage(1)" disabled style="padding:0.35rem 0.75rem; font-size:0.8rem;">Next →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══ Tab: Pledges ═══ -->
     <div class="tab-panel" id="tab-pledges">
         <div class="summary-cards" id="pledgeSummaryCards">
@@ -1381,6 +1466,8 @@
                 </table>
             </div>
         </div>
+    </div>
+
     <!-- ═══ Tab: Teams ═══ -->
     <div class="tab-panel" id="tab-teams">
         <div class="summary-cards" id="teamsSummaryCards">
@@ -1429,6 +1516,116 @@
                         <tr><td colspan="9" class="table-loading">Loading teams…</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Tab: Reports ═══ -->
+    <div class="tab-panel" id="tab-reports">
+        <div class="form-card" style="margin-bottom:1.5rem;">
+            <div style="margin-bottom:1.25rem;">
+                <h3 style="font-size:1.1rem; font-weight:600; color:#fff; margin-bottom:0.25rem;">Campaign Performance Reports</h3>
+                <p style="font-size:0.82rem; color:#888;">Generate on-demand donation summaries, method breakdowns, and optional CSV export or email delivery.</p>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:1.25rem;">
+                <div>
+                    <label style="display:block; font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:#888; margin-bottom:0.5rem;">Date Range Preset</label>
+                    <div class="filter-pills" id="reportPresetPills">
+                        <button type="button" class="filter-pill active" data-preset="all">All Time</button>
+                        <button type="button" class="filter-pill" data-preset="today">Today</button>
+                        <button type="button" class="filter-pill" data-preset="week">This Week</button>
+                        <button type="button" class="filter-pill" data-preset="month">This Month</button>
+                        <button type="button" class="filter-pill" data-preset="year">This Year</button>
+                        <button type="button" class="filter-pill" data-preset="custom">Custom Range</button>
+                    </div>
+                </div>
+
+                <div id="reportCustomDatesRow" style="display:none; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="field" style="margin-bottom:0;">
+                        <label for="rptDateFrom">Date From</label>
+                        <input type="date" id="rptDateFrom" class="form-input">
+                    </div>
+                    <div class="field" style="margin-bottom:0;">
+                        <label for="rptDateTo">Date To</label>
+                        <input type="date" id="rptDateTo" class="form-input">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr auto; gap:1rem; align-items:end;">
+                    <div class="field" style="margin-bottom:0;">
+                        <label for="rptSendToEmail">Email Report (Optional)</label>
+                        <input type="email" id="rptSendToEmail" placeholder="user@notzer.org (leave blank for on-screen report only)" class="form-input">
+                    </div>
+                    <button type="button" class="btn-primary" id="btnGenerateReport" onclick="runCampaignReport()" style="padding:0.7rem 1.5rem; font-size:0.9rem; white-space:nowrap; height:42px;">📊 Generate Report</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Results Section (Visible after generation) -->
+        <div id="reportResultsArea" style="display:none;">
+            <div class="summary-cards" id="reportSummaryCards">
+                <div class="summary-card accent-green">
+                    <div class="card-value" id="rptTotalRaised">$0.00</div>
+                    <div class="card-label">Total Raised</div>
+                </div>
+                <div class="summary-card accent-blue">
+                    <div class="card-value" id="rptDonationCount">0</div>
+                    <div class="card-label">Total Donations</div>
+                </div>
+                <div class="summary-card accent-orange">
+                    <div class="card-value" id="rptAverageDonation">$0.00</div>
+                    <div class="card-label">Average Gift</div>
+                </div>
+                <div class="summary-card accent-blue">
+                    <div class="card-value" id="rptGoalPercent">0%</div>
+                    <div class="card-label">Goal Progress</div>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+                <!-- Breakdown by Payment Method -->
+                <div class="form-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <h4 style="font-size:0.95rem; font-weight:600; color:#fff;">Breakdown by Payment Method</h4>
+                    </div>
+                    <div class="data-table-wrapper">
+                        <table class="data-table" id="rptMethodTable">
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th>Count</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rptMethodTableBody">
+                                <tr><td colspan="3" class="table-empty">No method data</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Top 5 Donors -->
+                <div class="form-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <h4 style="font-size:0.95rem; font-weight:600; color:#fff;">Top Gifts</h4>
+                        <button type="button" class="btn-secondary" id="rptDownloadCsvBtn" onclick="downloadReportCsv()" style="padding:0.3rem 0.75rem; font-size:0.78rem;">⬇ Download CSV</button>
+                    </div>
+                    <div class="data-table-wrapper">
+                        <table class="data-table" id="rptTopTable">
+                            <thead>
+                                <tr>
+                                    <th>Donor</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rptTopTableBody">
+                                <tr><td colspan="3" class="table-empty">No donor data</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1705,6 +1902,10 @@ let lastDonationId = null;
 let pledgesData = [];
 let scheduledData = [];
 let currentPledgeFilter = 'all';
+let transactionsData = [];
+let txnPaginationInfo = { page: 1, pageSize: 50, total: 0 };
+let currentReportPreset = 'all';
+let currentReportData = null;
 
 /* ─── Auth Gate ───────────────────────────────────────── */
 (async function boot() {
@@ -1716,7 +1917,7 @@ let currentPledgeFilter = 'all';
         if (user) {
             userBar.style.display = 'flex';
             userEmailEl.textContent = user.email || user.name || 'Authenticated';
-            if (user.role === 'super_admin' || user.role === 'campaign_owner' || user.isOwner) {
+            if (user.role === 'super_admin' || user.role === 'campaign_owner' || user.role === 'campaign_manager' || user.isOwner) {
                 const uBtn = document.getElementById('usersTabBtn');
                 if (uBtn) uBtn.style.display = '';
             }
@@ -1823,6 +2024,43 @@ function init() {
         });
     }
 
+    // Transactions filters
+    const txnSearch = document.getElementById('txnSearchInput');
+    if (txnSearch) {
+        let debounceTimer;
+        txnSearch.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                currentTxnSearch = e.target.value.trim();
+                loadTransactions(1);
+            }, 300);
+        });
+    }
+    const txnMethod = document.getElementById('txnMethodFilter');
+    if (txnMethod) {
+        txnMethod.addEventListener('change', (e) => {
+            currentTxnMethod = e.target.value;
+            loadTransactions(1);
+        });
+    }
+    const txnResult = document.getElementById('txnResultFilter');
+    if (txnResult) {
+        txnResult.addEventListener('change', (e) => {
+            currentTxnResult = e.target.value;
+            loadTransactions(1);
+        });
+    }
+
+    // Reports preset pills
+    const rptPills = document.getElementById('reportPresetPills');
+    if (rptPills) {
+        rptPills.addEventListener('click', (e) => {
+            if (e.target.classList.contains('filter-pill')) {
+                setReportPreset(e.target.dataset.preset);
+            }
+        });
+    }
+
     // Modal backdrop click-to-close
     ['teamModal', 'campaignUserModal'].forEach(id => {
         const m = document.getElementById(id);
@@ -1845,15 +2083,20 @@ function initTabs() {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             // Activate target
             btn.classList.add('active');
-            document.getElementById('tab-' + tabId).classList.add('active');
+            const panel = document.getElementById('tab-' + tabId);
+            if (panel) panel.classList.add('active');
 
-            // Load data on first switch
-            if (tabId === 'pledges') {
+            // Load data on switch
+            if (tabId === 'transactions') {
+                loadTransactions(1);
+            } else if (tabId === 'pledges') {
                 loadPledges();
             } else if (tabId === 'scheduledPayments') {
                 loadScheduledPayments();
             } else if (tabId === 'teams') {
                 loadTeams(true);
+            } else if (tabId === 'reports') {
+                initReportsTab();
             } else if (tabId === 'users') {
                 loadCampaignUsers();
             }
@@ -2067,16 +2310,18 @@ async function loadTeams(renderTable = false) {
                 updateTeamsSummary();
             }
         } else {
+            teamsData = [];
             if (renderTable) {
-                const tbody = document.getElementById('teamsTableBody');
-                if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="table-empty">No teams found.</td></tr>';
+                renderTeamsTab();
+                updateTeamsSummary();
             }
         }
     } catch (err) {
         console.warn('Could not load teams:', err);
+        teamsData = [];
         if (renderTable) {
-            const tbody = document.getElementById('teamsTableBody');
-            if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="table-empty">Failed to load teams.</td></tr>';
+            renderTeamsTab();
+            updateTeamsSummary();
         }
     }
 }
@@ -2279,6 +2524,117 @@ class CampaignSelector {
     reset() {
         this.selectedCampaign = { id: CAMPAIGN_CONFIG.id, name: CAMPAIGN_CONFIG.name };
         this.renderChip();
+    }
+}
+
+/* ─── Transactions Management ─────────────────────────── */
+let currentTxnSearch = '';
+let currentTxnMethod = '';
+let currentTxnResult = '';
+
+async function loadTransactions(page = 1) {
+    const tbody = document.getElementById('transactionsTableBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="table-loading">Loading transactions…</td></tr>';
+
+    txnPaginationInfo.page = page;
+
+    try {
+        const params = {
+            campaignId: CAMPAIGN_CONFIG.id,
+            page: page,
+            pageSize: txnPaginationInfo.pageSize,
+            search: currentTxnSearch,
+            method: currentTxnMethod,
+            result: currentTxnResult
+        };
+
+        const data = await authGet('getTransactions', params);
+        if (data.status === 'success' && Array.isArray(data.transactions)) {
+            transactionsData = data.transactions;
+            txnPaginationInfo.total = data.total || 0;
+            renderTransactions();
+            if (data.summary) {
+                updateTransactionsSummary(data.summary);
+            }
+        } else {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="table-empty">No transactions found.</td></tr>';
+            updateTxnPagination();
+        }
+    } catch (err) {
+        console.error('Failed to load transactions:', err);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="table-empty">Failed to load transactions.</td></tr>';
+    }
+}
+
+function renderTransactions() {
+    const tbody = document.getElementById('transactionsTableBody');
+    if (!tbody) return;
+
+    if (transactionsData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="table-empty">No transactions recorded for this campaign.</td></tr>';
+        updateTxnPagination();
+        return;
+    }
+
+    tbody.innerHTML = transactionsData.map(tx => {
+        const resLower = (tx.result || '').toLowerCase();
+        const badgeClass = resLower === 'a' ? 'fulfilled' : (resLower === 'd' ? 'overdue' : 'scheduled');
+        const displayResult = resLower === 'a' ? 'Approved' : (resLower === 'd' ? 'Declined' : (tx.result || 'Manual'));
+
+        const methodDisplay = [tx.cardType, tx.method].filter(Boolean).join(' ') || '—';
+
+        return `<tr>
+            <td style="font-size:0.8rem; color:#888;">${escapeHtml(tx.date || tx.timestamp || '—')}</td>
+            <td><strong style="font-family:monospace; color:#ddd; font-size:0.8rem;">${escapeHtml(tx.reference || tx.id || '—')}</strong></td>
+            <td><strong style="color:#eee;">${escapeHtml(tx.donorName || '—')}</strong></td>
+            <td><span style="font-size:0.8rem; color:#aaa;">${escapeHtml(methodDisplay)}</span></td>
+            <td style="font-weight:600; color:#fff;">${formatCurrency(tx.amount || 0)}</td>
+            <td style="color:#ffa94d;">${formatCurrency(tx.fees || 0)}</td>
+            <td style="font-weight:600; color:#51cf66;">${formatCurrency(tx.net || 0)}</td>
+            <td><span class="status-badge ${badgeClass}">${escapeHtml(displayResult)}</span></td>
+            <td style="font-family:monospace; font-size:0.75rem; color:#777;">${escapeHtml(tx.pledgeId || '—')}</td>
+            <td><span style="font-size:0.78rem; color:${tx.funded === 'Yes' ? '#51cf66' : '#888'};">${escapeHtml(tx.funded || (resLower === 'a' ? 'Pending' : '—'))}</span></td>
+        </tr>`;
+    }).join('');
+
+    updateTxnPagination();
+}
+
+function updateTransactionsSummary(summary) {
+    if (!summary) return;
+    const elCount = document.getElementById('txnTotalCount');
+    const elGross = document.getElementById('txnTotalGross');
+    const elFees = document.getElementById('txnTotalFees');
+    const elNet = document.getElementById('txnTotalNet');
+
+    if (elCount) elCount.textContent = (summary.count || 0).toLocaleString();
+    if (elGross) elGross.textContent = formatCurrency(summary.totalCharged || 0);
+    if (elFees) elFees.textContent = formatCurrency(summary.totalFees || 0);
+    if (elNet) elNet.textContent = formatCurrency(summary.totalNet || 0);
+}
+
+function updateTxnPagination() {
+    const pageInfo = document.getElementById('txnPageInfo');
+    const prevBtn = document.getElementById('txnPrevBtn');
+    const nextBtn = document.getElementById('txnNextBtn');
+
+    const total = txnPaginationInfo.total;
+    const page = txnPaginationInfo.page;
+    const pageSize = txnPaginationInfo.pageSize;
+    const maxPage = Math.max(1, Math.ceil(total / pageSize));
+
+    const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
+    const end = Math.min(page * pageSize, total);
+
+    if (pageInfo) pageInfo.textContent = `Showing ${start}-${end} of ${total} (Page ${page} of ${maxPage})`;
+    if (prevBtn) prevBtn.disabled = page <= 1;
+    if (nextBtn) nextBtn.disabled = page >= maxPage;
+}
+
+function changeTxnPage(delta) {
+    const newPage = txnPaginationInfo.page + delta;
+    if (newPage >= 1) {
+        loadTransactions(newPage);
     }
 }
 
@@ -2671,7 +3027,16 @@ function renderTeamsTab(filterText = '') {
     }
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="table-empty">No teams found.</td></tr>';
+        if (filterText) {
+            tbody.innerHTML = '<tr><td colspan="9" class="table-empty">No teams match your search.</td></tr>';
+        } else {
+            tbody.innerHTML = `<tr><td colspan="9" class="table-empty" style="padding: 2.5rem 1rem; text-align: center;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">👥</div>
+                <div style="font-size: 1rem; font-weight: 600; color: #eee; margin-bottom: 0.25rem;">No teams created yet</div>
+                <div style="font-size: 0.82rem; color: #888; margin-bottom: 1rem;">Organize your campaign with teams, captains, and group fundraising goals.</div>
+                <button type="button" class="btn-primary" onclick="openAddTeamModal()" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem; font-size: 0.85rem;">+ Add First Team</button>
+            </td></tr>`;
+        }
         return;
     }
 
@@ -2864,11 +3229,15 @@ async function loadCampaignUsers() {
             renderCampaignUsersTab();
             updateCampaignUsersSummary();
         } else {
-            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No campaign users found.</td></tr>';
+            campaignUsersData = [];
+            renderCampaignUsersTab();
+            updateCampaignUsersSummary();
         }
     } catch (err) {
         console.error('Failed to load campaign users:', err);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="table-empty">Failed to load campaign users.</td></tr>';
+        campaignUsersData = [];
+        renderCampaignUsersTab();
+        updateCampaignUsersSummary();
     }
 }
 
@@ -2877,7 +3246,12 @@ function renderCampaignUsersTab() {
     if (!tbody) return;
 
     if (campaignUsersData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No campaign users found.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="7" class="table-empty" style="padding: 2.5rem 1rem; text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">👤</div>
+            <div style="font-size: 1rem; font-weight: 600; color: #eee; margin-bottom: 0.25rem;">No staff users assigned</div>
+            <div style="font-size: 0.82rem; color: #888; margin-bottom: 1rem;">Add campaign managers, bookkeepers, or viewers to collaborate on this campaign.</div>
+            <button type="button" class="btn-primary" onclick="openAddCampaignUserModal()" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem; font-size: 0.85rem;">+ Add Campaign User</button>
+        </td></tr>`;
         return;
     }
 
@@ -3033,6 +3407,193 @@ async function deleteCampaignUserConfirm(email) {
     } catch (err) {
         alert('Network error: ' + err.message);
     }
+}
+
+/* ─── Reports Management ──────────────────────────────── */
+function initReportsTab() {
+    const today = new Date().toISOString().slice(0, 10);
+    const dateToInput = document.getElementById('rptDateTo');
+    const dateFromInput = document.getElementById('rptDateFrom');
+    if (dateToInput && !dateToInput.value) dateToInput.value = today;
+    if (dateFromInput && !dateFromInput.value) {
+        const d = new Date();
+        d.setDate(1);
+        dateFromInput.value = d.toISOString().slice(0, 10);
+    }
+
+    if (!currentReportData) {
+        runCampaignReport();
+    }
+}
+
+function setReportPreset(preset) {
+    currentReportPreset = preset;
+    const pills = document.querySelectorAll('#reportPresetPills .filter-pill');
+    pills.forEach(p => {
+        p.classList.toggle('active', p.dataset.preset === preset);
+    });
+
+    const customDatesRow = document.getElementById('reportCustomDatesRow');
+    if (customDatesRow) {
+        customDatesRow.style.display = (preset === 'custom') ? 'grid' : 'none';
+    }
+
+    if (preset !== 'custom') {
+        runCampaignReport();
+    }
+}
+
+function getReportDateRange() {
+    const today = new Date();
+    const toDateString = d => d.toISOString().slice(0, 10);
+
+    if (currentReportPreset === 'today') {
+        const todayStr = toDateString(today);
+        return { dateFrom: todayStr, dateTo: todayStr };
+    } else if (currentReportPreset === 'week') {
+        const dayOfWeek = today.getDay();
+        const firstDay = new Date(today);
+        firstDay.setDate(today.getDate() - dayOfWeek);
+        return { dateFrom: toDateString(firstDay), dateTo: toDateString(today) };
+    } else if (currentReportPreset === 'month') {
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        return { dateFrom: toDateString(firstDay), dateTo: toDateString(today) };
+    } else if (currentReportPreset === 'year') {
+        const firstDay = new Date(today.getFullYear(), 0, 1);
+        return { dateFrom: toDateString(firstDay), dateTo: toDateString(today) };
+    } else if (currentReportPreset === 'custom') {
+        const df = document.getElementById('rptDateFrom')?.value || '';
+        const dt = document.getElementById('rptDateTo')?.value || '';
+        return { dateFrom: df, dateTo: dt };
+    }
+    return { dateFrom: '', dateTo: '' };
+}
+
+async function runCampaignReport() {
+    const btn = document.getElementById('btnGenerateReport');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Generating…';
+    }
+
+    const { dateFrom, dateTo } = getReportDateRange();
+    const sendToEmail = (document.getElementById('rptSendToEmail')?.value || '').trim();
+
+    try {
+        const params = {
+            campaignId: CAMPAIGN_CONFIG.id,
+            dateFrom: dateFrom,
+            dateTo: dateTo
+        };
+        if (sendToEmail) {
+            params.sendTo = sendToEmail;
+        }
+
+        const res = await authPost('generateReport', params);
+        if (res.status === 'success' && res.report) {
+            currentReportData = res.report;
+            renderReportResults(res.report);
+            if (res.emailSent) {
+                alert('Report generated and emailed to ' + sendToEmail + '!');
+            }
+        } else {
+            alert(res.message || 'Failed to generate report.');
+        }
+    } catch (err) {
+        console.error('Error generating report:', err);
+        alert('Failed to generate report: ' + err.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = '📊 Generate Report';
+        }
+    }
+}
+
+function renderReportResults(report) {
+    const resultsArea = document.getElementById('reportResultsArea');
+    if (!resultsArea) return;
+    resultsArea.style.display = 'block';
+
+    const elTotal = document.getElementById('rptTotalRaised');
+    const elCount = document.getElementById('rptDonationCount');
+    const elAvg = document.getElementById('rptAverageDonation');
+    const elGoal = document.getElementById('rptGoalPercent');
+
+    if (elTotal) elTotal.textContent = formatCurrency(report.total || 0);
+    if (elCount) elCount.textContent = (report.count || 0).toLocaleString();
+    if (elAvg) elAvg.textContent = formatCurrency(report.average || 0);
+    if (elGoal) elGoal.textContent = (report.goalPercent || 0) + '%';
+
+    // Breakdown by payment method
+    const methodTbody = document.getElementById('rptMethodTableBody');
+    if (methodTbody) {
+        const methods = report.byMethod ? Object.keys(report.byMethod) : [];
+        if (methods.length === 0) {
+            methodTbody.innerHTML = '<tr><td colspan="3" class="table-empty">No method data recorded.</td></tr>';
+        } else {
+            methodTbody.innerHTML = methods.map(m => {
+                const item = report.byMethod[m];
+                return `<tr>
+                    <td><strong>${escapeHtml(m || 'Unknown')}</strong></td>
+                    <td>${item.count || 0}</td>
+                    <td style="font-weight:600; color:#81c995;">${formatCurrency(item.amount || 0)}</td>
+                </tr>`;
+            }).join('');
+        }
+    }
+
+    // Top gifts
+    const topTbody = document.getElementById('rptTopTableBody');
+    if (topTbody) {
+        const top5 = report.top5 || [];
+        if (top5.length === 0) {
+            topTbody.innerHTML = '<tr><td colspan="3" class="table-empty">No donor data recorded.</td></tr>';
+        } else {
+            topTbody.innerHTML = top5.map(d => {
+                return `<tr>
+                    <td><strong style="color:#eee;">${escapeHtml(d.donor || 'Anonymous')}</strong></td>
+                    <td style="font-weight:600; color:#81c995;">${formatCurrency(d.amount || 0)}</td>
+                    <td style="color:#aaa; font-size:0.82rem;">${escapeHtml(d.method || '—')}</td>
+                </tr>`;
+            }).join('');
+        }
+    }
+}
+
+function downloadReportCsv() {
+    if (!currentReportData || !Array.isArray(currentReportData.donations) || currentReportData.donations.length === 0) {
+        alert('No donation records found to download.');
+        return;
+    }
+
+    const headers = ['Date', 'Donor', 'Amount', 'Method', 'Status', 'Recurring', 'Team', 'Memo'];
+    const escapeCsvField = (val) => {
+        const str = String(val == null ? '' : val).replace(/"/g, '""');
+        return `"${str}"`;
+    };
+
+    const rows = currentReportData.donations.map(d => [
+        escapeCsvField(d.date ? new Date(d.date).toLocaleDateString('en-US') : ''),
+        escapeCsvField(d.donor || ''),
+        escapeCsvField(d.amount != null ? Number(d.amount).toFixed(2) : '0.00'),
+        escapeCsvField(d.method || ''),
+        escapeCsvField(d.status || ''),
+        escapeCsvField(d.recurring || ''),
+        escapeCsvField(d.teams || ''),
+        escapeCsvField(d.memo || '')
+    ].join(','));
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `report-${CAMPAIGN_CONFIG.id}-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 /* ─── Utility Functions ───────────────────────────────── */
