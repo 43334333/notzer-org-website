@@ -16,9 +16,9 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --accent: #d4af37;
-            --accent-light: #f3e5ab;
-            --accent-rgb: 212, 175, 55;
+            --accent: #4dabf7;
+            --accent-light: #66c4ff;
+            --accent-rgb: 77, 171, 247;
         }
 
         body {
@@ -909,13 +909,12 @@
 const WALL_CONFIG = {
     campaignId: 'keren-hk-m-twersky',
     campaignName: 'Keren Hachnosas Kallah M. Twersky',
-    campaignNameHebrew: 'הכנסת כלה — שמחת חתן וכלה',
+    campaignNameHebrew: 'קרן הכנסת כלה',
     appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzngv-LEqoOercDK5MfRtB8BpEFhH3sdnq16lyxzq2LN_8W0lUQpa-oUZB4CfGYE28y3g/exec',
     donationPageUrl: '/keren-hk-m-twersky.html',
-    goalAmount: 50000,
-    accentColor: '#d4af37',
-    accentLight: '#f3e5ab',
-    accentRgb: '212, 175, 55',
+    accentColor: '#4dabf7',
+    accentLight: '#66c4ff',
+    accentRgb: '77, 171, 247',
     autoRefreshInterval: 30000,
 };
 
@@ -939,9 +938,10 @@ const accessKey = new URLSearchParams(window.location.search).get('key');
 // FORMAT HELPERS
 // ============================================================
 function formatCurrency(amount) {
-    return '$' + Number(amount || 0).toLocaleString('en-US', {
+    if (amount == null || isNaN(amount)) return '$0';
+    return '$' + Number(amount).toLocaleString('en-US', {
         minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
+        maximumFractionDigits: 0
     });
 }
 
@@ -957,18 +957,11 @@ function formatDate(timestamp) {
 }
 
 function formatRefreshTime() {
-    const now = new Date();
-    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
-
-function escapeHTML(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    return new Date().toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit'
+    });
 }
 
 function getTeamName(teamId) {
@@ -980,7 +973,8 @@ function getTeamName(teamId) {
 // DATA FETCHING
 // ============================================================
 async function fetchDonors() {
-    let url = `${WALL_CONFIG.appsScriptUrl}?action=getDonors&campaign=${WALL_CONFIG.campaignId}&key=${encodeURIComponent(accessKey || '')}`;
+    let url = `${WALL_CONFIG.appsScriptUrl}?action=getDonors&campaign=${encodeURIComponent(WALL_CONFIG.campaignId)}`;
+    if (accessKey) url += `&key=${encodeURIComponent(accessKey)}`;
     const response = await fetch(url);
     const data = await response.json();
     return data;
@@ -988,7 +982,8 @@ async function fetchDonors() {
 
 async function fetchTeams() {
     try {
-        const url = `${WALL_CONFIG.appsScriptUrl}?action=getTeams&key=${accessKey}`;
+        let url = `${WALL_CONFIG.appsScriptUrl}?action=getTeams&campaign=${encodeURIComponent(WALL_CONFIG.campaignId)}`;
+        if (accessKey) url += `&key=${encodeURIComponent(accessKey)}`;
         const response = await fetch(url);
         const data = await response.json();
         if (data.status === 'success' && data.teams && data.teams.length > 0) {
@@ -1012,7 +1007,7 @@ async function loadData() {
         currentTotals = data.totals || {};
         currentDonors = data.donors || [];
         currentTeamTotals = data.teamTotals || {};
-        campaignGoal = data.campaignGoal || data.goalAmount || WALL_CONFIG.goalAmount || 0;
+        campaignGoal = data.campaignGoal || 0;
 
         updateStats();
         renderCurrentView();
@@ -1373,6 +1368,12 @@ function showAccessDenied(message) {
         WALL_CONFIG.campaignName + ' — Donor Wall';
     document.title = 'Donor Wall — ' + WALL_CONFIG.campaignName;
 
+    // Set donation link
+    const donationLink = document.getElementById('makeDonationLink');
+    if (donationLink && WALL_CONFIG.donationPageUrl) {
+        donationLink.href = WALL_CONFIG.donationPageUrl;
+    }
+
     // Apply accent colors from config (override CSS variables)
     if (WALL_CONFIG.accentColor) {
         document.documentElement.style.setProperty('--accent', WALL_CONFIG.accentColor);
@@ -1387,7 +1388,7 @@ function showAccessDenied(message) {
     // Fetch teams list
     fetchTeams();
 
-    // Initial load (server will validate access key if configured)
+    // Initial load (server validates access key if configured)
     loadData();
 
     // Auto-refresh

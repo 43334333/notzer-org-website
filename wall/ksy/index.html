@@ -15,6 +15,12 @@
            ============================================================ */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+        :root {
+            --accent: #4dabf7;
+            --accent-light: #66c4ff;
+            --accent-rgb: 77, 171, 247;
+        }
+
         body {
             background-color: #121212;
             color: #EFEFEF;
@@ -30,8 +36,8 @@
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background:
-                radial-gradient(ellipse at 20% 0%, rgba(77, 171, 247, 0.06) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 100%, rgba(77, 171, 247, 0.04) 0%, transparent 50%);
+                radial-gradient(ellipse at 20% 0%, rgba(var(--accent-rgb), 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(var(--accent-rgb), 0.04) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
         }
@@ -69,7 +75,7 @@
             letter-spacing: -0.5px;
             color: #fff;
             margin-bottom: 4px;
-            background: linear-gradient(135deg, #ffffff 0%, #4dabf7 100%);
+            background: linear-gradient(135deg, #ffffff 0%, var(--accent-light) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -92,8 +98,8 @@
             gap: 8px;
             margin-top: 16px;
             padding: 6px 16px;
-            background: rgba(77, 171, 247, 0.08);
-            border: 1px solid rgba(77, 171, 247, 0.15);
+            background: rgba(var(--accent-rgb), 0.08);
+            border: 1px solid rgba(var(--accent-rgb), 0.15);
             border-radius: 100px;
             font-size: 0.78rem;
             color: rgba(255,255,255,0.5);
@@ -105,13 +111,13 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #4dabf7;
+            background: var(--accent);
             animation: pulse 2s ease-in-out infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(77, 171, 247, 0.4); }
-            50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(77, 171, 247, 0); }
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.4); }
+            50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(var(--accent-rgb), 0); }
         }
 
         /* ============================================================
@@ -139,7 +145,7 @@
 
         .stat-card:hover {
             transform: translateY(-2px);
-            border-color: rgba(77, 171, 247, 0.2);
+            border-color: rgba(var(--accent-rgb), 0.2);
         }
 
         .stat-card::before {
@@ -150,7 +156,7 @@
         }
 
         .stat-card:nth-child(1)::before {
-            background: linear-gradient(90deg, #4dabf7, #74c0fc);
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
         }
         .stat-card:nth-child(2)::before {
             background: linear-gradient(90deg, #69db7c, #38d9a9);
@@ -174,7 +180,7 @@
             margin-bottom: 6px;
         }
 
-        .stat-card:nth-child(1) .stat-value { color: #74c0fc; }
+        .stat-card:nth-child(1) .stat-value { color: var(--accent-light); }
         .stat-card:nth-child(2) .stat-value { color: #69db7c; }
         .stat-card:nth-child(3) .stat-value { color: #da77f2; }
 
@@ -187,7 +193,7 @@
         }
 
         /* ============================================================
-           PROGRESS BAR (optional, shown when goalAmount is set)
+           PROGRESS BAR
            ============================================================ */
         .progress-section {
             margin-bottom: 28px;
@@ -212,7 +218,7 @@
         .progress-pct {
             font-size: 1.1rem;
             font-weight: 700;
-            color: #4dabf7;
+            color: var(--accent);
         }
 
         .progress-track {
@@ -225,7 +231,7 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #4dabf7, #74c0fc);
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
             border-radius: 100px;
             transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
             position: relative;
@@ -291,9 +297,9 @@
         }
 
         .sort-pill.active {
-            background: #4dabf7;
+            background: var(--accent);
             color: #121212;
-            box-shadow: 0 2px 12px rgba(77, 171, 247, 0.3);
+            box-shadow: 0 2px 12px rgba(var(--accent-rgb), 0.3);
         }
 
         /* ============================================================
@@ -322,8 +328,8 @@
 
         .donor-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(77, 171, 247, 0.15);
-            border-color: rgba(77, 171, 247, 0.2);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(var(--accent-rgb), 0.15);
+            border-color: rgba(var(--accent-rgb), 0.2);
         }
 
         @keyframes cardFadeIn {
@@ -352,7 +358,7 @@
         .donor-amount {
             font-size: 1.5rem;
             font-weight: 800;
-            color: #4dabf7;
+            color: var(--accent);
             letter-spacing: -0.5px;
             margin-bottom: 8px;
         }
@@ -389,9 +395,9 @@
             font-size: 0.68rem;
             font-weight: 600;
             letter-spacing: 0.3px;
-            background: rgba(77, 171, 247, 0.12);
-            color: #74c0fc;
-            border: 1px solid rgba(77, 171, 247, 0.2);
+            background: rgba(var(--accent-rgb), 0.12);
+            color: var(--accent-light);
+            border: 1px solid rgba(var(--accent-rgb), 0.2);
         }
 
         /* Rank badge for top 3 donors */
@@ -424,7 +430,7 @@
             width: 44px;
             height: 44px;
             border: 3px solid rgba(255,255,255,0.08);
-            border-top-color: #4dabf7;
+            border-top-color: var(--accent);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -507,6 +513,18 @@
 
         .footer-text .refresh-time {
             color: rgba(255,255,255,0.35);
+        }
+
+        .footer-link {
+            color: var(--accent-light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: var(--accent);
+            text-decoration: underline;
         }
 
         /* ============================================================
@@ -646,14 +664,14 @@
         }
 
         .filter-pill:hover {
-            border-color: rgba(77, 171, 247, 0.3);
+            border-color: rgba(var(--accent-rgb), 0.3);
             color: rgba(255,255,255,0.8);
         }
 
         .filter-pill.active {
-            background: rgba(77, 171, 247, 0.15);
-            border-color: rgba(77, 171, 247, 0.4);
-            color: #74c0fc;
+            background: rgba(var(--accent-rgb), 0.15);
+            border-color: rgba(var(--accent-rgb), 0.4);
+            color: var(--accent-light);
         }
 
         /* ============================================================
@@ -686,9 +704,9 @@
         }
 
         .view-toggle-btn.active {
-            background: #4dabf7;
+            background: var(--accent);
             color: #121212;
-            box-shadow: 0 2px 12px rgba(77, 171, 247, 0.3);
+            box-shadow: 0 2px 12px rgba(var(--accent-rgb), 0.3);
         }
 
         /* ============================================================
@@ -710,8 +728,8 @@
 
         .team-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(77, 171, 247, 0.15);
-            border-color: rgba(77, 171, 247, 0.2);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(var(--accent-rgb), 0.15);
+            border-color: rgba(var(--accent-rgb), 0.2);
         }
 
         .team-card-name {
@@ -739,7 +757,7 @@
         .team-stat-value {
             font-size: 1.4rem;
             font-weight: 800;
-            color: #4dabf7;
+            color: var(--accent);
             letter-spacing: -0.5px;
         }
 
@@ -757,7 +775,7 @@
             position: absolute;
             top: 0; left: 0; right: 0;
             border-radius: 14px 14px 0 0;
-            background: linear-gradient(90deg, #4dabf7, #74c0fc);
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
         }
 
         /* Goal progress card */
@@ -771,7 +789,7 @@
         }
         .goal-progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #4dabf7, #74c0fc);
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
             border-radius: 4px;
             width: 0%;
             transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -787,7 +805,7 @@
          ============================================================ -->
     <header class="header">
         <img src="../../NC_Logo_03.png" alt="Notzer Chesed" class="header-logo">
-        <h1 class="campaign-title">Keren Shlomo Yechiel — Donor Wall</h1>
+        <h1 class="campaign-title" id="campaign-title"></h1>
         <p class="campaign-subtitle">Internal Dashboard</p>
         <div class="live-indicator">
             <span class="live-dot"></span>
@@ -823,7 +841,7 @@
                 <div class="goal-progress-bar">
                     <div class="goal-progress-fill" id="goal-fill"></div>
                 </div>
-                <div id="goal-pct" style="font-size:0.75rem; color:#4dabf7; margin-top:3px; text-align:right;">0%</div>
+                <div id="goal-pct" style="font-size:0.75rem; color:var(--accent); margin-top:3px; text-align:right;">0%</div>
             </div>
         </div>
     </div>
@@ -878,7 +896,7 @@
         <div class="footer-text">
             This page is not publicly listed. Data refreshes automatically.<br>
             Last updated: <span class="refresh-time" id="last-refresh">—</span><br>
-            <a href="/keren-shlomo-yechiel.html" class="footer-link" style="margin-top: 8px; display: inline-block;">Make a Donation →</a>
+            <a href="/keren-shlomo-yechiel.html" id="makeDonationLink" class="footer-link" style="margin-top: 8px; display: inline-block;">Make a Donation →</a>
         </div>
     </footer>
 
@@ -886,14 +904,18 @@
 
 <script>
 // ============================================================
-// CONFIGURATION
+// WALL CONFIGURATION — The ONLY thing you change per campaign
 // ============================================================
-const CONFIG = {
+const WALL_CONFIG = {
+    campaignId: 'ksy',
     campaignName: 'Keren Shlomo Yechiel',
-    campaignCode: 'ksy',
-    appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzpxIaoeZewC6uMC8wrbXqytzq3FfTQXg2Yx10PGy6BJEMOM9hTg1HDUg3-C-4TkUhnnQ/exec',
-    key: new URLSearchParams(window.location.search).get('key'),
-    refreshInterval: 30000,
+    campaignNameHebrew: 'קרן שלמה יחיאל',
+    appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzngv-LEqoOercDK5MfRtB8BpEFhH3sdnq16lyxzq2LN_8W0lUQpa-oUZB4CfGYE28y3g/exec',
+    donationPageUrl: '/keren-shlomo-yechiel.html',
+    accentColor: '#4dabf7',
+    accentLight: '#66c4ff',
+    accentRgb: '77, 171, 247',
+    autoRefreshInterval: 30000,
 };
 
 // ============================================================
@@ -902,12 +924,15 @@ const CONFIG = {
 let currentDonors = [];
 let currentTotals = {};
 let currentTeamTotals = {};
-let allTeams = [];  // from Teams sheet
+let allTeams = [];
 let currentSort = 'amount';
-let currentView = 'donors'; // 'donors' or 'teams'
+let currentView = 'donors';
 let currentTeamFilter = new URLSearchParams(window.location.search).get('team') || '';
 let campaignGoal = 0;
 let isFirstLoad = true;
+
+// Access key from URL
+const accessKey = new URLSearchParams(window.location.search).get('key');
 
 // ============================================================
 // FORMAT HELPERS
@@ -948,8 +973,8 @@ function getTeamName(teamId) {
 // DATA FETCHING
 // ============================================================
 async function fetchDonors() {
-    let url = `${CONFIG.appsScriptUrl}?action=getDonors&campaign=${CONFIG.campaignCode}&key=${CONFIG.key}`;
-    // Note: team filtering is done client-side to keep teamTotals accurate across all donors
+    let url = `${WALL_CONFIG.appsScriptUrl}?action=getDonors&campaign=${encodeURIComponent(WALL_CONFIG.campaignId)}`;
+    if (accessKey) url += `&key=${encodeURIComponent(accessKey)}`;
     const response = await fetch(url);
     const data = await response.json();
     return data;
@@ -957,7 +982,8 @@ async function fetchDonors() {
 
 async function fetchTeams() {
     try {
-        const url = `${CONFIG.appsScriptUrl}?action=getTeams&key=${CONFIG.key}`;
+        let url = `${WALL_CONFIG.appsScriptUrl}?action=getTeams&campaign=${encodeURIComponent(WALL_CONFIG.campaignId)}`;
+        if (accessKey) url += `&key=${encodeURIComponent(accessKey)}`;
         const response = await fetch(url);
         const data = await response.json();
         if (data.status === 'success' && data.teams && data.teams.length > 0) {
@@ -973,7 +999,6 @@ async function loadData() {
     try {
         const data = await fetchDonors();
 
-        // Check for errors (invalid key, etc.)
         if (data.status === 'error') {
             showAccessDenied(data.message || 'Access denied.');
             return;
@@ -982,12 +1007,11 @@ async function loadData() {
         currentTotals = data.totals || {};
         currentDonors = data.donors || [];
         currentTeamTotals = data.teamTotals || {};
-        campaignGoal = data.campaignGoal || data.goalAmount || WALL_CONFIG.goalAmount || 0;
+        campaignGoal = data.campaignGoal || 0;
 
         updateStats();
         renderCurrentView();
 
-        // Update refresh timestamp
         document.getElementById('last-refresh').textContent = formatRefreshTime();
 
         if (isFirstLoad) {
@@ -996,7 +1020,6 @@ async function loadData() {
             document.getElementById('controls-bar').style.display = 'flex';
             document.getElementById('donors-grid').style.display = 'grid';
 
-            // Apply URL team filter if present
             if (currentTeamFilter) {
                 setTeamFilter(currentTeamFilter);
             }
@@ -1017,7 +1040,6 @@ function renderTeamFilterPills() {
     const bar = document.getElementById('filter-bar');
     if (!allTeams.length) return;
 
-    // Remove old team pills (keep the "All" button)
     const existing = bar.querySelectorAll('.filter-pill[data-team]:not([data-team=""])');
     existing.forEach(el => el.remove());
 
@@ -1030,7 +1052,6 @@ function renderTeamFilterPills() {
         bar.appendChild(pill);
     });
 
-    // Update "All" pill state
     const allPill = bar.querySelector('[data-team=""]');
     if (allPill) allPill.classList.toggle('active', !currentTeamFilter);
 
@@ -1040,15 +1061,12 @@ function renderTeamFilterPills() {
 function setTeamFilter(teamId) {
     currentTeamFilter = teamId;
 
-    // Update pill states
     document.querySelectorAll('.filter-pill').forEach(pill => {
         pill.classList.toggle('active', pill.dataset.team === teamId);
     });
 
     updateStats();
     renderCurrentView();
-
-    // Update donor count label
     updateDonorCountLabel();
 }
 
@@ -1071,7 +1089,6 @@ function setView(view) {
         btn.classList.toggle('active', btn.dataset.view === view);
     });
 
-    // Show/hide sort pills (only relevant in donors view)
     document.getElementById('sort-pills').style.display = view === 'donors' ? 'flex' : 'none';
 
     renderCurrentView();
@@ -1093,7 +1110,6 @@ function updateStats() {
     const totalEl = document.getElementById('stat-total');
     const donorsEl = document.getElementById('stat-donors');
 
-    // When filtered by team, recalculate totals from filtered donors
     let displayRaised = currentTotals.totalRaised || 0;
     let displayDonors = currentTotals.donorCount || 0;
 
@@ -1101,11 +1117,6 @@ function updateStats() {
         const filtered = getFilteredDonors();
         displayRaised = filtered.reduce((sum, d) => sum + (d.amount || 0), 0);
         displayDonors = filtered.length;
-        console.log('[updateStats] Team filter active:', currentTeamFilter,
-            '| Filtered donors:', displayDonors,
-            '| Filtered raised:', displayRaised,
-            '| Global raised:', currentTotals.totalRaised,
-            '| Sample donor teams:', currentDonors.slice(0,3).map(d => d.teams));
     }
 
     const newTotal = formatCurrency(displayRaised);
@@ -1120,7 +1131,6 @@ function updateStats() {
         if (!isFirstLoad) donorsEl.classList.add('fade-update');
     }
 
-    // Remove animation class after it completes
     setTimeout(() => {
         totalEl.classList.remove('fade-update');
         donorsEl.classList.remove('fade-update');
@@ -1129,7 +1139,6 @@ function updateStats() {
     // Update goal progress card
     let activeGoal = campaignGoal;
 
-    // If filtered by team, use team-specific goal
     if (currentTeamFilter) {
         const teamObj = allTeams.find(t => t.id.toLowerCase() === currentTeamFilter.toLowerCase());
         if (teamObj && teamObj.goal) {
@@ -1174,7 +1183,6 @@ function updateDonorCountLabel() {
 function setSort(sortBy) {
     currentSort = sortBy;
 
-    // Update pill buttons
     document.querySelectorAll('.sort-pill').forEach(pill => {
         pill.classList.toggle('active', pill.dataset.sort === sortBy);
     });
@@ -1216,7 +1224,6 @@ function renderDonors(donors) {
         return;
     }
 
-    // Assign ranks based on amount (for badges)
     const ranked = [...donors].sort((a, b) => (b.amount || 0) - (a.amount || 0));
     const rankMap = new Map();
     ranked.forEach((d, i) => {
@@ -1248,7 +1255,6 @@ function renderDonors(donors) {
 
         html += `<div class="donor-date">${formatDate(donor.timestamp)}</div>`;
 
-        // Team badges
         if (donor.teams && donor.teams.trim()) {
             const teamIds = donor.teams.split(',').map(t => t.trim()).filter(Boolean);
             if (teamIds.length > 0) {
@@ -1285,7 +1291,6 @@ function renderTeamCards() {
         return;
     }
 
-    // Sort teams by amount (highest first)
     const teamEntries = Object.entries(currentTeamTotals)
         .sort((a, b) => b[1].amount - a[1].amount);
 
@@ -1358,21 +1363,36 @@ function showAccessDenied(message) {
 // INITIALIZATION
 // ============================================================
 (function init() {
-    // Check for key
-    if (!CONFIG.key) {
-        document.getElementById('loading-screen').style.display = 'none';
-        showAccessDenied('No access key provided. Please use the link you were given.');
-        return;
+    // Set campaign title from config
+    document.getElementById('campaign-title').textContent =
+        WALL_CONFIG.campaignName + ' — Donor Wall';
+    document.title = 'Donor Wall — ' + WALL_CONFIG.campaignName;
+
+    // Set donation link
+    const donationLink = document.getElementById('makeDonationLink');
+    if (donationLink && WALL_CONFIG.donationPageUrl) {
+        donationLink.href = WALL_CONFIG.donationPageUrl;
     }
 
-    // Fetch teams list (for filter pills + team name lookups)
+    // Apply accent colors from config (override CSS variables)
+    if (WALL_CONFIG.accentColor) {
+        document.documentElement.style.setProperty('--accent', WALL_CONFIG.accentColor);
+    }
+    if (WALL_CONFIG.accentLight) {
+        document.documentElement.style.setProperty('--accent-light', WALL_CONFIG.accentLight);
+    }
+    if (WALL_CONFIG.accentRgb) {
+        document.documentElement.style.setProperty('--accent-rgb', WALL_CONFIG.accentRgb);
+    }
+
+    // Fetch teams list
     fetchTeams();
 
-    // Initial load
+    // Initial load (server validates access key if configured)
     loadData();
 
     // Auto-refresh
-    setInterval(loadData, CONFIG.refreshInterval);
+    setInterval(loadData, WALL_CONFIG.autoRefreshInterval);
 })();
 </script>
 

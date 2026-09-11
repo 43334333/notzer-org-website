@@ -973,7 +973,8 @@ function getTeamName(teamId) {
 // DATA FETCHING
 // ============================================================
 async function fetchDonors() {
-    let url = `${WALL_CONFIG.appsScriptUrl}?action=getDonors&campaign=${WALL_CONFIG.campaignId}&key=${accessKey}`;
+    let url = `${WALL_CONFIG.appsScriptUrl}?action=getDonors&campaign=${encodeURIComponent(WALL_CONFIG.campaignId)}`;
+    if (accessKey) url += `&key=${encodeURIComponent(accessKey)}`;
     const response = await fetch(url);
     const data = await response.json();
     return data;
@@ -981,7 +982,8 @@ async function fetchDonors() {
 
 async function fetchTeams() {
     try {
-        const url = `${WALL_CONFIG.appsScriptUrl}?action=getTeams&campaign=${encodeURIComponent(WALL_CONFIG.campaignId)}&key=${encodeURIComponent(accessKey || '')}`;
+        let url = `${WALL_CONFIG.appsScriptUrl}?action=getTeams&campaign=${encodeURIComponent(WALL_CONFIG.campaignId)}`;
+        if (accessKey) url += `&key=${encodeURIComponent(accessKey)}`;
         const response = await fetch(url);
         const data = await response.json();
         if (data.status === 'success' && data.teams && data.teams.length > 0) {
@@ -1365,6 +1367,12 @@ function showAccessDenied(message) {
     document.getElementById('campaign-title').textContent =
         WALL_CONFIG.campaignName + ' — Donor Wall';
     document.title = 'Donor Wall — ' + WALL_CONFIG.campaignName;
+
+    // Set donation link
+    const donationLink = document.getElementById('makeDonationLink');
+    if (donationLink && WALL_CONFIG.donationPageUrl) {
+        donationLink.href = WALL_CONFIG.donationPageUrl;
+    }
 
     // Apply accent colors from config (override CSS variables)
     if (WALL_CONFIG.accentColor) {
