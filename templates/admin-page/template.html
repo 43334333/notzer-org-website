@@ -3256,9 +3256,11 @@ function renderCampaignUsersTab() {
     }
 
     tbody.innerHTML = campaignUsersData.map(u => {
-        const roleBadge = u.role === 'campaign_manager' ? 'badge-manager' :
+        const roleBadge = u.role === 'campaign_owner' ? 'badge-manager' :
+                          u.role === 'campaign_manager' ? 'badge-manager' :
                           u.role === 'bookkeeper' ? 'badge-bookkeeper' : 'badge-viewer';
-        const roleLabel = u.role === 'campaign_manager' ? 'Manager' :
+        const roleLabel = u.role === 'campaign_owner' ? 'Campaign Owner' :
+                          u.role === 'campaign_manager' ? 'Manager' :
                           u.role === 'bookkeeper' ? 'Bookkeeper' : 'Viewer';
         const statusBadge = (u.status === 'Active' || u.active !== false) ? 'badge-active' : 'badge-inactive';
         const statusLabel = (u.status === 'Active' || u.active !== false) ? 'Active' : 'Inactive';
@@ -3321,7 +3323,14 @@ function openEditCampaignUserModal(email) {
     document.getElementById('cuEmail').value = u.email || '';
     document.getElementById('cuEmail').readOnly = true;
     document.getElementById('cuName').value = u.displayName || u.name || '';
-    document.getElementById('cuRole').value = u.role || 'campaign_manager';
+    const roleSelect = document.getElementById('cuRole');
+    if (u.role === 'campaign_owner' && !roleSelect.querySelector('option[value="campaign_owner"]')) {
+        const opt = document.createElement('option');
+        opt.value = 'campaign_owner';
+        opt.textContent = 'Campaign Owner';
+        roleSelect.appendChild(opt);
+    }
+    roleSelect.value = u.role || 'campaign_manager';
     document.getElementById('cuAuthMethod').value = u.authMethod || 'password';
     document.getElementById('cuPassword').value = '';
     document.getElementById('cuPasswordField').style.display = u.authMethod === 'google' ? 'none' : 'block';
@@ -3367,7 +3376,7 @@ async function saveCampaignUser() {
             originalEmail,
             name,
             role,
-            authMethod,
+            userAuthMethod: authMethod,
             password,
             active,
         });

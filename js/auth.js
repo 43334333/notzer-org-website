@@ -107,10 +107,17 @@ function getAuthParams() {
  */
 async function authGet(action, params = {}) {
     const url = new URL(AUTH_CONFIG.masterScriptUrl);
+    const queryParams = { ...params };
+    if (queryParams.authMethod && !queryParams.userAuthMethod) {
+        queryParams.userAuthMethod = queryParams.authMethod;
+    }
+    delete queryParams.authMethod;
+    delete queryParams.authToken;
+
     url.searchParams.set('action', action);
     url.searchParams.set('authToken', _authToken);
     url.searchParams.set('authMethod', _authMethod);
-    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    Object.entries(queryParams).forEach(([k, v]) => url.searchParams.set(k, v));
 
     const resp = await fetch(url.toString());
     if (!resp.ok) {
@@ -128,11 +135,18 @@ async function authGet(action, params = {}) {
  * @returns {Promise<Object>} Parsed JSON response
  */
 async function authPost(action, data = {}) {
+    const payload = { ...data };
+    if (payload.authMethod && !payload.userAuthMethod) {
+        payload.userAuthMethod = payload.authMethod;
+    }
+    delete payload.authMethod;
+    delete payload.authToken;
+
     const body = {
+        ...payload,
         action,
         authToken: _authToken,
-        authMethod: _authMethod,
-        ...data
+        authMethod: _authMethod
     };
 
     const resp = await fetch(AUTH_CONFIG.masterScriptUrl, {
