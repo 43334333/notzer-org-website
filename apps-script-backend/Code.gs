@@ -166,10 +166,19 @@ function doGet(e) {
     if (action === 'getCampaignUsers') {
       var campId = params.campaignId || params.campaign || '';
       if (!campId) return jsonResponse({ status: 'error', message: 'campaignId is required.' });
-      if (!checkPermission(user, 'campaign_owner', campId)) {
-        return jsonResponse({ status: 'error', message: 'Insufficient permissions. Requires campaign owner.' });
+      if (!checkPermission(user, 'campaign_manager', campId)) {
+        return jsonResponse({ status: 'error', message: 'Insufficient permissions. Requires campaign manager.' });
       }
       return jsonResponse(getCampaignUsersMaster_(campId));
+    }
+
+    if (action === 'getTransactions') {
+      var campId = params.campaignId || params.campaign || '';
+      if (!campId) return jsonResponse({ status: 'error', message: 'campaignId is required.' });
+      if (!checkPermission(user, 'bookkeeper', campId)) {
+        return jsonResponse({ status: 'error', message: 'Access denied for this campaign.' });
+      }
+      return jsonResponse(getTransactionsMaster_(campId, params));
     }
 
     if (action === 'getCampaigns') {
@@ -230,6 +239,14 @@ function doGet(e) {
         return jsonResponse({ status: 'error', message: 'Access denied for this campaign.' });
       }
       return jsonResponse(getScheduledPayments(filters, user));
+    }
+
+    if (action === 'generateReport') {
+      var rptCamp = params.campaignId || params.campaign || '';
+      if (rptCamp && !checkPermission(user, 'campaign_manager', rptCamp)) {
+        return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
+      }
+      return jsonResponse(generateReport(params, user));
     }
 
     if (action === 'getReceiptLog') {
@@ -389,27 +406,37 @@ function doPost(e) {
       return jsonResponse(deleteTeamMaster_(data, user));
     }
 
-    // ── Campaign Users Management (Tier 2: Tab 11 Users - campaign_owner, super_admin) ──
+    // ── Campaign Users Management (Tier 2: Tab 11 Users - campaign_manager, campaign_owner, super_admin) ──
     if (action === 'getCampaignUsers') {
       var uCampId = data.campaignId || data.campaign || '';
-      if (!checkPermission(user, 'campaign_owner', uCampId)) {
-        return jsonResponse({ status: 'error', message: 'Insufficient permissions. Requires campaign owner.' });
+      if (!checkPermission(user, 'campaign_manager', uCampId)) {
+        return jsonResponse({ status: 'error', message: 'Insufficient permissions. Requires campaign manager.' });
       }
       return jsonResponse(getCampaignUsersMaster_(uCampId));
     }
     if (action === 'saveCampaignUser') {
       var uCampId = data.campaignId || data.campaign || '';
-      if (!checkPermission(user, 'campaign_owner', uCampId)) {
-        return jsonResponse({ status: 'error', message: 'Insufficient permissions. Requires campaign owner.' });
+      if (!checkPermission(user, 'campaign_manager', uCampId)) {
+        return jsonResponse({ status: 'error', message: 'Insufficient permissions. Requires campaign manager.' });
       }
       return jsonResponse(saveCampaignUserMaster_(uCampId, data));
     }
     if (action === 'deleteCampaignUser') {
       var uCampId = data.campaignId || data.campaign || '';
-      if (!checkPermission(user, 'campaign_owner', uCampId)) {
-        return jsonResponse({ status: 'error', message: 'Insufficient permissions. Requires campaign owner.' });
+      if (!checkPermission(user, 'campaign_manager', uCampId)) {
+        return jsonResponse({ status: 'error', message: 'Insufficient permissions. Requires campaign manager.' });
       }
       return jsonResponse(deleteCampaignUserMaster_(uCampId, data.email));
+    }
+
+    // ── Transactions (bookkeeper+) ──
+    if (action === 'getTransactions') {
+      var txnCampId = data.campaignId || data.campaign || '';
+      if (!txnCampId) return jsonResponse({ status: 'error', message: 'campaignId is required.' });
+      if (!checkPermission(user, 'bookkeeper', txnCampId)) {
+        return jsonResponse({ status: 'error', message: 'Access denied for this campaign.' });
+      }
+      return jsonResponse(getTransactionsMaster_(txnCampId, data));
     }
 
     // ── Campaign management (super_admin) ──
@@ -544,14 +571,6 @@ function doPost(e) {
         return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
       }
       return jsonResponse(updateScheduledPayment(data));
-    }
-    if (action === 'getTransactions') {
-      var txnCampId = data.campaignId || data.campaign || '';
-      if (!txnCampId) return jsonResponse({ status: 'error', message: 'campaignId is required.' });
-      if (!checkPermission(user, 'bookkeeper', txnCampId)) {
-        return jsonResponse({ status: 'error', message: 'Access denied for this campaign.' });
-      }
-      return jsonResponse(getTransactionsMaster_(txnCampId, data));
     }
     if (action === 'markTransactionFunded') {
       if (!checkPermission(user, 'bookkeeper', data.campaignId)) {
@@ -3319,6 +3338,161 @@ function getPledges(campaignId, filters) {
 
 
 // ============================================================
+// TRANSACTIONS — READ FROM TAB 2 TRANSACTIONS
+// ============================================================
+/**
+ * Retrieve transaction records from a campaign's Transactions sheet.
+ * Tab 2 schema (14 cols):
+ * A: Timestamp, B: Reference, C: Amount Charged, D: Fees, E: Net,
+ * F: Donor Name, G: Pledge ID, H: Customer ID, I: Result, J: Method,
+ * K: Card Type, L: Payment #, M: Funded, N: Funded Date
+ *
+ * @param {string} campaignId - Campaign ID/slug
+ * @param {Object} [filters] - { page, pageSize, search, status, result, method, funded, dateFrom, dateTo }
+ * @returns {Object} { status, transactions, total, page, pageSize, summary }
+ */
+function getTransactionsMaster_(campaignId, filters) {
+  try {
+    filters = filters || {};
+    var campaignRow = getCampaignRow(campaignId);
+    if (!campaignRow) {
+      return { status: 'error', message: 'Campaign not found: ' + campaignId };
+    }
+
+    var sheetId = String(campaignRow[3] || '').trim();
+    if (!sheetId) {
+      return { status: 'error', message: 'No sheet configured for this campaign.' };
+    }
+
+    var ss = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName('Transactions');
+    if (!sheet || sheet.getLastRow() < 2) {
+      return {
+        status: 'success',
+        transactions: [],
+        total: 0,
+        page: 1,
+        pageSize: parseInt(filters.pageSize) || 50,
+        summary: { count: 0, totalCharged: 0, totalFees: 0, totalNet: 0 }
+      };
+    }
+
+    var lastRow = sheet.getLastRow();
+    var lastCol = Math.max(15, sheet.getLastColumn());
+    var data = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+
+    var page = parseInt(filters.page) || 1;
+    var pageSize = parseInt(filters.pageSize) || 50;
+    var searchFilter = (filters.search || '').trim().toLowerCase();
+    var resultFilter = (filters.result || '').trim().toLowerCase();
+    var methodFilter = (filters.method || '').trim().toLowerCase();
+    var fundedFilter = (filters.funded || '').trim().toLowerCase();
+    var dateFrom = filters.dateFrom ? new Date(filters.dateFrom) : null;
+    var dateTo = filters.dateTo ? new Date(filters.dateTo + 'T23:59:59') : null;
+
+    var filtered = [];
+    var sumCharged = 0;
+    var sumFees = 0;
+    var sumNet = 0;
+
+    // Scan newest first (from bottom row up to row 2)
+    for (var i = data.length - 1; i >= 0; i--) {
+      var row = data[i];
+      var rawTimestamp = row[0];
+      var refNum = String(row[1] || '').trim();
+      var amountCharged = parseFloat(row[2]) || 0;
+      var fees = parseFloat(row[3]) || 0;
+      var net = parseFloat(row[4]) || 0;
+      var donorName = String(row[5] || '').trim();
+      var pledgeId = String(row[6] || '').trim();
+      var customerId = String(row[7] || '').trim();
+      var result = String(row[8] || '').trim();
+      var method = String(row[9] || '').trim();
+      var cardType = String(row[10] || '').trim();
+      var paymentNum = String(row[11] || '').trim();
+      var funded = String(row[12] || '').trim();
+      var fundedDate = row[13] ? formatDateEdt_(row[13]) : '';
+      var depositBatchId = String(row[14] || '').trim();
+
+      var txDate = rawTimestamp ? (rawTimestamp instanceof Date ? rawTimestamp : new Date(rawTimestamp)) : null;
+
+      // Apply search filter
+      if (searchFilter) {
+        var match = donorName.toLowerCase().indexOf(searchFilter) !== -1 ||
+                    refNum.toLowerCase().indexOf(searchFilter) !== -1 ||
+                    pledgeId.toLowerCase().indexOf(searchFilter) !== -1 ||
+                    customerId.toLowerCase().indexOf(searchFilter) !== -1;
+        if (!match) continue;
+      }
+
+      // Apply result filter
+      if (resultFilter && result.toLowerCase() !== resultFilter) continue;
+
+      // Apply method filter (checks method and cardType)
+      if (methodFilter && method.toLowerCase().indexOf(methodFilter) === -1 && cardType.toLowerCase().indexOf(methodFilter) === -1) continue;
+
+      // Apply funded filter
+      if (fundedFilter) {
+        var isCleared = funded.toLowerCase() === 'cleared';
+        if ((fundedFilter === 'pending' || fundedFilter === 'unfunded') && isCleared) continue;
+        if ((fundedFilter === 'cleared' || fundedFilter === 'funded') && !isCleared) continue;
+        if (fundedFilter !== 'pending' && fundedFilter !== 'unfunded' && fundedFilter !== 'cleared' && fundedFilter !== 'funded' && funded.toLowerCase() !== fundedFilter) continue;
+      }
+
+      // Apply date filters
+      if (dateFrom && txDate && txDate < dateFrom) continue;
+      if (dateTo && txDate && txDate > dateTo) continue;
+
+      sumCharged += amountCharged;
+      sumFees += fees;
+      sumNet += net;
+
+      filtered.push({
+        id: refNum || ('TXN-' + (i + 2)),
+        timestamp: formatDateEdt_(txDate),
+        date: txDate ? Utilities.formatDate(txDate, Session.getScriptTimeZone() || 'America/New_York', 'yyyy-MM-dd HH:mm') : '',
+        reference: refNum,
+        amount: amountCharged,
+        fees: fees,
+        net: net,
+        donorName: donorName,
+        pledgeId: pledgeId,
+        customerId: customerId,
+        result: result,
+        method: method,
+        cardType: cardType,
+        paymentNum: paymentNum,
+        funded: funded,
+        fundedDate: fundedDate,
+        depositBatchId: depositBatchId
+      });
+    }
+
+    var total = filtered.length;
+    var startIdx = (page - 1) * pageSize;
+    var paginated = filtered.slice(startIdx, startIdx + pageSize);
+
+    return {
+      status: 'success',
+      transactions: paginated,
+      total: total,
+      page: page,
+      pageSize: pageSize,
+      summary: {
+        count: total,
+        totalCharged: Math.round(sumCharged * 100) / 100,
+        totalFees: Math.round(sumFees * 100) / 100,
+        totalNet: Math.round(sumNet * 100) / 100
+      }
+    };
+  } catch (err) {
+    Logger.log('getTransactionsMaster_ error: ' + err.toString());
+    return { status: 'error', message: 'Failed to retrieve transactions: ' + err.toString() };
+  }
+}
+
+
+// ============================================================
 // SCHEDULED PAYMENTS — READ WITH OVERDUE AUTO-FLAGGING
 // ============================================================
 /**
@@ -3925,165 +4099,6 @@ function bulkMarkFunded(data) {
     return { status: 'error', message: 'Failed to bulk mark transactions as funded.' };
   }
 }
-
-
-// ============================================================
-// TRANSACTIONS — READ FROM TAB 2 TRANSACTIONS
-// ============================================================
-/**
- * Retrieve transaction records from a campaign's Transactions sheet.
- * Tab 2 schema (14 cols):
- * A: Timestamp, B: Reference, C: Amount Charged, D: Fees, E: Net,
- * F: Donor Name, G: Pledge ID, H: Customer ID, I: Result, J: Method,
- * K: Card Type, L: Payment #, M: Funded, N: Funded Date
- *
- * @param {string} campaignId - Campaign ID/slug
- * @param {Object} [filters] - { page, pageSize, search, status, result, method, funded, dateFrom, dateTo }
- * @returns {Object} { status, transactions, total, page, pageSize, summary }
- */
-function getTransactionsMaster_(campaignId, filters) {
-  try {
-    filters = filters || {};
-    var campaignRow = getCampaignRow(campaignId);
-    if (!campaignRow) {
-      return { status: 'error', message: 'Campaign not found: ' + campaignId };
-    }
-
-    var sheetId = String(campaignRow[3] || '').trim();
-    if (!sheetId) {
-      return { status: 'error', message: 'No sheet configured for this campaign.' };
-    }
-
-    var ss = SpreadsheetApp.openById(sheetId);
-    var sheet = ss.getSheetByName('Transactions');
-    if (!sheet || sheet.getLastRow() < 2) {
-      return {
-        status: 'success',
-        transactions: [],
-        total: 0,
-        page: 1,
-        pageSize: parseInt(filters.pageSize) || 50,
-        summary: { count: 0, totalCharged: 0, totalFees: 0, totalNet: 0 }
-      };
-    }
-
-    var lastRow = sheet.getLastRow();
-    var lastCol = Math.max(15, sheet.getLastColumn());
-    var data = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
-
-    var page = parseInt(filters.page) || 1;
-    var pageSize = parseInt(filters.pageSize) || 50;
-    var searchFilter = (filters.search || '').trim().toLowerCase();
-    var resultFilter = (filters.result || '').trim().toLowerCase();
-    var methodFilter = (filters.method || '').trim().toLowerCase();
-    var fundedFilter = (filters.funded || '').trim().toLowerCase();
-    var dateFrom = filters.dateFrom ? new Date(filters.dateFrom) : null;
-    var dateTo = filters.dateTo ? new Date(filters.dateTo + 'T23:59:59') : null;
-
-    var filtered = [];
-    var sumCharged = 0;
-    var sumFees = 0;
-    var sumNet = 0;
-
-    // Scan newest first (from bottom row up to row 2)
-    for (var i = data.length - 1; i >= 0; i--) {
-      var row = data[i];
-      var rawTimestamp = row[0];
-      var refNum = String(row[1] || '').trim();
-      var amountCharged = parseFloat(row[2]) || 0;
-      var fees = parseFloat(row[3]) || 0;
-      var net = parseFloat(row[4]) || 0;
-      var donorName = String(row[5] || '').trim();
-      var pledgeId = String(row[6] || '').trim();
-      var customerId = String(row[7] || '').trim();
-      var result = String(row[8] || '').trim();
-      var method = String(row[9] || '').trim();
-      var cardType = String(row[10] || '').trim();
-      var paymentNum = String(row[11] || '').trim();
-      var funded = String(row[12] || '').trim();
-      var fundedDate = row[13] ? formatDateEdt_(row[13]) : '';
-      var depositBatchId = String(row[14] || '').trim();
-
-      var txDate = rawTimestamp ? (rawTimestamp instanceof Date ? rawTimestamp : new Date(rawTimestamp)) : null;
-
-      // Apply search filter
-      if (searchFilter) {
-        var match = donorName.toLowerCase().indexOf(searchFilter) !== -1 ||
-                    refNum.toLowerCase().indexOf(searchFilter) !== -1 ||
-                    pledgeId.toLowerCase().indexOf(searchFilter) !== -1 ||
-                    customerId.toLowerCase().indexOf(searchFilter) !== -1;
-        if (!match) continue;
-      }
-
-      // Apply result filter
-      if (resultFilter && result.toLowerCase() !== resultFilter) continue;
-
-      // Apply method filter (checks method and cardType)
-      if (methodFilter && method.toLowerCase().indexOf(methodFilter) === -1 && cardType.toLowerCase().indexOf(methodFilter) === -1) continue;
-
-      // Apply funded filter
-      if (fundedFilter) {
-        var isCleared = funded.toLowerCase() === 'cleared';
-        if ((fundedFilter === 'pending' || fundedFilter === 'unfunded') && isCleared) continue;
-        if ((fundedFilter === 'cleared' || fundedFilter === 'funded') && !isCleared) continue;
-        if (fundedFilter !== 'pending' && fundedFilter !== 'unfunded' && fundedFilter !== 'cleared' && fundedFilter !== 'funded' && funded.toLowerCase() !== fundedFilter) continue;
-      }
-
-      // Apply date filters
-      if (dateFrom && txDate && txDate < dateFrom) continue;
-      if (dateTo && txDate && txDate > dateTo) continue;
-
-      sumCharged += amountCharged;
-      sumFees += fees;
-      sumNet += net;
-
-      filtered.push({
-        id: refNum || ('TXN-' + (i + 2)),
-        timestamp: formatDateEdt_(txDate),
-        date: txDate ? Utilities.formatDate(txDate, Session.getScriptTimeZone() || 'America/New_York', 'yyyy-MM-dd HH:mm') : '',
-        reference: refNum,
-        amount: amountCharged,
-        fees: fees,
-        net: net,
-        donorName: donorName,
-        pledgeId: pledgeId,
-        customerId: customerId,
-        result: result,
-        method: method,
-        cardType: cardType,
-        paymentNum: paymentNum,
-        funded: funded,
-        fundedDate: fundedDate,
-        depositBatchId: depositBatchId
-      });
-    }
-
-    var total = filtered.length;
-    var startIdx = (page - 1) * pageSize;
-    var paginated = filtered.slice(startIdx, startIdx + pageSize);
-
-    return {
-      status: 'success',
-      transactions: paginated,
-      total: total,
-      page: page,
-      pageSize: pageSize,
-      summary: {
-        count: total,
-        totalCharged: Math.round(sumCharged * 100) / 100,
-        totalFees: Math.round(sumFees * 100) / 100,
-        totalNet: Math.round(sumNet * 100) / 100
-      }
-    };
-  } catch (err) {
-    Logger.log('getTransactionsMaster_ error: ' + err.toString());
-    return { status: 'error', message: 'Failed to retrieve transactions: ' + err.toString() };
-  }
-}
-
-
-// ============================================================
-// SCHEDULED PAYMENTS — READ WITH OVERDUE AUTO-FLAGGING
 
 
 // ============================================================
@@ -5004,10 +5019,6 @@ function confirmReconcileMatchesMaster_(campaignId, data) {
 
 // ============================================================
 // GENERAL DONATION — PROCESS (PUBLIC, Turnstile-protected)
-
-
-// ============================================================
-// GENERAL DONATION — PROCESS (PUBLIC, Turnstile-protected)
 // ============================================================
 /**
  * Process a general donation (from /donate page).
@@ -5076,7 +5087,8 @@ function processGeneralDonation(data) {
 
         // Log transaction
         var donorName = (data.firstName || '') + ' ' + (data.lastName || '');
-        logTransactionMaster(ss, pledgeId, customerId, donorName, parseFloat(data.amount), result, '1');
+        var txFee = calculateFee(result.xCardType || 'Credit Card', parseFloat(data.amount), ss);
+        logTransactionMaster(ss, pledgeId, customerId, donorName, parseFloat(data.amount), result, '1', txFee);
 
         // Send receipt
         sendDonationReceipt(data, result, campaignId);
@@ -5472,9 +5484,11 @@ function getCampaignUsersMaster_(campaignId) {
     for (var i = 0; i < data.length; i++) {
       var email = String(data[i][0] || '').trim().toLowerCase();
       if (!email) continue;
+      var userName = String(data[i][1] || '').trim();
       users.push({
         email: email,
-        name: String(data[i][1] || '').trim(),
+        name: userName,
+        displayName: userName,
         role: String(data[i][2] || 'campaign_manager').trim(),
         authMethod: String(data[i][3] || 'password').trim(),
         hasPassword: !!data[i][4],
@@ -5503,19 +5517,20 @@ function saveCampaignUserMaster_(campaignId, data) {
     if (!campCode) return { status: 'error', message: 'campaignId is required.' };
 
     var email = String(data.email || '').trim().toLowerCase();
-    var name = String(data.name || '').trim();
+    var originalEmail = String(data.originalEmail || email).trim().toLowerCase();
+    var name = String(data.displayName || data.name || '').trim();
     var role = String(data.role || 'campaign_manager').trim();
-    var authMethod = String(data.authMethod || 'password').trim();
+    var authMethod = String(data.userAuthMethod || data.targetAuthMethod || data.authMethod || 'password').trim();
     var password = String(data.password || '').trim();
-    var status = String(data.status || 'Active').trim();
+    var status = (data.active === false || data.status === 'Inactive') ? 'Inactive' : 'Active';
 
     if (!email || !name) {
       return { status: 'error', message: 'Email and Display Name are required.' };
     }
 
-    var allowedRoles = ['campaign_manager', 'bookkeeper', 'viewer'];
+    var allowedRoles = ['campaign_owner', 'campaign_manager', 'bookkeeper', 'viewer'];
     if (allowedRoles.indexOf(role) === -1) {
-      return { status: 'error', message: 'Role must be campaign_manager, bookkeeper, or viewer.' };
+      return { status: 'error', message: 'Role must be campaign_owner, campaign_manager, bookkeeper, or viewer.' };
     }
 
     var sheetId = getCampaignSheetId(campCode);
@@ -5529,7 +5544,8 @@ function saveCampaignUserMaster_(campaignId, data) {
     if (lastRow >= 2) {
       var emails = usersSheet.getRange(2, 1, lastRow - 1, 1).getValues();
       for (var i = 0; i < emails.length; i++) {
-        if (String(emails[i][0] || '').trim().toLowerCase() === email) {
+        var rowEmail = String(emails[i][0] || '').trim().toLowerCase();
+        if (rowEmail === originalEmail || rowEmail === email) {
           foundRow = i + 2;
           break;
         }
@@ -5539,6 +5555,7 @@ function saveCampaignUserMaster_(campaignId, data) {
     var passwordHash = password ? hashPasswordGas_(password, email) : '';
 
     if (foundRow > 0) {
+      usersSheet.getRange(foundRow, 1).setValue(email);
       usersSheet.getRange(foundRow, 2).setValue(name);
       usersSheet.getRange(foundRow, 3).setValue(role);
       usersSheet.getRange(foundRow, 4).setValue(authMethod);
@@ -6093,7 +6110,8 @@ function issueManualReceipt(data, user) {
         pledgeId = logPledgeMaster(campaignSS, data, customerId, 'Processed', '', campaignId);
 
         var paymentResult = { xRefNum: refNum, xResult: 'Manual', xMaskedCardNumber: data.method || 'Manual', xCardType: '' };
-        logTransactionMaster(campaignSS, pledgeId, customerId, donorName, amount, paymentResult, '1');
+        var txFee = calculateFee(data.method || 'Manual', amount, campaignSS);
+        logTransactionMaster(campaignSS, pledgeId, customerId, donorName, amount, paymentResult, '1', txFee);
       }
     } catch (sheetErr) {
       Logger.log('Failed to write manual donation to campaign sheet: ' + sheetErr.toString());
@@ -6859,11 +6877,7 @@ function generateReport(data, user) {
     var campaignId = data.campaignId || '*';
     var dateFrom = data.dateFrom ? new Date(data.dateFrom) : null;
     var dateTo = data.dateTo ? new Date(data.dateTo + 'T23:59:59') : null;
-    var sendTo = data.sendTo || (user ? user.email : '');
-
-    if (!sendTo) {
-      return { status: 'error', message: 'No recipient email specified.' };
-    }
+    var sendTo = data.sendTo ? String(data.sendTo).trim() : (data.emailReport ? (user ? user.email : '') : '');
 
     // Collect campaigns to report on
     var campaignIds = [];
@@ -6977,23 +6991,36 @@ function generateReport(data, user) {
       donations: allDonations
     };
 
-    var emailHtml = buildReportEmail(reportData);
-    var csvBlob = buildReportCsv(allDonations);
+    var emailSent = false;
+    if (sendTo) {
+      try {
+        var emailHtml = buildReportEmail(reportData);
+        var csvBlob = buildReportCsv(allDonations);
 
-    // Send email
-    MailApp.sendEmail({
-      to: sendTo,
-      subject: '📊 Campaign Report: ' + campaignName + ' — ' + dateRangeStr,
-      body: '📊 Campaign Report: ' + campaignName + ' — ' + dateRangeStr + '\n\nTotal: $' + overallTotal.toFixed(2) + ', Count: ' + overallCount,
-      htmlBody: emailHtml,
-      attachments: [csvBlob],
-      name: 'Notzer Chesed Reports'
-    });
+        // Send email
+        MailApp.sendEmail({
+          to: sendTo,
+          subject: '📊 Campaign Report: ' + campaignName + ' — ' + dateRangeStr,
+          body: '📊 Campaign Report: ' + campaignName + ' — ' + dateRangeStr + '\n\nTotal: $' + overallTotal.toFixed(2) + ', Count: ' + overallCount,
+          htmlBody: emailHtml,
+          attachments: [csvBlob],
+          name: 'Notzer Chesed Reports'
+        });
+        emailSent = true;
+      } catch (mailErr) {
+        Logger.log('generateReport MailApp error: ' + mailErr.toString());
+      }
+    }
 
-    return { status: 'success', message: 'Report sent to ' + sendTo + '.' };
+    return {
+      status: 'success',
+      message: emailSent ? ('Report sent to ' + sendTo + '.') : 'Report generated successfully.',
+      emailSent: emailSent,
+      report: reportData
+    };
   } catch (err) {
     Logger.log('generateReport error: ' + err.toString());
-    return { status: 'error', message: 'Failed to generate report.' };
+    return { status: 'error', message: 'Failed to generate report: ' + err.toString() };
   }
 }
 
@@ -8872,10 +8899,10 @@ var TdfClient_ = {
     
     if (res.status >= 200 && res.status < 300) {
       if (data.result === 'Error') {
-        return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorType, errorMessage: data.errorMessage, requestId: data.requestId, rawResponse: res.body };
+        return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorType, errorMessage: data.errorMessage || data.message || '', requestId: data.requestId, rawResponse: res.body };
       }
       if (data.error || data.errorCode) {
-        return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorCode, errorMessage: data.message || data.errorMessage, rawResponse: res.body };
+        return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorCode, errorMessage: data.message || data.errorMessage || (typeof data.error === 'string' ? data.error : JSON.stringify(data.error || '')), rawResponse: res.body };
       }
       var confNum = data.confirmationNumber || data.ConfirmationNumber || (typeof data.data === 'string' ? data.data : null);
       if (confNum) {
@@ -8883,7 +8910,7 @@ var TdfClient_ = {
       }
       return { outcome: 'UNKNOWN', errorMessage: 'HTTP 200 received but confirmation number missing', rawResponse: res.body };
     } else if (res.status === 400) {
-      return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorType || data.errorCode, errorMessage: data.errorMessage || data.message, requestId: data.requestId, rawResponse: res.body };
+      return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorType || data.errorCode, errorMessage: data.errorMessage || data.message || (typeof data.error === 'string' ? data.error : ''), requestId: data.requestId, rawResponse: res.body };
     } else {
       return { outcome: 'UNKNOWN', errorMessage: 'TDF server returned HTTP ' + res.status, rawResponse: res.body };
     }
@@ -9144,7 +9171,7 @@ function createDafGrant(data) {
     } else if (result.outcome === 'CONFIRMED_REJECTED') {
       tdfSheet.getRange(rowToUpdate, 9).setValue('SUBMIT_FAILED');
       tdfSheet.getRange(rowToUpdate, 12).setValue(result.requestId || '');
-      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || '');
+      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || result.rawResponse || '');
       return { 
         status: 'error', 
         outcome: result.outcome, 
@@ -9152,7 +9179,7 @@ function createDafGrant(data) {
       };
     } else if (result.outcome === 'CONFIG_FAILURE') {
       tdfSheet.getRange(rowToUpdate, 9).setValue('CONFIG_FAILURE');
-      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || '');
+      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || result.rawResponse || '');
       return { 
         status: 'error', 
         outcome: result.outcome, 
@@ -9160,7 +9187,7 @@ function createDafGrant(data) {
       };
     } else {
       tdfSheet.getRange(rowToUpdate, 9).setValue('OUTCOME_UNKNOWN');
-      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || '');
+      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || result.rawResponse || '');
       return { 
         status: 'error', 
         outcome: 'UNKNOWN', 

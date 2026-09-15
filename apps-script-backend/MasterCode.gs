@@ -5087,7 +5087,8 @@ function processGeneralDonation(data) {
 
         // Log transaction
         var donorName = (data.firstName || '') + ' ' + (data.lastName || '');
-        logTransactionMaster(ss, pledgeId, customerId, donorName, parseFloat(data.amount), result, '1');
+        var txFee = calculateFee(result.xCardType || 'Credit Card', parseFloat(data.amount), ss);
+        logTransactionMaster(ss, pledgeId, customerId, donorName, parseFloat(data.amount), result, '1', txFee);
 
         // Send receipt
         sendDonationReceipt(data, result, campaignId);
@@ -6109,7 +6110,8 @@ function issueManualReceipt(data, user) {
         pledgeId = logPledgeMaster(campaignSS, data, customerId, 'Processed', '', campaignId);
 
         var paymentResult = { xRefNum: refNum, xResult: 'Manual', xMaskedCardNumber: data.method || 'Manual', xCardType: '' };
-        logTransactionMaster(campaignSS, pledgeId, customerId, donorName, amount, paymentResult, '1');
+        var txFee = calculateFee(data.method || 'Manual', amount, campaignSS);
+        logTransactionMaster(campaignSS, pledgeId, customerId, donorName, amount, paymentResult, '1', txFee);
       }
     } catch (sheetErr) {
       Logger.log('Failed to write manual donation to campaign sheet: ' + sheetErr.toString());
@@ -8897,10 +8899,10 @@ var TdfClient_ = {
     
     if (res.status >= 200 && res.status < 300) {
       if (data.result === 'Error') {
-        return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorType, errorMessage: data.errorMessage, requestId: data.requestId, rawResponse: res.body };
+        return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorType, errorMessage: data.errorMessage || data.message || '', requestId: data.requestId, rawResponse: res.body };
       }
       if (data.error || data.errorCode) {
-        return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorCode, errorMessage: data.message || data.errorMessage, rawResponse: res.body };
+        return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorCode, errorMessage: data.message || data.errorMessage || (typeof data.error === 'string' ? data.error : JSON.stringify(data.error || '')), rawResponse: res.body };
       }
       var confNum = data.confirmationNumber || data.ConfirmationNumber || (typeof data.data === 'string' ? data.data : null);
       if (confNum) {
@@ -8908,7 +8910,7 @@ var TdfClient_ = {
       }
       return { outcome: 'UNKNOWN', errorMessage: 'HTTP 200 received but confirmation number missing', rawResponse: res.body };
     } else if (res.status === 400) {
-      return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorType || data.errorCode, errorMessage: data.errorMessage || data.message, requestId: data.requestId, rawResponse: res.body };
+      return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorType || data.errorCode, errorMessage: data.errorMessage || data.message || (typeof data.error === 'string' ? data.error : ''), requestId: data.requestId, rawResponse: res.body };
     } else {
       return { outcome: 'UNKNOWN', errorMessage: 'TDF server returned HTTP ' + res.status, rawResponse: res.body };
     }
@@ -9169,7 +9171,7 @@ function createDafGrant(data) {
     } else if (result.outcome === 'CONFIRMED_REJECTED') {
       tdfSheet.getRange(rowToUpdate, 9).setValue('SUBMIT_FAILED');
       tdfSheet.getRange(rowToUpdate, 12).setValue(result.requestId || '');
-      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || '');
+      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || result.rawResponse || '');
       return { 
         status: 'error', 
         outcome: result.outcome, 
@@ -9177,7 +9179,7 @@ function createDafGrant(data) {
       };
     } else if (result.outcome === 'CONFIG_FAILURE') {
       tdfSheet.getRange(rowToUpdate, 9).setValue('CONFIG_FAILURE');
-      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || '');
+      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || result.rawResponse || '');
       return { 
         status: 'error', 
         outcome: result.outcome, 
@@ -9185,7 +9187,7 @@ function createDafGrant(data) {
       };
     } else {
       tdfSheet.getRange(rowToUpdate, 9).setValue('OUTCOME_UNKNOWN');
-      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || '');
+      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || result.rawResponse || '');
       return { 
         status: 'error', 
         outcome: 'UNKNOWN', 

@@ -21,3 +21,6 @@ desktop.ini
 .env
 .env.local
 *.env
+
+# Agent relay (inter-session comms — keep off the public site)
+.agent-relay/

@@ -1178,6 +1178,9 @@
                                         <iframe id="card-number-iframe" data-ifields-id="card-number" data-ifields-placeholder="Card Number" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
                                         <input data-ifields-id="card-number-token" name="xCardNum" type="hidden">
                                     </div>
+                                    <div id="daf-card-warning" style="display:none; padding:10px 14px; margin:8px 0; background:rgba(255,180,0,0.12); border:1px solid #b8860b; border-radius:6px; font-size:0.85rem; color:#daa520;">
+                                        &#127974; This doesn't appear to be a standard credit or debit card. If you have a <strong>Donors Fund</strong>, <strong>OJC Fund</strong>, <strong>Pledger</strong>, or <strong>Matbia</strong> card, please contact us for DAF donation options.
+                                    </div>
 
                                     <div class="form-row">
                                         <div class="form-group">
@@ -1380,6 +1383,11 @@
                         } else {
                             setIfieldStyle('cvv', fieldStyle);
                         }
+                    }
+                    // DAF card detection: full-length number that fails standard brand validation
+                    var dafWarn = document.getElementById('daf-card-warning');
+                    if (dafWarn) {
+                        dafWarn.style.display = (data.cardNumberFormattedLength >= 15 && !data.cardNumberIsValid) ? 'block' : 'none';
                     }
                 });
             }
