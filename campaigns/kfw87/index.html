@@ -1672,10 +1672,11 @@
                         setIfieldStyle('cvv', fieldStyle);
                     }
                 }
-                // DAF card detection: full-length number that fails standard brand validation
+                // DAF card detection: full-length (16-digit) number that fails standard brand validation
                 var dafWarn = document.getElementById('daf-card-warning');
                 if (dafWarn) {
-                    dafWarn.style.display = (data.cardNumberFormattedLength >= 15 && !data.cardNumberIsValid) ? 'block' : 'none';
+                    var isFullLength = (data.cardNumberFormattedLength >= 19) || (data.cardNumberLength && data.cardNumberLength >= 16);
+                    dafWarn.style.display = (isFullLength && !data.cardNumberIsValid) ? 'block' : 'none';
                 }
             });
         },

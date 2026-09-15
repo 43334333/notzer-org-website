@@ -7852,7 +7852,7 @@ function calculateFee(method, amount, ss) {
     var s = schedule['DAF'];
     return Math.round((amount * s.rate + s.flat) * 100) / 100;
   }
-  if (/^\d/.test(method) || ml.includes('visa') || ml.includes('mastercard') || ml.includes('card')) {
+  if (/^\d/.test(method) || ml.includes('visa') || ml.includes('mastercard') || ml.includes('card') || ml.includes('amex') || ml.includes('american express') || ml.includes('discover') || ml.includes('diners') || ml.includes('jcb')) {
     if (schedule['Credit Card']) {
       var s = schedule['Credit Card'];
       return Math.round((amount * s.rate + s.flat) * 100) / 100;
@@ -9169,25 +9169,28 @@ function createDafGrant(data) {
         message: 'Grant recommendation submitted successfully!'
       };
     } else if (result.outcome === 'CONFIRMED_REJECTED') {
+      var errDetail = result.errorMessage || (result.rawResponse ? String(result.rawResponse).slice(0, 5000) : '') || '';
       tdfSheet.getRange(rowToUpdate, 9).setValue('SUBMIT_FAILED');
       tdfSheet.getRange(rowToUpdate, 12).setValue(result.requestId || '');
-      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || result.rawResponse || '');
+      tdfSheet.getRange(rowToUpdate, 18).setValue(errDetail);
       return { 
         status: 'error', 
         outcome: result.outcome, 
         message: result.errorMessage || 'The Donors Fund rejected the card or grant request.'
       };
     } else if (result.outcome === 'CONFIG_FAILURE') {
+      var errDetail = result.errorMessage || (result.rawResponse ? String(result.rawResponse).slice(0, 5000) : '') || '';
       tdfSheet.getRange(rowToUpdate, 9).setValue('CONFIG_FAILURE');
-      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || result.rawResponse || '');
+      tdfSheet.getRange(rowToUpdate, 18).setValue(errDetail);
       return { 
         status: 'error', 
         outcome: result.outcome, 
         message: 'The Donors Fund service is temporarily unavailable. Please try again later or donate directly.' 
       };
     } else {
+      var errDetail = result.errorMessage || (result.rawResponse ? String(result.rawResponse).slice(0, 5000) : '') || '';
       tdfSheet.getRange(rowToUpdate, 9).setValue('OUTCOME_UNKNOWN');
-      tdfSheet.getRange(rowToUpdate, 18).setValue(result.errorMessage || result.rawResponse || '');
+      tdfSheet.getRange(rowToUpdate, 18).setValue(errDetail);
       return { 
         status: 'error', 
         outcome: 'UNKNOWN', 
