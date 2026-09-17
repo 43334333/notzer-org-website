@@ -8901,6 +8901,25 @@ function extractTransactionId_(data) {
   return raw ? String(raw).trim() : '';
 }
 
+/**
+ * Sanitizes and validates an upstream requestId to prevent PAN/PIN injection.
+ * Rejects values that are missing, excessively long, contain illegal characters,
+ * or match credit card PAN (13+ digits) or PIN (3-4 digits) patterns.
+ * @param {*} rawReqId
+ * @returns {string} Sanitized opaque request ID, or '' if invalid/suspicious
+ */
+function sanitizeRequestId_(rawReqId) {
+  var clean = String(rawReqId || '').trim();
+  if (!clean || clean.length > 64) return '';
+  // Must be alphanumeric, dash, underscore, colon, dot
+  if (!/^[a-zA-Z0-9\-_:.]{1,64}$/.test(clean)) return '';
+  // Reject if contains 13 or more consecutive digits (PAN pattern)
+  if (/\d{13,}/.test(clean)) return '';
+  // Reject pure digit strings of length 3 or 4 (PIN pattern)
+  if (/^\d{3,4}$/.test(clean)) return '';
+  return clean;
+}
+
 function formatSafeDiagnosticSummary_(httpStatus, errorCode, rawMsg, requestId) {
   var codeNum = Number(errorCode) || 0;
   var codeDesc = TDF_SAFE_CODE_MESSAGES_[codeNum] || '';
@@ -8926,9 +8945,9 @@ function formatSafeDiagnosticSummary_(httpStatus, errorCode, rawMsg, requestId) 
     parts.push('Unresolved response');
   }
   
-  // Validate requestId as strictly opaque token (alphanumeric, dash, underscore, 1-64 chars)
-  var cleanReqId = String(requestId || '').trim();
-  if (cleanReqId && /^[a-zA-Z0-9\-_]{1,64}$/.test(cleanReqId)) {
+  // Validate requestId as strictly opaque token (rejects PAN/PIN shaped strings)
+  var cleanReqId = sanitizeRequestId_(requestId);
+  if (cleanReqId) {
     parts.push('Req: ' + cleanReqId);
   }
   
@@ -9025,7 +9044,7 @@ var TdfClient_ = {
     
     var errorCode = Number(data.errorCode || data.errorType) || 0;
     var rawError = data.message || data.errorMessage || (typeof data.error === 'string' ? data.error : '') || '';
-    var requestId = data.requestId ? String(data.requestId) : '';
+    var requestId = sanitizeRequestId_(data.requestId);
     var tdfTxId = extractTransactionId_(data);
     var confNum = extractConfirmationNumber_(data);
     var diagnostic = formatSafeDiagnosticSummary_(httpStatus, errorCode, rawError, requestId);
@@ -9229,7 +9248,7 @@ function createDafGrant(data) {
       return { status: 'error', outcome: 'BOT_CHECK_FAILED', message: 'Security verification failed. Please refresh and try again.' };
     }
 
-    // Server-Side Rate Limiting (5 attempts per hour per email, and per card last4)
+    // Server-Side Throttle (Best-effort rate limiting via CacheService: 5 attempts per key, sliding 1-hour TTL per email and card last4)
     var cache = CacheService.getScriptCache();
     var emailKey = 'rate_tdf_em_' + (email ? email.toLowerCase().trim() : 'unknown');
     var currentEmailCount = parseInt(cache.get(emailKey) || '0');
@@ -9371,6 +9390,7 @@ function createDafGrant(data) {
     var result = TdfClient_.createGrant(tdfConfig, tdfParams);
     
     var updateNow = new Date();
+    var safeReqId = sanitizeRequestId_(result.requestId);
     tdfSheet.getRange(rowToUpdate, 17).setValue(updateNow); // Last_Checked_At
     if (result.httpStatus && tdfSheet.getLastColumn() >= 21) {
       tdfSheet.getRange(rowToUpdate, 21).setValue(result.httpStatus); // HTTP_Status
@@ -9381,7 +9401,7 @@ function createDafGrant(data) {
     
     if (result.outcome === 'CONFIRMED_ACCEPTED') {
       tdfSheet.getRange(rowToUpdate, 9).setValue('TDF_SUBMITTED');
-      tdfSheet.getRange(rowToUpdate, 12).setValue(result.requestId || '');
+      tdfSheet.getRange(rowToUpdate, 12).setValue(safeReqId);
       tdfSheet.getRange(rowToUpdate, 13).setValue(result.confirmationNumber || '');
       tdfSheet.getRange(rowToUpdate, 14).setValue(updateNow);
       tdfSheet.getRange(rowToUpdate, 18).setValue('');
@@ -9420,7 +9440,7 @@ function createDafGrant(data) {
           anonymous: !!data.anonymous,
           teams: data.team || data.teams || '',
           method: 'DAF - The Donors Fund',
-          notes: 'TDF Confirmation: ' + (result.confirmationNumber || '') + (result.requestId ? (' (Req: ' + result.requestId + ')') : '')
+          notes: 'TDF Confirmation: ' + (result.confirmationNumber || '') + (safeReqId ? (' (Req: ' + safeReqId + ')') : '')
         };
         pledgeId = logPledgeMaster(campSS, pledgeData, customerId, 'Processed', '', campaignId);
 
@@ -9450,7 +9470,7 @@ function createDafGrant(data) {
       };
     } else if (result.outcome === 'CONFIRMED_REJECTED') {
       tdfSheet.getRange(rowToUpdate, 9).setValue('SUBMIT_FAILED');
-      tdfSheet.getRange(rowToUpdate, 12).setValue(result.requestId || '');
+      tdfSheet.getRange(rowToUpdate, 12).setValue(safeReqId);
       tdfSheet.getRange(rowToUpdate, 18).setValue(result.diagnosticSummary || 'Submission failed');
       return { 
         status: 'error', 
@@ -9459,7 +9479,7 @@ function createDafGrant(data) {
       };
     } else if (result.outcome === 'CONFIG_FAILURE') {
       tdfSheet.getRange(rowToUpdate, 9).setValue('CONFIG_FAILURE');
-      tdfSheet.getRange(rowToUpdate, 12).setValue(result.requestId || '');
+      tdfSheet.getRange(rowToUpdate, 12).setValue(safeReqId);
       tdfSheet.getRange(rowToUpdate, 18).setValue(result.diagnosticSummary || 'Configuration error');
       return { 
         status: 'error', 
@@ -9468,7 +9488,7 @@ function createDafGrant(data) {
       };
     } else {
       tdfSheet.getRange(rowToUpdate, 9).setValue('UNRESOLVED');
-      tdfSheet.getRange(rowToUpdate, 12).setValue(result.requestId || '');
+      tdfSheet.getRange(rowToUpdate, 12).setValue(safeReqId);
       tdfSheet.getRange(rowToUpdate, 18).setValue(result.diagnosticSummary || 'Unresolved response');
       return { 
         status: 'error', 
@@ -9589,7 +9609,7 @@ function reconcileTdfPending_() {
                   tdfSheet.getRange(rowIdx, 9).setValue('MANUAL_REVIEW_REQUIRED');
                   var detCode = details.details ? (details.details.errorCode || details.details.errorType || 0) : 0;
                   var detMsg = details.details ? (details.details.errorMessage || details.details.message || '') : '';
-                  var detReq = details.details ? (details.details.requestId || '') : '';
+                  var detReq = sanitizeRequestId_(details.details ? details.details.requestId : '');
                   var safeDiag = formatSafeDiagnosticSummary_(0, detCode, detMsg, detReq);
                   tdfSheet.getRange(rowIdx, 18).setValue(safeDiag || 'Error in grant details');
                   actionsTaken.push('Row ' + rowIdx + ' (' + campId + '): marked MANUAL_REVIEW_REQUIRED (API Error)');
