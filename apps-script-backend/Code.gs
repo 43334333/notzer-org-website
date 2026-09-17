@@ -9181,7 +9181,8 @@ var TdfClient_ = {
       if (data.result === 'Error') {
         return { found: true, status: 'Error', details: data, rawResponse: res.body };
       }
-      return { found: true, status: data.status || 'OK', details: data, rawResponse: res.body };
+      var statusVal = (data && (data.grantStatus || data.status)) ? String(data.grantStatus || data.status).trim() : 'OK';
+      return { found: true, status: statusVal, details: data, rawResponse: res.body };
     }
     return { found: false, rawResponse: res.body };
   },
