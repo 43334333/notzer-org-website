@@ -2723,10 +2723,12 @@
             if (!res.ok) {
                 throw new Error('HTTP ' + res.status);
             }
-            return res.json().catch(function() { return { status: 'success' }; });
+            return res.json().catch(function() {
+                throw new Error('Invalid server response (non-JSON)');
+            });
         }).then(function(json) {
-            if (json && json.status === 'error') {
-                throw new Error(json.message || 'Server error logging link click');
+            if (!json || json.status === 'error') {
+                throw new Error((json && json.message) || 'Server error logging link click');
             }
             return json;
         }).catch(function(err) {
