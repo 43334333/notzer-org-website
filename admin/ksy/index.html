@@ -1311,6 +1311,10 @@
                 <div class="card-value" id="txnTotalFees">$0.00</div>
                 <div class="card-label">Total Fees</div>
             </div>
+            <div class="summary-card accent-orange">
+                <div class="card-value" id="txnTotalFundCharge">$0.00</div>
+                <div class="card-label">Total Fund Charge</div>
+            </div>
             <div class="summary-card accent-blue">
                 <div class="card-value" id="txnTotalNet">$0.00</div>
                 <div class="card-label">Total Net</div>
@@ -1354,6 +1358,7 @@
                             <th>Method</th>
                             <th>Amount</th>
                             <th>Fees</th>
+                            <th>Fund Charge</th>
                             <th>Net</th>
                             <th>Result</th>
                             <th>Pledge ID</th>
@@ -1361,7 +1366,7 @@
                         </tr>
                     </thead>
                     <tbody id="transactionsTableBody">
-                        <tr><td colspan="10" class="table-loading">Loading transactions…</td></tr>
+                        <tr><td colspan="11" class="table-loading">Loading transactions…</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -2534,7 +2539,7 @@ let currentTxnResult = '';
 
 async function loadTransactions(page = 1) {
     const tbody = document.getElementById('transactionsTableBody');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="table-loading">Loading transactions…</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="table-loading">Loading transactions…</td></tr>';
 
     txnPaginationInfo.page = page;
 
@@ -2557,12 +2562,12 @@ async function loadTransactions(page = 1) {
                 updateTransactionsSummary(data.summary);
             }
         } else {
-            if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="table-empty">No transactions found.</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="table-empty">No transactions found.</td></tr>';
             updateTxnPagination();
         }
     } catch (err) {
         console.error('Failed to load transactions:', err);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="table-empty">Failed to load transactions.</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="table-empty">Failed to load transactions.</td></tr>';
     }
 }
 
@@ -2571,7 +2576,7 @@ function renderTransactions() {
     if (!tbody) return;
 
     if (transactionsData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="table-empty">No transactions recorded for this campaign.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="table-empty">No transactions recorded for this campaign.</td></tr>';
         updateTxnPagination();
         return;
     }
@@ -2590,6 +2595,7 @@ function renderTransactions() {
             <td><span style="font-size:0.8rem; color:#aaa;">${escapeHtml(methodDisplay)}</span></td>
             <td style="font-weight:600; color:#fff;">${formatCurrency(tx.amount || 0)}</td>
             <td style="color:#ffa94d;">${formatCurrency(tx.fees || 0)}</td>
+            <td style="color:#ffa94d;">${formatCurrency(tx.fundCharge || 0)}</td>
             <td style="font-weight:600; color:#51cf66;">${formatCurrency(tx.net || 0)}</td>
             <td><span class="status-badge ${badgeClass}">${escapeHtml(displayResult)}</span></td>
             <td style="font-family:monospace; font-size:0.75rem; color:#777;">${escapeHtml(tx.pledgeId || '—')}</td>
@@ -2605,11 +2611,13 @@ function updateTransactionsSummary(summary) {
     const elCount = document.getElementById('txnTotalCount');
     const elGross = document.getElementById('txnTotalGross');
     const elFees = document.getElementById('txnTotalFees');
+    const elFundCharge = document.getElementById('txnTotalFundCharge');
     const elNet = document.getElementById('txnTotalNet');
 
     if (elCount) elCount.textContent = (summary.count || 0).toLocaleString();
     if (elGross) elGross.textContent = formatCurrency(summary.totalCharged || 0);
     if (elFees) elFees.textContent = formatCurrency(summary.totalFees || 0);
+    if (elFundCharge) elFundCharge.textContent = formatCurrency(summary.totalFundCharge || 0);
     if (elNet) elNet.textContent = formatCurrency(summary.totalNet || 0);
 }
 

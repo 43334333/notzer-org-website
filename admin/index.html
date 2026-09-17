@@ -1787,14 +1787,15 @@ body::before {
                 <table class="data-table" id="feeDefaultsTable">
                     <thead>
                         <tr>
-                            <th style="width:40%;">Payment Method</th>
-                            <th style="width:25%;">Rate (%)</th>
-                            <th style="width:25%;">Flat Fee ($)</th>
+                            <th style="width:35%;">Payment Method</th>
+                            <th style="width:20%;">Rate (%)</th>
+                            <th style="width:20%;">Flat Fee ($)</th>
+                            <th style="width:15%;">Fund Charge (%)</th>
                             <th style="width:10%;text-align:center;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="feeDefaultsTableRows">
-                        <tr><td colspan="4" class="empty-state">Loading fee defaults...</td></tr>
+                        <tr><td colspan="5" class="empty-state">Loading fee defaults...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -3657,17 +3658,17 @@ function closeFeeDefaultsManager() {
 
 async function loadFeeDefaults() {
     const tbody = $('#feeDefaultsTableRows');
-    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Loading fee defaults from Master Sheet...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Loading fee defaults from Master Sheet...</td></tr>';
     try {
         const res = await authGet('getFeeConfigDefaults');
         if (res && res.status === 'success' && Array.isArray(res.defaults)) {
             FEE_DEFAULTS_STATE.data = res.defaults;
             renderFeeDefaultsTable();
         } else {
-            tbody.innerHTML = `<tr><td colspan="4" class="empty-state" style="color:var(--error);">${res?.message || 'Failed to load fee defaults'}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:var(--error);">${res?.message || 'Failed to load fee defaults'}</td></tr>`;
         }
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="4" class="empty-state" style="color:var(--error);">Error loading fee defaults: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:var(--error);">Error loading fee defaults: ${err.message}</td></tr>`;
     }
 }
 
@@ -3675,12 +3676,13 @@ function renderFeeDefaultsTable() {
     const tbody = $('#feeDefaultsTableRows');
     const items = FEE_DEFAULTS_STATE.data || [];
     if (!items.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No fee default methods found. Click "+ Add Payment Method" below.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No fee default methods found. Click "+ Add Payment Method" below.</td></tr>';
         return;
     }
     tbody.innerHTML = items.map((item, idx) => {
         const ratePct = typeof item.rate === 'number' ? (item.rate * 100).toFixed(2) : (parseFloat(item.rate) * 100 || 0).toFixed(2);
         const flatVal = typeof item.flat === 'number' ? item.flat.toFixed(2) : (parseFloat(item.flat) || 0).toFixed(2);
+        const fcVal = item.fundCharge !== undefined ? (typeof item.fundCharge === 'number' ? (item.fundCharge * 100).toFixed(2) : (parseFloat(item.fundCharge) * 100 || 0).toFixed(2)) : '1.00';
         return `
             <tr data-index="${idx}">
                 <td style="padding:6px 8px;">
@@ -3698,6 +3700,12 @@ function renderFeeDefaultsTable() {
                         <input type="number" step="0.01" min="0" class="fee-def-flat" value="${flatVal}" style="width:90px;padding:6px 8px;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);font-size:0.85rem;text-align:right;">
                     </div>
                 </td>
+                <td style="padding:6px 8px;">
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <input type="number" step="0.01" min="0" max="100" class="fee-def-fund-charge" value="${fcVal}" style="width:90px;padding:6px 8px;background:var(--bg-input);border:1px solid var(--border-subtle);border-radius:6px;color:var(--text-primary);font-size:0.85rem;text-align:right;">
+                        <span style="color:var(--text-muted);font-size:0.85rem;">%</span>
+                    </div>
+                </td>
                 <td style="padding:6px 8px;text-align:center;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="deleteFeeDefaultRow(${idx})" title="Delete method" style="color:var(--error);padding:4px 8px;font-size:0.8rem;">✕</button>
                 </td>
@@ -3713,12 +3721,14 @@ function syncFeeDefaultsFromInputs() {
         const methodInput = row.querySelector('.fee-def-method');
         const rateInput = row.querySelector('.fee-def-rate');
         const flatInput = row.querySelector('.fee-def-flat');
+        const fcInput = row.querySelector('.fee-def-fund-charge');
         if (methodInput) {
             const m = methodInput.value.trim();
             if (m) {
                 const rate = (parseFloat(rateInput?.value) || 0) / 100;
                 const flat = parseFloat(flatInput?.value) || 0;
-                updated.push({ method: m, rate: rate, flat: flat });
+                const fc = fcInput ? (parseFloat(fcInput.value) || 0) / 100 : 0.01;
+                updated.push({ method: m, rate: rate, flat: flat, fundCharge: fc });
             }
         }
     });
@@ -3728,7 +3738,7 @@ function syncFeeDefaultsFromInputs() {
 
 function addFeeDefaultRow() {
     syncFeeDefaultsFromInputs();
-    FEE_DEFAULTS_STATE.data.push({ method: '', rate: 0, flat: 0 });
+    FEE_DEFAULTS_STATE.data.push({ method: '', rate: 0, flat: 0, fundCharge: 0.01 });
     renderFeeDefaultsTable();
     const rows = $$('#feeDefaultsTableRows tr');
     if (rows.length) {
