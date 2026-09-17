@@ -188,6 +188,10 @@ campaignFiles.forEach(f => {
         content.includes("logLinkClickMaster('Zelle', amt, fn, ln, em, session.id).catch("),
         `[${f}] Both Zelle click paths handle logging rejection cleanly`
     );
+    assert(
+        content.includes("throw new Error('Invalid server response (non-JSON)');"),
+        `[${f}] logLinkClickMaster rejects on non-JSON response rather than swallowing as success`
+    );
 });
 
 // 8. Test Bidirectional Amount Sync & Route-Scoped Click PK in Sandbox VM

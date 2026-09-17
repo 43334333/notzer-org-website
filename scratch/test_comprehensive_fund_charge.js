@@ -255,6 +255,16 @@ it('Scenario 1c: getTransactionColMap_ rejects duplicate headers fail-closed', (
   }, /Duplicate header detected: "Reference"/);
 });
 
+it('Scenario 1d: logTransactionMaster throws fail-closed when sheet headers are invalid', () => {
+  const ss = new MockSpreadsheet('test1d');
+  const sheet = ss.insertSheet('Transactions');
+  sheet.appendRow(['Timestamp', 'Reference', 'Amount Charged', 'Fees']); // Missing Net
+
+  assert.throws(() => {
+    sandbox.logTransactionMaster(ss, 'PL-1', 'CUST-1', 'Donor', 100, { xResult: 'A', xRefNum: 'REF-1' }, '1', 3.00);
+  }, /Required header "net" missing/);
+});
+
 // SCENARIO 2: Legacy Row Reading & Non-Retroactivity
 it('Scenario 2: getTransactionsMaster_ preserves historical Net and returns fundCharge: 0 on legacy 14-col sheet', () => {
   const ss = getMockSS('camp-legacy-sheet');
