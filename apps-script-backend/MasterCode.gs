@@ -8110,6 +8110,83 @@ function loadFeeSchedule_(ss) {
 }
 
 /**
+ * Resolves a method name or card type to its corresponding entry in the fee schedule.
+ * Handles exact matches, case-insensitive matches, DAF brand mappings, and card fallbacks.
+ *
+ * @param {string} method - Payment method or card type (e.g. 'DonorsFund', 'Visa', 'DAF - OJCF')
+ * @param {Object} schedule - Fee schedule map from loadFeeSchedule_
+ * @returns {Object|null} The resolved fee config entry { rate, flat, fundCharge } or null
+ */
+function resolveFeeScheduleEntry_(method, schedule) {
+  if (!schedule || typeof schedule !== 'object') return null;
+
+  // 1. Direct exact match
+  if (schedule[method]) return schedule[method];
+
+  var ml = (method || '').toLowerCase().trim();
+  if (!ml) return schedule['Credit Card'] || null;
+
+  // 2. Case-insensitive direct match
+  for (var key in schedule) {
+    if (key.toLowerCase().trim() === ml) {
+      return schedule[key];
+    }
+  }
+
+  // 3. DAF Brand mappings (from Cardknox xCardType or user input)
+  // The Donors Fund
+  if (ml.includes('donors') || ml.includes('tdf')) {
+    if (schedule['DAF - The Donors Fund']) return schedule['DAF - The Donors Fund'];
+    if (schedule['The Donors Fund']) return schedule['The Donors Fund'];
+    if (schedule['DonorsFund']) return schedule['DonorsFund'];
+    if (schedule['DAF']) return schedule['DAF'];
+  }
+
+  // OJC Fund
+  if (ml.includes('ojc')) {
+    if (schedule['DAF - OJCF']) return schedule['DAF - OJCF'];
+    if (schedule['DAF - OJC']) return schedule['DAF - OJC'];
+    if (schedule['OJC Fund']) return schedule['OJC Fund'];
+    if (schedule['OJCF']) return schedule['OJCF'];
+    if (schedule['OJC']) return schedule['OJC'];
+    if (schedule['DAF']) return schedule['DAF'];
+  }
+
+  // Pledger
+  if (ml.includes('pledger')) {
+    if (schedule['DAF - Pledger']) return schedule['DAF - Pledger'];
+    if (schedule['Pledger']) return schedule['Pledger'];
+    if (schedule['DAF']) return schedule['DAF'];
+  }
+
+  // Matbia (DAF or payment method)
+  if (ml.includes('matbia')) {
+    if (schedule['DAF - Matbia']) return schedule['DAF - Matbia'];
+    if (schedule['Matbia']) return schedule['Matbia'];
+    if (schedule['DAF']) return schedule['DAF'];
+  }
+
+  // Generic DAF fallback
+  if (ml.startsWith('daf')) {
+    if (schedule['DAF']) return schedule['DAF'];
+    for (var k in schedule) {
+      if (k.toLowerCase().startsWith('daf')) return schedule[k];
+    }
+  }
+
+  // 4. Standard Credit Card brands
+  if (/^\d/.test(method) || ml.includes('visa') || ml.includes('mastercard') || ml.includes('card') ||
+      ml.includes('amex') || ml.includes('american express') || ml.includes('discover') ||
+      ml.includes('diners') || ml.includes('jcb')) {
+    if (schedule['Credit Card']) return schedule['Credit Card'];
+    if (schedule['Cardknox']) return schedule['Cardknox'];
+    if (schedule['USAePay']) return schedule['USAePay'];
+  }
+
+  return null;
+}
+
+/**
  * Calculates the NC Fund Charge for a given transaction method and amount.
  *
  * @param {string} method - Payment method or card brand
@@ -8126,50 +8203,26 @@ function calculateFundCharge(method, amount, ss) {
   } else {
     schedule = { 'Credit Card': { rate: 0.029, flat: 0.30, fundCharge: 0.01 } };
   }
+  var entry = resolveFeeScheduleEntry_(method, schedule);
   var rate = 0.01;
-  if (schedule && schedule[method] && schedule[method].fundCharge !== undefined) {
-    rate = schedule[method].fundCharge;
-  } else {
-    var ml = (method || '').toLowerCase();
-    if (ml.startsWith('daf') && schedule && schedule['DAF'] && schedule['DAF'].fundCharge !== undefined) {
-      rate = schedule['DAF'].fundCharge;
-    } else if ((/^d/.test(method) || ml.includes('visa') || ml.includes('mastercard') || ml.includes('card') || ml.includes('amex') || ml.includes('american express') || ml.includes('discover') || ml.includes('diners') || ml.includes('jcb')) && schedule && schedule['Credit Card'] && schedule['Credit Card'].fundCharge !== undefined) {
-      rate = schedule['Credit Card'].fundCharge;
-    } else if (ml.includes('matbia') && schedule && schedule['Matbia'] && schedule['Matbia'].fundCharge !== undefined) {
-      rate = schedule['Matbia'].fundCharge;
-    }
+  if (entry && entry.fundCharge !== undefined && entry.fundCharge !== null) {
+    rate = entry.fundCharge;
   }
   return Math.round(amt * rate * 100) / 100;
 }
 
 function calculateFee(method, amount, ss) {
+  var amt = parseFloat(amount) || 0;
+  if (amt <= 0) return 0;
   var schedule;
   if (ss) {
     schedule = loadFeeSchedule_(ss);
   } else {
-    // Fallback: hardcoded default
     schedule = { 'Credit Card': { rate: 0.029, flat: 0.30 } };
   }
-  // Direct match
-  if (schedule[method]) {
-    var s = schedule[method];
-    return Math.round((amount * s.rate + s.flat) * 100) / 100;
-  }
-  // Pattern matching
-  var ml = (method || '').toLowerCase();
-  if (ml.startsWith('daf') && schedule['DAF']) {
-    var s = schedule['DAF'];
-    return Math.round((amount * s.rate + s.flat) * 100) / 100;
-  }
-  if (/^\d/.test(method) || ml.includes('visa') || ml.includes('mastercard') || ml.includes('card') || ml.includes('amex') || ml.includes('american express') || ml.includes('discover') || ml.includes('diners') || ml.includes('jcb')) {
-    if (schedule['Credit Card']) {
-      var s = schedule['Credit Card'];
-      return Math.round((amount * s.rate + s.flat) * 100) / 100;
-    }
-  }
-  if (ml.includes('matbia') && schedule['Matbia']) {
-    var s = schedule['Matbia'];
-    return Math.round((amount * s.rate + s.flat) * 100) / 100;
+  var entry = resolveFeeScheduleEntry_(method, schedule);
+  if (entry) {
+    return Math.round((amt * entry.rate + entry.flat) * 100) / 100;
   }
   return 0;
 }
