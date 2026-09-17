@@ -2461,18 +2461,26 @@ function provisionCampaignSheet(campaignId) {
     ]]);
     if (existingGoal) campSheet.getRange('C2').setNumberFormat('$#,##0.00');
 
-    // ── Tab 10: TDF_Transactions (19 cols) ──
+    // ── Tab 10: TDF_Transactions (21 cols) ──
     var tdfSheet = campaignSS.getSheetByName('TDF_Transactions');
     if (!tdfSheet) {
       tdfSheet = campaignSS.insertSheet('TDF_Transactions');
-      tdfSheet.getRange('A1:S1').setValues([[
-        'Created_At', 'Transaction_ID', 'Submission_ID', 'Campaign_ID', 'Amount', 'Donor_Name', 'Email', 'Method', 'TDF_Status', 'Card_Last4', 'Designation', 'TDF_Request_ID', 'TDF_Confirmation_Number', 'TDF_Submitted_At', 'Completed_At', 'Reconciled_At', 'Last_Checked_At', 'Error', 'Pledge_ID'
+      tdfSheet.getRange('A1:U1').setValues([[
+        'Created_At', 'Transaction_ID', 'Submission_ID', 'Campaign_ID', 'Amount', 'Donor_Name', 'Email', 'Method', 'TDF_Status', 'Card_Last4', 'Designation', 'TDF_Request_ID', 'TDF_Confirmation_Number', 'TDF_Submitted_At', 'Completed_At', 'Reconciled_At', 'Last_Checked_At', 'Error', 'Pledge_ID', 'TDF_Transaction_ID', 'HTTP_Status'
       ]]);
-    } else if (tdfSheet.getLastColumn() < 19) {
-      tdfSheet.getRange('S1').setValue('Pledge_ID');
-      tdfSheet.getRange('S1').setFontWeight('bold');
+    } else {
+      var curCols = tdfSheet.getLastColumn();
+      if (curCols < 19) {
+        tdfSheet.getRange(1, 19).setValue('Pledge_ID').setFontWeight('bold');
+      }
+      if (curCols < 20) {
+        tdfSheet.getRange(1, 20).setValue('TDF_Transaction_ID').setFontWeight('bold');
+      }
+      if (curCols < 21) {
+        tdfSheet.getRange(1, 21).setValue('HTTP_Status').setFontWeight('bold');
+      }
     }
-    formatHeaderRow_(tdfSheet, 'A1:S1');
+    formatHeaderRow_(tdfSheet, 'A1:U1');
     tdfSheet.getRange('E2:E1000').setNumberFormat('$#,##0.00');
 
     // ── Tab 11: Users (8 cols - Campaign Managers & Bookkeepers) ──
@@ -5813,9 +5821,9 @@ function processCardknox(data, keys) {
       xBillCity: data.city || '',
       xBillState: data.state || '',
       xBillZip: data.zip || '',
-      xDescription: data.campaign || data.campaignId || 'Donation',
+      xDescription: data.campaign || data.campaignName || data.campaignCode || data.campaignId || 'Donation',
       xInvoice: 'NC-' + new Date().getTime(),
-      xCustom01: data.campaignId || data.campaign || '',
+      xCustom01: data.campaignCode || data.campaignId || data.campaign || '',
       xCustom02: data.anonymous ? 'Anonymous' : '',
       xCustom03: data.isRecurring ? (data.frequency || 'recurring') : 'one-time'
     };
@@ -8826,12 +8834,113 @@ function getTdfConfig_(campaignId) {
 }
 
 /**
+ * TDF API Error Code Taxonomy & Allowlisted Descriptions
+ * Codes per The Donors Fund OpenAPI v1.2.0 Specification.
+ */
+var TDF_SAFE_CODE_MESSAGES_ = {
+  3100: 'Invalid card number',
+  3101: 'Card expired',
+  3102: 'Card inactive',
+  3103: 'Insufficient balance',
+  3104: 'Card locked',
+  3106: 'Card restricted',
+  3109: 'Charity account inactive',
+  3112: 'Invalid charity account',
+  3118: 'Amount exceeds card limit',
+  3120: 'Card cancelled',
+  3121: 'Card not found',
+  3201: 'Invalid PIN or authorization code',
+  3204: 'API authentication failed',
+  3205: 'PIN retry limit exceeded',
+  3206: 'PIN expired',
+  3208: 'Authorization failed',
+  3209: 'Unauthorized charity account',
+  3210: 'API key disabled',
+  3211: 'Validation token expired',
+  3212: 'Declined by issuer'
+};
+
+var TDF_DEFINITIVE_DECLINE_CODES_ = [3100, 3101, 3102, 3103, 3104, 3106, 3118, 3120, 3121, 3201, 3205, 3206, 3208, 3212];
+var TDF_CONFIG_FAILURE_CODES_ = [3109, 3112, 3204, 3209, 3210, 3211];
+
+function extractConfirmationNumber_(data) {
+  if (!data || typeof data !== 'object') return null;
+  var raw = null;
+  if (data.confirmationNumber !== undefined && data.confirmationNumber !== null) {
+    raw = data.confirmationNumber;
+  } else if (data.ConfirmationNumber !== undefined && data.ConfirmationNumber !== null) {
+    raw = data.ConfirmationNumber;
+  } else if (data.data && typeof data.data === 'object') {
+    if (data.data.confirmationNumber !== undefined && data.data.confirmationNumber !== null) {
+      raw = data.data.confirmationNumber;
+    } else if (data.data.ConfirmationNumber !== undefined && data.data.ConfirmationNumber !== null) {
+      raw = data.data.ConfirmationNumber;
+    }
+  } else if (typeof data.data === 'string' && /^\d+$/.test(data.data.trim())) {
+    raw = data.data.trim();
+  }
+  if (raw !== null && raw !== undefined) {
+    var str = String(raw).trim();
+    if (/^\d+$/.test(str)) {
+      return str;
+    }
+  }
+  return null;
+}
+
+function extractTransactionId_(data) {
+  if (!data || typeof data !== 'object') return '';
+  var raw = null;
+  if (data.transactionId) {
+    raw = data.transactionId;
+  } else if (data.TransactionId) {
+    raw = data.TransactionId;
+  } else if (data.data && typeof data.data === 'object') {
+    raw = data.data.transactionId || data.data.TransactionId || '';
+  }
+  return raw ? String(raw).trim() : '';
+}
+
+function formatSafeDiagnosticSummary_(httpStatus, errorCode, rawMsg, requestId) {
+  var codeNum = Number(errorCode) || 0;
+  var codeDesc = TDF_SAFE_CODE_MESSAGES_[codeNum] || '';
+  var parts = [];
+  
+  if (httpStatus) {
+    parts.push('HTTP ' + httpStatus);
+  }
+  if (codeNum) {
+    parts.push('Code ' + codeNum + (codeDesc ? ' (' + codeDesc + ')' : ''));
+  } else if (codeDesc) {
+    parts.push(codeDesc);
+  }
+  
+  if (!codeDesc && rawMsg) {
+    var safeMsg = String(rawMsg)
+      .replace(/\b\d{13,19}\b/g, '[PAN-REDACTED]')
+      .replace(/\b\d{3,4}\b/g, '[PIN-REDACTED]')
+      .replace(/[\r\n\t]+/g, ' ')
+      .trim();
+    if (safeMsg.length > 80) safeMsg = safeMsg.substring(0, 80) + '...';
+    if (safeMsg) parts.push(safeMsg);
+  }
+  
+  if (requestId) {
+    parts.push('Req: ' + String(requestId).substring(0, 40));
+  }
+  
+  var summary = parts.join(' | ');
+  if (!summary) summary = 'Unknown upstream response';
+  return summary.length > 150 ? summary.substring(0, 150) : summary;
+}
+
+/**
  * 2. TdfClient_ Adapter
  * Normalized outcome semantics:
- *   - CONFIRMED_ACCEPTED: TDF confirmed receipt of grant recommendation
- *   - CONFIRMED_REJECTED: TDF definitively rejected (bad card, invalid amount, etc.)
- *   - CONFIG_FAILURE: 401/403 or bad credentials
- *   - UNKNOWN: Network error, timeout, 5xx, or unparseable response
+ *   - CONFIRMED_ACCEPTED: TDF confirmed receipt of grant recommendation with valid confirmation number
+ *   - CONFIRMED_REJECTED: TDF definitively rejected (invalid card, expired card, insufficient balance, etc.)
+ *   - CONFIG_FAILURE: 401/403 or bad credentials/account
+ *   - UNRESOLVED: Network error, timeout, 5xx, or unparseable/ambiguous response
  */
 var TdfClient_ = {
   _request: function(config, method, endpoint, payload) {
@@ -8873,47 +8982,158 @@ var TdfClient_ = {
 
   createGrant: function(config, params) {
     var payload = {
-      donor: params.donorName,
-      email: params.email,
-      cardNumber: params.cardNumber,
+      accountNumber: String(config.charityAccountNumber).trim(),
       amount: parseFloat(params.amount),
-      charityAccountNumber: config.charityAccountNumber,
-      grantPurpose: params.designation
+      donor: String(params.cardNumber).replace(/[^0-9]/g, ''),
+      donorAuthorization: String(params.cardPin).trim(),
+      purposeType: 'Other',
+      purposeNote: params.designation || 'Donation to Notzer Chesed'
     };
     
     var res = this._request(config, 'post', '/Create', payload);
-    var maskCard = '****' + String(params.cardNumber).replace(/[^0-9]/g, '').slice(-4);
     
     if (!res) {
-      return { outcome: 'UNKNOWN', errorMessage: 'Network error or timeout connecting to TDF', rawResponse: null };
+      return { 
+        outcome: 'UNRESOLVED', 
+        httpStatus: 0,
+        errorMessage: 'Network error or timeout connecting to TDF', 
+        diagnosticSummary: 'Network error or timeout connecting to TDF'
+      };
     }
     
-    if (res.status === 401 || res.status === 403) {
-      return { outcome: 'CONFIG_FAILURE', errorMessage: 'TDF authentication failed (HTTP ' + res.status + ')', rawResponse: res.body };
+    var httpStatus = res.status || 0;
+    if (httpStatus === 401 || httpStatus === 403) {
+      return { 
+        outcome: 'CONFIG_FAILURE', 
+        httpStatus: httpStatus,
+        errorMessage: 'TDF authentication failed (HTTP ' + httpStatus + ')', 
+        diagnosticSummary: formatSafeDiagnosticSummary_(httpStatus, 0, 'Authentication failed', '')
+      };
     }
     
     var data = this._parseResponse(res);
     if (!data) {
-      return { outcome: 'UNKNOWN', errorMessage: 'Invalid or empty JSON response from TDF (HTTP ' + res.status + ')', rawResponse: res.body };
+      return { 
+        outcome: 'UNRESOLVED', 
+        httpStatus: httpStatus,
+        errorMessage: 'Invalid or empty JSON response from TDF (HTTP ' + httpStatus + ')', 
+        diagnosticSummary: formatSafeDiagnosticSummary_(httpStatus, 0, 'Invalid or empty response', '')
+      };
     }
     
-    if (res.status >= 200 && res.status < 300) {
-      if (data.result === 'Error') {
-        return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorType, errorMessage: data.errorMessage || data.message || '', requestId: data.requestId, rawResponse: res.body };
+    var errorCode = Number(data.errorCode || data.errorType) || 0;
+    var rawError = data.message || data.errorMessage || (typeof data.error === 'string' ? data.error : '') || '';
+    var requestId = data.requestId ? String(data.requestId) : '';
+    var tdfTxId = extractTransactionId_(data);
+    var confNum = extractConfirmationNumber_(data);
+    var diagnostic = formatSafeDiagnosticSummary_(httpStatus, errorCode, rawError, requestId);
+
+    // 2xx responses
+    if (httpStatus >= 200 && httpStatus < 300) {
+      // 1. Check explicit error markers on 2xx
+      if (data.result === 'Error' || data.error || errorCode !== 0) {
+        if (TDF_CONFIG_FAILURE_CODES_.indexOf(errorCode) !== -1) {
+          return {
+            outcome: 'CONFIG_FAILURE',
+            httpStatus: httpStatus,
+            errorCode: errorCode,
+            errorMessage: TDF_SAFE_CODE_MESSAGES_[errorCode] || 'TDF configuration error',
+            requestId: requestId,
+            transactionId: tdfTxId,
+            diagnosticSummary: diagnostic
+          };
+        }
+        if (TDF_DEFINITIVE_DECLINE_CODES_.indexOf(errorCode) !== -1) {
+          return {
+            outcome: 'CONFIRMED_REJECTED',
+            httpStatus: httpStatus,
+            errorCode: errorCode,
+            errorMessage: TDF_SAFE_CODE_MESSAGES_[errorCode] || 'The Donors Fund rejected the card or grant recommendation.',
+            requestId: requestId,
+            transactionId: tdfTxId,
+            diagnosticSummary: diagnostic
+          };
+        }
+        return {
+          outcome: 'UNRESOLVED',
+          httpStatus: httpStatus,
+          errorCode: errorCode,
+          errorMessage: 'Unresolved response from TDF',
+          requestId: requestId,
+          transactionId: tdfTxId,
+          diagnosticSummary: diagnostic
+        };
       }
-      if (data.error || data.errorCode) {
-        return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorCode, errorMessage: data.message || data.errorMessage || (typeof data.error === 'string' ? data.error : JSON.stringify(data.error || '')), rawResponse: res.body };
-      }
-      var confNum = data.confirmationNumber || data.ConfirmationNumber || (typeof data.data === 'string' ? data.data : null);
+      
+      // 2. Verified numeric confirmation number
       if (confNum) {
-        return { outcome: 'CONFIRMED_ACCEPTED', confirmationNumber: confNum, requestId: data.requestId, rawResponse: res.body };
+        return {
+          outcome: 'CONFIRMED_ACCEPTED',
+          httpStatus: httpStatus,
+          confirmationNumber: confNum,
+          transactionId: tdfTxId,
+          requestId: requestId,
+          diagnosticSummary: diagnostic
+        };
       }
-      return { outcome: 'UNKNOWN', errorMessage: 'HTTP 200 received but confirmation number missing', rawResponse: res.body };
-    } else if (res.status === 400) {
-      return { outcome: 'CONFIRMED_REJECTED', errorCode: data.errorType || data.errorCode, errorMessage: data.errorMessage || data.message || (typeof data.error === 'string' ? data.error : ''), requestId: data.requestId, rawResponse: res.body };
-    } else {
-      return { outcome: 'UNKNOWN', errorMessage: 'TDF server returned HTTP ' + res.status, rawResponse: res.body };
+      
+      // 3. 2xx without valid numeric confirmation number
+      return {
+        outcome: 'UNRESOLVED',
+        httpStatus: httpStatus,
+        errorMessage: 'HTTP 200 received but valid numeric confirmation number missing',
+        transactionId: tdfTxId,
+        requestId: requestId,
+        diagnosticSummary: diagnostic
+      };
     }
+    
+    // 400 responses
+    if (httpStatus === 400) {
+      if (TDF_CONFIG_FAILURE_CODES_.indexOf(errorCode) !== -1) {
+        return {
+          outcome: 'CONFIG_FAILURE',
+          httpStatus: httpStatus,
+          errorCode: errorCode,
+          errorMessage: TDF_SAFE_CODE_MESSAGES_[errorCode] || 'TDF configuration error',
+          requestId: requestId,
+          transactionId: tdfTxId,
+          diagnosticSummary: diagnostic
+        };
+      }
+      if (TDF_DEFINITIVE_DECLINE_CODES_.indexOf(errorCode) !== -1) {
+        return {
+          outcome: 'CONFIRMED_REJECTED',
+          httpStatus: httpStatus,
+          errorCode: errorCode,
+          errorMessage: TDF_SAFE_CODE_MESSAGES_[errorCode] || 'The Donors Fund rejected the card or grant recommendation.',
+          requestId: requestId,
+          transactionId: tdfTxId,
+          diagnosticSummary: diagnostic
+        };
+      }
+      // Missing code, all-null envelope, or non-definitive error -> UNRESOLVED
+      return {
+        outcome: 'UNRESOLVED',
+        httpStatus: httpStatus,
+        errorCode: errorCode,
+        errorMessage: 'Unresolved 400 response from TDF',
+        requestId: requestId,
+        transactionId: tdfTxId,
+        diagnosticSummary: diagnostic
+      };
+    }
+    
+    // 5xx or any other HTTP status
+    return {
+      outcome: 'UNRESOLVED',
+      httpStatus: httpStatus,
+      errorCode: errorCode,
+      errorMessage: 'TDF server returned HTTP ' + httpStatus,
+      requestId: requestId,
+      transactionId: tdfTxId,
+      diagnosticSummary: diagnostic
+    };
   },
   
   validateCard: function(config, cardNumber) {
@@ -8977,9 +9197,14 @@ function createDafGrant(data) {
     var email = data.email;
     var turnstileToken = data.turnstileToken;
     var submissionId = data.submissionId;
+    var cardPin = String(data.cardPin || data.donorAuthorization || '').trim();
     
     if (!campaignId || isNaN(amount) || amount <= 0 || amount > 100000 || !cardNumber || !donorName || !email || !submissionId) {
       return { status: 'error', outcome: 'INVALID_INPUT', message: 'Invalid or missing required fields' };
+    }
+
+    if (!/^[0-9]{3,4}$/.test(cardPin)) {
+      return { status: 'error', outcome: 'INVALID_PIN', message: 'Please enter a valid 3 or 4-digit Giving Card PIN / CVV.' };
     }
     
     // Check max 2 decimal places
@@ -9013,14 +9238,22 @@ function createDafGrant(data) {
     var tdfSheet = campSS.getSheetByName('TDF_Transactions');
     if (!tdfSheet) {
       tdfSheet = campSS.insertSheet('TDF_Transactions');
-      tdfSheet.getRange('A1:S1').setValues([[
-        'Created_At', 'Transaction_ID', 'Submission_ID', 'Campaign_ID', 'Amount', 'Donor_Name', 'Email', 'Method', 'TDF_Status', 'Card_Last4', 'Designation', 'TDF_Request_ID', 'TDF_Confirmation_Number', 'TDF_Submitted_At', 'Completed_At', 'Reconciled_At', 'Last_Checked_At', 'Error', 'Pledge_ID'
+      tdfSheet.getRange('A1:U1').setValues([[
+        'Created_At', 'Transaction_ID', 'Submission_ID', 'Campaign_ID', 'Amount', 'Donor_Name', 'Email', 'Method', 'TDF_Status', 'Card_Last4', 'Designation', 'TDF_Request_ID', 'TDF_Confirmation_Number', 'TDF_Submitted_At', 'Completed_At', 'Reconciled_At', 'Last_Checked_At', 'Error', 'Pledge_ID', 'TDF_Transaction_ID', 'HTTP_Status'
       ]]);
-      formatHeaderRow_(tdfSheet, 'A1:S1');
+      formatHeaderRow_(tdfSheet, 'A1:U1');
       tdfSheet.getRange('E2:E1000').setNumberFormat('$#,##0.00');
-    } else if (tdfSheet.getLastColumn() < 19) {
-      tdfSheet.getRange('S1').setValue('Pledge_ID');
-      tdfSheet.getRange('S1').setFontWeight('bold');
+    } else {
+      var curCols = tdfSheet.getLastColumn();
+      if (curCols < 19) {
+        tdfSheet.getRange(1, 19).setValue('Pledge_ID').setFontWeight('bold');
+      }
+      if (curCols < 20) {
+        tdfSheet.getRange(1, 20).setValue('TDF_Transaction_ID').setFontWeight('bold');
+      }
+      if (curCols < 21) {
+        tdfSheet.getRange(1, 21).setValue('HTTP_Status').setFontWeight('bold');
+      }
     }
     
     var lock = LockService.getScriptLock();
@@ -9046,13 +9279,21 @@ function createDafGrant(data) {
     
     if (existingRowIdx !== -1) {
       lock.releaseLock();
-      if (existingStatus === 'SUBMIT_FAILED') {
-        return { status: 'error', outcome: 'SUBMIT_FAILED', message: 'This submission previously failed. Please try again with a new submission ID.' };
+      if (existingStatus === 'SUBMIT_FAILED' || existingStatus === 'CONFIRMED_REJECTED') {
+        return { status: 'error', outcome: 'CONFIRMED_REJECTED', message: 'This submission previously failed. Please try again with a new submission ID.' };
+      }
+      if (existingStatus === 'TDF_SUBMITTED' || existingStatus === 'CONFIRMED_ACCEPTED' || existingStatus === 'COMPLETED') {
+        return { 
+          status: 'success', 
+          outcome: 'CONFIRMED_ACCEPTED', 
+          message: 'Submission already processed', 
+          confirmationNumber: existingConf 
+        };
       }
       return { 
-        status: 'success', 
-        outcome: existingStatus, 
-        message: 'Submission already processed or in progress', 
+        status: 'pending', 
+        outcome: 'UNRESOLVED', 
+        message: 'Submission is currently being verified or in progress.', 
         confirmationNumber: existingConf 
       };
     }
@@ -9080,7 +9321,9 @@ function createDafGrant(data) {
       '',                   // 16: Reconciled_At
       '',                   // 17: Last_Checked_At
       '',                   // 18: Error
-      ''                    // 19: Pledge_ID
+      '',                   // 19: Pledge_ID
+      '',                   // 20: TDF_Transaction_ID
+      ''                    // 21: HTTP_Status
     ];
     
     tdfSheet.appendRow(newRow);
@@ -9091,6 +9334,7 @@ function createDafGrant(data) {
       donorName: donorName,
       email: email,
       cardNumber: cardNumber,
+      cardPin: cardPin,
       amount: amount,
       designation: designation
     };
@@ -9099,12 +9343,19 @@ function createDafGrant(data) {
     
     var updateNow = new Date();
     tdfSheet.getRange(rowToUpdate, 17).setValue(updateNow); // Last_Checked_At
+    if (result.httpStatus && tdfSheet.getLastColumn() >= 21) {
+      tdfSheet.getRange(rowToUpdate, 21).setValue(result.httpStatus); // HTTP_Status
+    }
+    if (result.transactionId && tdfSheet.getLastColumn() >= 20) {
+      tdfSheet.getRange(rowToUpdate, 20).setValue(result.transactionId); // TDF_Transaction_ID
+    }
     
     if (result.outcome === 'CONFIRMED_ACCEPTED') {
       tdfSheet.getRange(rowToUpdate, 9).setValue('TDF_SUBMITTED');
       tdfSheet.getRange(rowToUpdate, 12).setValue(result.requestId || '');
       tdfSheet.getRange(rowToUpdate, 13).setValue(result.confirmationNumber || '');
       tdfSheet.getRange(rowToUpdate, 14).setValue(updateNow);
+      tdfSheet.getRange(rowToUpdate, 18).setValue('');
 
       // ── Unify into Core Campaign Sheets (Customers, Pledges, Transactions) ──
       var pledgeId = '';
@@ -9169,31 +9420,30 @@ function createDafGrant(data) {
         message: 'Grant recommendation submitted successfully!'
       };
     } else if (result.outcome === 'CONFIRMED_REJECTED') {
-      var errDetail = result.errorMessage || (result.rawResponse ? String(result.rawResponse).slice(0, 5000) : '') || '';
       tdfSheet.getRange(rowToUpdate, 9).setValue('SUBMIT_FAILED');
       tdfSheet.getRange(rowToUpdate, 12).setValue(result.requestId || '');
-      tdfSheet.getRange(rowToUpdate, 18).setValue(errDetail);
+      tdfSheet.getRange(rowToUpdate, 18).setValue(result.diagnosticSummary || 'Submission failed');
       return { 
         status: 'error', 
         outcome: result.outcome, 
         message: result.errorMessage || 'The Donors Fund rejected the card or grant request.'
       };
     } else if (result.outcome === 'CONFIG_FAILURE') {
-      var errDetail = result.errorMessage || (result.rawResponse ? String(result.rawResponse).slice(0, 5000) : '') || '';
       tdfSheet.getRange(rowToUpdate, 9).setValue('CONFIG_FAILURE');
-      tdfSheet.getRange(rowToUpdate, 18).setValue(errDetail);
+      tdfSheet.getRange(rowToUpdate, 12).setValue(result.requestId || '');
+      tdfSheet.getRange(rowToUpdate, 18).setValue(result.diagnosticSummary || 'Configuration error');
       return { 
         status: 'error', 
         outcome: result.outcome, 
         message: 'The Donors Fund service is temporarily unavailable. Please try again later or donate directly.' 
       };
     } else {
-      var errDetail = result.errorMessage || (result.rawResponse ? String(result.rawResponse).slice(0, 5000) : '') || '';
-      tdfSheet.getRange(rowToUpdate, 9).setValue('OUTCOME_UNKNOWN');
-      tdfSheet.getRange(rowToUpdate, 18).setValue(errDetail);
+      tdfSheet.getRange(rowToUpdate, 9).setValue('UNRESOLVED');
+      tdfSheet.getRange(rowToUpdate, 12).setValue(result.requestId || '');
+      tdfSheet.getRange(rowToUpdate, 18).setValue(result.diagnosticSummary || 'Unresolved response');
       return { 
         status: 'error', 
-        outcome: 'UNKNOWN', 
+        outcome: 'UNRESOLVED', 
         message: 'We could not confirm whether your grant recommendation was received. Please do NOT submit again. We will verify with The Donors Fund and follow up by email.' 
       };
     }
@@ -9308,7 +9558,11 @@ function reconcileTdfPending_() {
               if (details.found) {
                 if (details.status === 'Error') {
                   tdfSheet.getRange(rowIdx, 9).setValue('MANUAL_REVIEW_REQUIRED');
-                  tdfSheet.getRange(rowIdx, 18).setValue(details.details ? JSON.stringify(details.details) : 'Error in details');
+                  var detCode = details.details ? (details.details.errorCode || details.details.errorType || 0) : 0;
+                  var detMsg = details.details ? (details.details.errorMessage || details.details.message || '') : '';
+                  var detReq = details.details ? (details.details.requestId || '') : '';
+                  var safeDiag = formatSafeDiagnosticSummary_(0, detCode, detMsg, detReq);
+                  tdfSheet.getRange(rowIdx, 18).setValue(safeDiag || 'Error in grant details');
                   actionsTaken.push('Row ' + rowIdx + ' (' + campId + '): marked MANUAL_REVIEW_REQUIRED (API Error)');
                 } else if (details.status === 'Completed' || details.status === 'Approved') {
                   tdfSheet.getRange(rowIdx, 9).setValue('COMPLETED');
@@ -9362,13 +9616,19 @@ function reconcileTdfPending_() {
               }
             } else {
               tdfSheet.getRange(rowIdx, 9).setValue('MANUAL_REVIEW_REQUIRED');
-              tdfSheet.getRange(rowIdx, 18).setValue('Missing confirmation number');
+              var existingErr = String(tdfSheet.getRange(rowIdx, 18).getValue() || '').trim();
+              var escalatedErr = existingErr ? (existingErr + ' | Missing confirmation number') : 'Missing confirmation number';
+              if (escalatedErr.length > 150) escalatedErr = escalatedErr.substring(0, 150);
+              tdfSheet.getRange(rowIdx, 18).setValue(escalatedErr);
               actionsTaken.push('Row ' + rowIdx + ' (' + campId + '): marked MANUAL_REVIEW_REQUIRED (Missing confirmation)');
               processedCount++;
             }
-          } else if (tStatus === 'OUTCOME_UNKNOWN' || (tStatus === 'SUBMITTING' && !confNumber)) {
+          } else if (tStatus === 'OUTCOME_UNKNOWN' || tStatus === 'UNRESOLVED' || (tStatus === 'SUBMITTING' && !confNumber)) {
             tdfSheet.getRange(rowIdx, 9).setValue('MANUAL_REVIEW_REQUIRED');
-            tdfSheet.getRange(rowIdx, 18).setValue('Stuck in ' + tStatus);
+            var existingErr = String(tdfSheet.getRange(rowIdx, 18).getValue() || '').trim();
+            var escalatedErr = existingErr ? (existingErr + ' | Escalated: ' + tStatus) : ('Stuck in ' + tStatus);
+            if (escalatedErr.length > 150) escalatedErr = escalatedErr.substring(0, 150);
+            tdfSheet.getRange(rowIdx, 18).setValue(escalatedErr);
             actionsTaken.push('Row ' + rowIdx + ' (' + campId + '): marked MANUAL_REVIEW_REQUIRED (' + tStatus + ')');
             processedCount++;
           }
