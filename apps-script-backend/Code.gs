@@ -7341,13 +7341,13 @@ function updateReportSchedule(data) {
  * @returns {{ success: boolean }}
  */
 function verifyTurnstile(token) {
-  if (!token) return { success: false };
+  if (!token) return { success: false, error: 'MISSING_TOKEN' };
 
   try {
     var secret = PropertiesService.getScriptProperties().getProperty('TURNSTILE_SECRET');
     if (!secret) {
-      Logger.log('TURNSTILE_SECRET not configured — skipping verification.');
-      return { success: true }; // Allow through if not configured (dev mode)
+      Logger.log('CRITICAL: TURNSTILE_SECRET not configured — failing closed.');
+      return { success: false, error: 'TURNSTILE_NOT_CONFIGURED' };
     }
 
     var response = UrlFetchApp.fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
@@ -8909,28 +8909,30 @@ function formatSafeDiagnosticSummary_(httpStatus, errorCode, rawMsg, requestId) 
   if (httpStatus) {
     parts.push('HTTP ' + httpStatus);
   }
+  
   if (codeNum) {
-    parts.push('Code ' + codeNum + (codeDesc ? ' (' + codeDesc + ')' : ''));
+    parts.push('Code ' + codeNum + (codeDesc ? ' (' + codeDesc + ')' : ' (Unmapped decline)'));
   } else if (codeDesc) {
     parts.push(codeDesc);
+  } else if (httpStatus === 400) {
+    parts.push('Bad request / unmapped envelope');
+  } else if (httpStatus === 401 || httpStatus === 403) {
+    parts.push('Authentication failed');
+  } else if (httpStatus >= 500) {
+    parts.push('Upstream server error');
+  } else if (httpStatus === 0) {
+    parts.push('Network or connection timeout');
+  } else {
+    parts.push('Unresolved response');
   }
   
-  if (!codeDesc && rawMsg) {
-    var safeMsg = String(rawMsg)
-      .replace(/\b\d{13,19}\b/g, '[PAN-REDACTED]')
-      .replace(/\b\d{3,4}\b/g, '[PIN-REDACTED]')
-      .replace(/[\r\n\t]+/g, ' ')
-      .trim();
-    if (safeMsg.length > 80) safeMsg = safeMsg.substring(0, 80) + '...';
-    if (safeMsg) parts.push(safeMsg);
-  }
-  
-  if (requestId) {
-    parts.push('Req: ' + String(requestId).substring(0, 40));
+  // Validate requestId as strictly opaque token (alphanumeric, dash, underscore, 1-64 chars)
+  var cleanReqId = String(requestId || '').trim();
+  if (cleanReqId && /^[a-zA-Z0-9\-_]{1,64}$/.test(cleanReqId)) {
+    parts.push('Req: ' + cleanReqId);
   }
   
   var summary = parts.join(' | ');
-  if (!summary) summary = 'Unknown upstream response';
   return summary.length > 150 ? summary.substring(0, 150) : summary;
 }
 
@@ -9199,6 +9201,11 @@ function createDafGrant(data) {
     var submissionId = data.submissionId;
     var cardPin = String(data.cardPin || data.donorAuthorization || '').trim();
     
+    // Honeypot check
+    if (data.website) {
+      return { status: 'error', outcome: 'BOT_CHECK_FAILED', message: 'Invalid request.' };
+    }
+
     if (!campaignId || isNaN(amount) || amount <= 0 || amount > 100000 || !cardNumber || !donorName || !email || !submissionId) {
       return { status: 'error', outcome: 'INVALID_INPUT', message: 'Invalid or missing required fields' };
     }
@@ -9212,11 +9219,33 @@ function createDafGrant(data) {
       return { status: 'error', outcome: 'INVALID_INPUT', message: 'Amount cannot have more than 2 decimal places' };
     }
     
-    if (typeof verifyTurnstile === 'function' && turnstileToken) {
-      var tsResult = verifyTurnstile(turnstileToken);
-      if (!tsResult || !tsResult.success) {
-        return { status: 'error', outcome: 'BOT_CHECK_FAILED', message: 'Security verification failed. Please refresh and try again.' };
+    // Mandatory Turnstile Verification (Fail Closed)
+    var turnstileToken = String(data.turnstileToken || '').trim();
+    if (!turnstileToken) {
+      return { status: 'error', outcome: 'BOT_CHECK_FAILED', message: 'Security verification required. Please complete the verification check.' };
+    }
+    var tsResult = verifyTurnstile(turnstileToken);
+    if (!tsResult || !tsResult.success) {
+      return { status: 'error', outcome: 'BOT_CHECK_FAILED', message: 'Security verification failed. Please refresh and try again.' };
+    }
+
+    // Server-Side Rate Limiting (5 attempts per hour per email, and per card last4)
+    var cache = CacheService.getScriptCache();
+    var emailKey = 'rate_tdf_em_' + (email ? email.toLowerCase().trim() : 'unknown');
+    var currentEmailCount = parseInt(cache.get(emailKey) || '0');
+    if (currentEmailCount >= 5) {
+      return { status: 'error', outcome: 'RATE_LIMITED', message: 'Too many attempts. Please try again in 1 hour.' };
+    }
+    cache.put(emailKey, String(currentEmailCount + 1), 3600);
+
+    var cardLast4 = String(cardNumber).replace(/[^0-9]/g, '').slice(-4);
+    if (cardLast4) {
+      var cardKey = 'rate_tdf_card_' + cardLast4;
+      var currentCardCount = parseInt(cache.get(cardKey) || '0');
+      if (currentCardCount >= 5) {
+        return { status: 'error', outcome: 'RATE_LIMITED', message: 'Too many attempts for this card. Please try again in 1 hour.' };
       }
+      cache.put(cardKey, String(currentCardCount + 1), 3600);
     }
     
     var campaignRow = getCampaignRow(campaignId);
@@ -9663,7 +9692,8 @@ function testTdfIntegration_(campaignId) {
       baseUrl: tdfConfig.baseUrl || null,
       charityAccountNumber: tdfConfig.charityAccountNumber || null,
       hasApiKey: !!(tdfConfig && tdfConfig.apiKey),
-      hasValidationToken: !!(tdfConfig && tdfConfig.validationToken)
+      hasValidationToken: !!(tdfConfig && tdfConfig.validationToken),
+      turnstileSecretConfigured: !!PropertiesService.getScriptProperties().getProperty('TURNSTILE_SECRET')
     };
     
     if (!tdfConfig.enabled) {

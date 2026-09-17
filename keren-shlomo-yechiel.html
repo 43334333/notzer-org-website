@@ -1225,6 +1225,13 @@
                 return;
             }
 
+            // Turnstile check
+            var tsToken = (typeof turnstileToken !== 'undefined' ? turnstileToken : '');
+            if (!tsToken) {
+                showTdfStatus('error', 'Please complete the security verification check before submitting.', false);
+                return;
+            }
+
             // Generate durable client submission ID
             var submissionId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
                 ? crypto.randomUUID() 
@@ -1260,7 +1267,8 @@
                 memo: (document.getElementById('donor-memo') ? document.getElementById('donor-memo').value.trim() : ''),
                 anonymous: (document.getElementById('anonymous-check') ? document.getElementById('anonymous-check').checked : false),
                 team: (typeof selectedTeam !== 'undefined' ? selectedTeam : ''),
-                turnstileToken: turnstileToken || ''
+                website: (document.getElementById('honeypot') ? document.getElementById('honeypot').value : ''),
+                turnstileToken: tsToken
             };
 
             fetch(TDF_BACKEND_URL, {
@@ -1289,6 +1297,11 @@
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Submit Grant Recommendation';
                     showTdfStatus('error', data.message || 'The Donors Fund service is temporarily unavailable.', true);
+                } else if (data.outcome === 'BOT_CHECK_FAILED' || data.outcome === 'RATE_LIMITED') {
+                    sessionStorage.removeItem('tdf_pending_grant');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Grant Recommendation';
+                    showTdfStatus('error', data.message || 'Security check failed. Please refresh the page and try again.', true);
                 } else {
                     // UNKNOWN state — response lost or timed out.
                     // DO NOT allow immediate retry to avoid double submission.
