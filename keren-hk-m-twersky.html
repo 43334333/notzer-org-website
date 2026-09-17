@@ -1296,6 +1296,7 @@
                                             <span class="copy-hint" id="zelle-memo-hint">Click to copy</span>
                                         </div>
                                         <p style="font-size: 0.85rem; color: #888; margin-top: 8px;">Please include your name and email address in the Zelle memo for receipt purposes.</p>
+                                        <div id="zelle-error-display" style="display: none; padding: 6px 10px; margin-top: 8px; background: rgba(255, 82, 82, 0.15); border: 1px solid #ff5252; border-radius: 5px; color: #ff5252; font-size: 0.8rem; text-align: center;"></div>
                                     </div>
                                 </div>
 
@@ -1442,6 +1443,7 @@
                 <p style="font-size: 0.85rem; color: #888; margin: 8px auto 20px; line-height: 1.5; max-width: 340px;">
                     Please include this reference memo in the Zelle payment notes so we can credit your gift and issue a tax receipt.
                 </p>
+                <div id="modal-zelle-error" style="display: none; padding: 8px 10px; margin-bottom: 12px; background: rgba(255, 82, 82, 0.15); border: 1px solid #ff5252; border-radius: 5px; color: #ff5252; font-size: 0.82rem; text-align: center;"></div>
                 <button type="button" class="modal-close-btn" style="width: 100%; background: var(--accent, #4dabf7); color: #000; font-weight: 600; padding: 10px 0;" onclick="closeDafConfirm()">Done</button>
             </div>
 
@@ -1450,8 +1452,9 @@
                 <div class="modal-icon" style="margin: 0 auto 10px; font-size: 2rem;">🅿</div>
                 <h3 style="margin-bottom: 8px; font-size: 1.25rem;">Donate with PayPal</h3>
                 <p id="modal-paypal-status-text" style="font-size: 0.9rem; color: #ccc; margin-bottom: 12px;">
-                    Campaign memo copied to clipboard!
+                    Preparing campaign memo...
                 </p>
+                <div id="modal-paypal-error" style="display: none; padding: 8px 10px; margin-bottom: 12px; background: rgba(255, 82, 82, 0.15); border: 1px solid #ff5252; border-radius: 5px; color: #ff5252; font-size: 0.82rem; text-align: center;"></div>
                 <div class="zelle-email" id="modal-paypal-memo-box" style="margin: 0 auto 12px; display: inline-flex; font-size: 0.9rem; padding: 8px 14px; cursor: pointer; max-width: 95%; word-break: break-all; border-color: var(--accent, #4dabf7);">
                     <strong id="modal-paypal-memo-display"></strong>
                     <span class="copy-hint" id="modal-paypal-memo-hint" style="margin-left: 8px; white-space: nowrap;">Click to copy</span>
@@ -2566,6 +2569,8 @@
         if (zelleInfo && zelleInfo.style.display === 'block') {
             zelleInfo.style.display = 'none';
             if (zelleBtn) zelleBtn.classList.remove('open');
+            var inPageZErr = document.getElementById('zelle-error-display');
+            if (inPageZErr) { inPageZErr.style.display = 'none'; inPageZErr.textContent = ''; }
             activeClickSessions.zelle = null;
             return;
         }
@@ -2586,9 +2591,16 @@
             if (zDisplay && typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.zelleEmail) {
                 zDisplay.textContent = CAMPAIGN_CONFIG.zelleEmail;
             }
+            var inPageZErr = document.getElementById('zelle-error-display');
+            if (inPageZErr) { inPageZErr.style.display = 'none'; inPageZErr.textContent = ''; }
             if (zelleInfo) zelleInfo.style.display = 'block';
             if (zelleBtn) zelleBtn.classList.add('open');
-            logLinkClickMaster('Zelle', amt, fn, ln, em, session.id);
+            logLinkClickMaster('Zelle', amt, fn, ln, em, session.id).catch(function(err) {
+                if (inPageZErr) {
+                    inPageZErr.textContent = 'Note: could not record click reference with server (' + (err.message || err) + '). Please ensure memo is included in Zelle.';
+                    inPageZErr.style.display = 'block';
+                }
+            });
         } else {
             pendingDafLink = null;
             pendingDafName = 'Zelle';
@@ -2604,6 +2616,13 @@
         if (stepForm) stepForm.style.display = 'block';
         if (stepZelle) stepZelle.style.display = 'none';
         if (stepPaypal) stepPaypal.style.display = 'none';
+
+        var modalDafErr = document.getElementById('modal-daf-error');
+        if (modalDafErr) { modalDafErr.style.display = 'none'; modalDafErr.textContent = ''; }
+        var modalZErr = document.getElementById('modal-zelle-error');
+        if (modalZErr) { modalZErr.style.display = 'none'; modalZErr.textContent = ''; }
+        var modalPPErr = document.getElementById('modal-paypal-error');
+        if (modalPPErr) { modalPPErr.style.display = 'none'; modalPPErr.textContent = ''; }
 
         var screenshotBox = document.getElementById('daf-confirm-screenshot-box');
         if (screenshotBox) screenshotBox.style.display = (isZelleMode || pendingDafName === 'PayPal') ? 'none' : 'block';
@@ -2666,6 +2685,12 @@
         if (stepForm) stepForm.style.display = 'block';
         if (stepZelle) stepZelle.style.display = 'none';
         if (stepPaypal) stepPaypal.style.display = 'none';
+        var modalDafErr = document.getElementById('modal-daf-error');
+        if (modalDafErr) { modalDafErr.style.display = 'none'; modalDafErr.textContent = ''; }
+        var modalZErr = document.getElementById('modal-zelle-error');
+        if (modalZErr) { modalZErr.style.display = 'none'; modalZErr.textContent = ''; }
+        var modalPPErr = document.getElementById('modal-paypal-error');
+        if (modalPPErr) { modalPPErr.style.display = 'none'; modalPPErr.textContent = ''; }
         pendingDafLink = null;
         pendingDafName = null;
         isZelleMode = false;
@@ -2755,7 +2780,15 @@
 
             if (isZelleMode) {
                 var session = getRouteSession('zelle');
-                logLinkClickMaster('Zelle', amt, fn, ln, em, session.id);
+                var modalZErr = document.getElementById('modal-zelle-error');
+                if (modalZErr) { modalZErr.style.display = 'none'; modalZErr.textContent = ''; }
+
+                logLinkClickMaster('Zelle', amt, fn, ln, em, session.id).catch(function(err) {
+                    if (modalZErr) {
+                        modalZErr.textContent = 'Note: could not record click reference with server (' + (err.message || err) + '). Please ensure memo is pasted in Zelle.';
+                        modalZErr.style.display = 'block';
+                    }
+                });
 
                 var zEmail = (typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.zelleEmail) || (typeof ZELLE_EMAIL !== 'undefined' ? ZELLE_EMAIL : 'kerensy@notzer.org');
                 var modalZDisplay = document.getElementById('modal-zelle-email-display');
@@ -2796,20 +2829,11 @@
                 var modalPPLink = document.getElementById('modal-paypal-open-btn');
                 if (modalPPLink) modalPPLink.href = pendingDafLink || 'https://www.paypal.com/us/fundraiser/charity/3380976';
 
-                // Copy memo to clipboard
-                safeCopyText(session.memo).then(function(copied) {
-                    var statusText = document.getElementById('modal-paypal-status-text');
-                    var memoHint = document.getElementById('modal-paypal-memo-hint');
-                    if (copied) {
-                        if (statusText) statusText.textContent = '✅ Campaign memo copied to clipboard! Paste it into PayPal:';
-                        if (memoHint) {
-                            memoHint.textContent = 'Copied!';
-                            setTimeout(function() { memoHint.textContent = 'Click to copy'; }, 3000);
-                        }
-                    } else {
-                        if (statusText) statusText.textContent = 'Please copy the campaign memo below before opening PayPal:';
-                    }
-                });
+                var statusText = document.getElementById('modal-paypal-status-text');
+                if (statusText) statusText.textContent = 'Copying campaign memo...';
+
+                var modalPPErr = document.getElementById('modal-paypal-error');
+                if (modalPPErr) { modalPPErr.style.display = 'none'; modalPPErr.textContent = ''; }
 
                 // Primary handoff: transition modal to PayPal Step 3 with explicit "Open PayPal →" link
                 var stepForm = document.getElementById('modal-daf-step-form');
@@ -2819,18 +2843,33 @@
                 if (stepZelle) stepZelle.style.display = 'none';
                 if (stepPaypal) stepPaypal.style.display = 'block';
 
+                // Copy memo to clipboard
+                safeCopyText(session.memo).then(function(copied) {
+                    var memoHint = document.getElementById('modal-paypal-memo-hint');
+                    if (copied) {
+                        if (statusText) statusText.textContent = 'Campaign memo copied to clipboard!';
+                        if (memoHint) {
+                            memoHint.textContent = 'Copied!';
+                            setTimeout(function() { memoHint.textContent = 'Click to copy'; }, 3000);
+                        }
+                    } else {
+                        if (statusText) statusText.textContent = 'Please copy the campaign memo below before opening PayPal:';
+                    }
+                });
+
                 logLinkClickMaster('PayPal', amt, fn, ln, em, session.id).catch(function(err) {
-                    var errDiv = document.getElementById('modal-daf-error');
-                    if (errDiv) {
-                        errDiv.textContent = 'Note: could not record click reference with server (' + (err.message || err) + '). Please ensure memo is pasted in PayPal.';
-                        errDiv.style.display = 'block';
+                    if (modalPPErr) {
+                        modalPPErr.textContent = 'Note: could not record click reference with server (' + (err.message || err) + '). Please ensure memo is pasted in PayPal.';
+                        modalPPErr.style.display = 'block';
                     }
                 });
 
             } else if (pendingDafLink) {
                 var dafId = (typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.id) || (typeof CAMPAIGN_CODE !== 'undefined' ? CAMPAIGN_CODE : 'general');
                 var dafPk = mintClickPk(dafId, 'DAF');
-                logLinkClickMaster(pendingDafName, amt, fn, ln, em, dafPk);
+                logLinkClickMaster(pendingDafName, amt, fn, ln, em, dafPk).catch(function(err) {
+                    console.warn('Failed to log DAF link click:', err);
+                });
                 window.open(pendingDafLink, '_blank');
                 closeDafConfirm();
             } else {

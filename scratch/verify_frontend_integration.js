@@ -168,6 +168,26 @@ campaignFiles.forEach(f => {
         content.includes('return fetch('),
         `[${f}] logLinkClickMaster returns fetch promise to caller`
     );
+    assert(
+        content.includes('id="zelle-error-display"'),
+        `[${f}] In-page zelle-info has visible zelle-error-display container`
+    );
+    assert(
+        content.includes('id="modal-zelle-error"'),
+        `[${f}] Modal step-zelle has visible modal-zelle-error container`
+    );
+    assert(
+        content.includes('id="modal-paypal-error"'),
+        `[${f}] Modal step-paypal has visible modal-paypal-error container`
+    );
+    assert(
+        content.includes('Preparing campaign memo...'),
+        `[${f}] Modal PayPal status starts with neutral 'Preparing campaign memo...'`
+    );
+    assert(
+        content.includes("logLinkClickMaster('Zelle', amt, fn, ln, em, session.id).catch("),
+        `[${f}] Both Zelle click paths handle logging rejection cleanly`
+    );
 });
 
 // 8. Test Bidirectional Amount Sync & Route-Scoped Click PK in Sandbox VM
