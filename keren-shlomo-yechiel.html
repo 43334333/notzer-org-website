@@ -520,7 +520,7 @@
             </div>
 
             <!-- Step 2: Zelle Instructions Overlay -->
-            <div <div id="modal-daf-step-zelle" style="display: none; text-align: center;">
+            <div id="modal-daf-step-zelle" style="display: none; text-align: center;">
                 <div class="modal-icon" style="margin: 0 auto 10px; font-size: 2rem;">⚡</div>
                 <h3 style="margin-bottom: 8px; font-size: 1.25rem;">Send via Zelle</h3>
                 <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 10px;">1. Send payment to Zelle email:</p>
@@ -1288,6 +1288,7 @@ addIfieldKeyPressCallback(function(data) {
         if (zelleInfo && zelleInfo.style.display === 'block') {
             zelleInfo.style.display = 'none';
             if (zelleBtn) zelleBtn.classList.remove('open');
+            activeClickSessions.zelle = null;
             return;
         }
 
@@ -1386,10 +1387,14 @@ addIfieldKeyPressCallback(function(data) {
         pendingDafLink = null;
         pendingDafName = null;
         isZelleMode = false;
+        activeClickSessions.zelle = null;
+        activeClickSessions.paypal = null;
     }
 
     function logLinkClickMaster(linkName, amount, firstName, lastName, email, clickId) {
-        fetch(APPS_SCRIPT_URL, {
+        if (!APPS_SCRIPT_URL) return Promise.reject(new Error('No Apps Script URL configured'));
+
+        return fetch(APPS_SCRIPT_URL, {
             method: 'POST',
             redirect: 'follow',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -1406,18 +1411,19 @@ addIfieldKeyPressCallback(function(data) {
             })
         }).then(function(res) {
             if (!res.ok) {
-                console.warn('Click logging returned non-200 status:', res.status);
+                throw new Error('HTTP ' + res.status);
             }
-            return res.json().catch(function() { return {}; });
+            return res.json().catch(function() { return { status: 'success' }; });
         }).then(function(json) {
             if (json && json.status === 'error') {
-                console.warn('Click logging error from server:', json.message);
+                throw new Error(json.message || 'Server error logging link click');
             }
+            return json;
         }).catch(function(err) {
             console.warn('Failed to log link click:', err);
+            throw err;
         });
     }
-
     var dafProceedBtn = document.getElementById('daf-confirm-proceed');
     if (dafProceedBtn) {
         dafProceedBtn.addEventListener('click', function() {
@@ -1498,8 +1504,6 @@ addIfieldKeyPressCallback(function(data) {
 
             } else if (pendingDafName === 'PayPal') {
                 var session = getRouteSession('paypal');
-                logLinkClickMaster('PayPal', amt, fn, ln, em, session.id);
-
                 var modalPPMemo = document.getElementById('modal-paypal-memo-display');
                 if (modalPPMemo) modalPPMemo.textContent = session.memo;
 
@@ -1515,17 +1519,24 @@ addIfieldKeyPressCallback(function(data) {
                             memoHint.textContent = 'Copied!';
                             setTimeout(function() { memoHint.textContent = 'Click to copy'; }, 3000);
                         }
-                        window.open(pendingDafLink, '_blank');
                     } else {
                         if (statusText) statusText.textContent = 'Please copy the campaign memo below before opening PayPal:';
                     }
+                });
 
-                    var stepForm = document.getElementById('modal-daf-step-form');
-                    var stepZelle = document.getElementById('modal-daf-step-zelle');
-                    var stepPaypal = document.getElementById('modal-daf-step-paypal');
-                    if (stepForm) stepForm.style.display = 'none';
-                    if (stepZelle) stepZelle.style.display = 'none';
-                    if (stepPaypal) stepPaypal.style.display = 'block';
+                var stepForm = document.getElementById('modal-daf-step-form');
+                var stepZelle = document.getElementById('modal-daf-step-zelle');
+                var stepPaypal = document.getElementById('modal-daf-step-paypal');
+                if (stepForm) stepForm.style.display = 'none';
+                if (stepZelle) stepZelle.style.display = 'none';
+                if (stepPaypal) stepPaypal.style.display = 'block';
+
+                logLinkClickMaster('PayPal', amt, fn, ln, em, session.id).catch(function(err) {
+                    var errDiv = document.getElementById('modal-daf-error');
+                    if (errDiv) {
+                        errDiv.textContent = 'Note: could not record click reference with server (' + (err.message || err) + '). Please ensure memo is pasted in PayPal.';
+                        errDiv.style.display = 'block';
+                    }
                 });
 
             } else if (pendingDafLink) {
