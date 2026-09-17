@@ -936,7 +936,17 @@
         #preview-schedule-btn:hover { background:rgba(77,171,247,0.18); border-color:rgba(77,171,247,0.4); }
         /* Date input styling for dark theme */
         #recurring-start-date { color-scheme:dark; }
-    </style>
+    
+        /* Remove up-down spin buttons on number inputs */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+</style>
 </head>
 <body>
 
@@ -1107,7 +1117,7 @@
                                 <!-- Amount buttons are generated dynamically from CAMPAIGN_CONFIG.presetAmounts -->
                             </div>
 
-                            <div class="custom-amount-wrapper" id="custom-amount-wrapper" style="display: none;">
+                            <div class="custom-amount-wrapper" id="custom-amount-wrapper">
                                 <span class="currency-symbol">$</span>
                                 <input type="number" id="custom-amount" placeholder="Enter amount" min="1" step="0.01">
                             </div>
@@ -1119,7 +1129,10 @@
                                  ════════════════════════════════════════ -->
                             <div id="cardknox-fields">
                                 <div class="ifield-container">
-                                    <label>Card Number (Credit, Debit, Donors Fund, OJC, Pledger, Matbia)</label>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                        <label style="margin-bottom: 0;">Card Number (Credit, Debit, Donors Fund, OJC, Pledger, Matbia)</label>
+                                        <span id="card-brand-icon" class="card-brand-badge" style="display: none; align-items: center;"></span>
+                                    </div>
                                     <iframe id="card-number-iframe" data-ifields-id="card-number" data-ifields-placeholder="Card Number" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
                                     <input data-ifields-id="card-number-token" name="xCardNum" type="hidden">
                                 </div>
@@ -1240,7 +1253,26 @@
                                 </div>
                             </div>
 
-                            <!-- ════════════════════════════════════════
+                            
+                        </div>
+                    </div>
+
+                    <!-- Full-width bottom section -->
+
+                    <!-- Honeypot -->
+                    <div style="position: absolute; left: -9999px;" aria-hidden="true">
+                        <input type="text" name="website" id="honeypot" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <!-- Cloudflare Turnstile -->
+                    <div class="cf-turnstile" id="turnstile-widget" data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN" data-callback="onTurnstileSuccess" data-theme="dark"></div>
+
+                    <button type="submit" class="donate-btn" id="donate-btn">Donate Now</button>
+
+                    <!-- Error / info status -->
+                    <div class="donation-status" id="donation-status"></div>
+
+                    <!-- ════════════════════════════════════════
                                  Other Ways to Give (Zelle, PayPal & DAF)
                                  ════════════════════════════════════════ -->
                             <div class="other-ways-container" id="other-ways-section" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color, rgba(255,255,255,0.1));">
@@ -1257,6 +1289,11 @@
                                         <div class="zelle-email" id="zelle-email-box">
                                             <strong id="zelle-email-display"></strong>
                                             <span class="copy-hint">Click to copy</span>
+                                        </div>
+                                        <p style="margin: 10px 0 4px; font-size: 0.85rem;">Include this Reference Memo in Zelle:</p>
+                                        <div class="zelle-email" id="zelle-memo-box" style="border-color: var(--accent, #4dabf7); word-break: break-all;">
+                                            <strong id="zelle-memo-display"></strong>
+                                            <span class="copy-hint" id="zelle-memo-hint">Click to copy</span>
                                         </div>
                                         <p style="font-size: 0.85rem; color: #888; margin-top: 8px;">Please include your name and email address in the Zelle memo for receipt purposes.</p>
                                     </div>
@@ -1330,23 +1367,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Full-width bottom section -->
-
-                    <!-- Honeypot -->
-                    <div style="position: absolute; left: -9999px;" aria-hidden="true">
-                        <input type="text" name="website" id="honeypot" tabindex="-1" autocomplete="off">
-                    </div>
-
-                    <!-- Cloudflare Turnstile -->
-                    <div class="cf-turnstile" id="turnstile-widget" data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN" data-callback="onTurnstileSuccess" data-theme="dark"></div>
-
-                    <button type="submit" class="donate-btn" id="donate-btn">Donate Now</button>
-
-                    <!-- Error / info status -->
-                    <div class="donation-status" id="donation-status"></div>
                 </form>
             </div>
         </div>
@@ -1406,18 +1426,43 @@
             </div>
 
             <!-- Step 2: Zelle Instructions Overlay -->
-            <div id="modal-daf-step-zelle" style="display: none; text-align: center;">
+            <div <div id="modal-daf-step-zelle" style="display: none; text-align: center;">
                 <div class="modal-icon" style="margin: 0 auto 10px; font-size: 2rem;">⚡</div>
                 <h3 style="margin-bottom: 8px; font-size: 1.25rem;">Send via Zelle</h3>
-                <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 12px;">Send via Zelle to:</p>
-                <div class="zelle-email" id="modal-zelle-email-box" style="margin: 0 auto 12px; display: inline-flex; font-size: 1rem; padding: 8px 16px; cursor: pointer;">
+                <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 10px;">1. Send payment to Zelle email:</p>
+                <div class="zelle-email" id="modal-zelle-email-box" style="margin: 0 auto 12px; display: inline-flex; font-size: 0.95rem; padding: 8px 16px; cursor: pointer;">
                     <strong id="modal-zelle-email-display"></strong>
                     <span class="copy-hint" id="modal-zelle-copy-hint" style="margin-left: 8px;">Click to copy</span>
                 </div>
-                <p style="font-size: 0.85rem; color: #888; margin: 8px auto 20px; line-height: 1.5; max-width: 320px;">
-                    Please include your name and email address in the Zelle memo for receipt purposes.
+                <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 8px;">2. Paste this reference in your Zelle payment memo:</p>
+                <div class="zelle-email" id="modal-zelle-memo-box" style="margin: 0 auto 12px; display: inline-flex; font-size: 0.9rem; padding: 8px 14px; cursor: pointer; max-width: 95%; word-break: break-all; border-color: var(--accent, #4dabf7);">
+                    <strong id="modal-zelle-memo-display"></strong>
+                    <span class="copy-hint" id="modal-zelle-memo-hint" style="margin-left: 8px; white-space: nowrap;">Click to copy</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #888; margin: 8px auto 20px; line-height: 1.5; max-width: 340px;">
+                    Please include this reference memo in the Zelle payment notes so we can credit your gift and issue a tax receipt.
                 </p>
-                <button type="button" class="modal-close-btn" style="width: 100%; background: var(--accent, #d4af37); color: #000; font-weight: 600; padding: 10px 0;" onclick="closeDafConfirm()">Done</button>
+                <button type="button" class="modal-close-btn" style="width: 100%; background: var(--accent, #4dabf7); color: #000; font-weight: 600; padding: 10px 0;" onclick="closeDafConfirm()">Done</button>
+            </div>
+
+            <!-- Step 3: PayPal Instructions Overlay -->
+            <div id="modal-daf-step-paypal" style="display: none; text-align: center;">
+                <div class="modal-icon" style="margin: 0 auto 10px; font-size: 2rem;">🅿</div>
+                <h3 style="margin-bottom: 8px; font-size: 1.25rem;">Donate with PayPal</h3>
+                <p id="modal-paypal-status-text" style="font-size: 0.9rem; color: #ccc; margin-bottom: 12px;">
+                    Campaign memo copied to clipboard!
+                </p>
+                <div class="zelle-email" id="modal-paypal-memo-box" style="margin: 0 auto 12px; display: inline-flex; font-size: 0.9rem; padding: 8px 14px; cursor: pointer; max-width: 95%; word-break: break-all; border-color: var(--accent, #4dabf7);">
+                    <strong id="modal-paypal-memo-display"></strong>
+                    <span class="copy-hint" id="modal-paypal-memo-hint" style="margin-left: 8px; white-space: nowrap;">Click to copy</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #888; margin: 8px auto 16px; line-height: 1.5; max-width: 340px;">
+                    Please paste this reference memo into the PayPal note to ensure your gift is credited.
+                </p>
+                <a href="#" id="modal-paypal-open-btn" target="_blank" rel="noopener" class="modal-close-btn" style="display: block; width: 100%; box-sizing: border-box; background: var(--accent, #4dabf7); color: #000; font-weight: 600; padding: 10px 0; text-decoration: none; margin-bottom: 8px;">
+                    Open PayPal →
+                </a>
+                <button type="button" class="modal-close-btn" style="width: 100%; background: #333; color: #ccc; padding: 8px 0;" onclick="closeDafConfirm()">Done</button>
             </div>
         </div>
     </div>
@@ -1707,6 +1752,19 @@
         /**
          * Initialize Cardknox iFields
          */
+        
+    // Verified Cardknox iFields data.issuer badges (no card-prefix sniffing)
+    var CARD_BRAND_BADGES = {
+        'visa': '<span style="display:inline-flex;align-items:center;background:#1a1f71;color:#fff;font-weight:bold;font-size:11px;padding:2px 7px;border-radius:4px;letter-spacing:0.5px;font-family:sans-serif;">VISA</span>',
+        'mastercard': '<span style="display:inline-flex;align-items:center;background:#222;padding:2px 6px;border-radius:4px;gap:2px;"><svg width="22" height="14" viewBox="0 0 28 18"><circle cx="9" cy="9" r="8" fill="#eb001b"/><circle cx="19" cy="9" r="8" fill="#f79e1b" fill-opacity="0.85"/></svg><span style="font-size:10px;font-weight:600;color:#fff;font-family:sans-serif;">MC</span></span>',
+        'amex': '<span style="display:inline-flex;align-items:center;background:#006fcf;color:#fff;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:4px;letter-spacing:0.5px;font-family:sans-serif;">AMEX</span>',
+        'discover': '<span style="display:inline-flex;align-items:center;background:#ff6000;color:#fff;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:4px;letter-spacing:0.5px;font-family:sans-serif;">DISCOVER</span>',
+        'donors': '<span style="display:inline-flex;align-items:center;background:#0a2540;color:#635bff;font-weight:bold;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #635bff;font-family:sans-serif;">🏦 THE DONORS FUND</span>',
+        'ojc': '<span style="display:inline-flex;align-items:center;background:#003366;color:#64b5f6;font-weight:bold;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #64b5f6;font-family:sans-serif;">🏛️ OJC FUND</span>',
+        'pledger': '<span style="display:inline-flex;align-items:center;background:#0f382c;color:#4ade80;font-weight:bold;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #4ade80;font-family:sans-serif;">💎 PLEDGER</span>',
+        'matbia': '<span style="display:inline-flex;align-items:center;background:#2d3748;color:#f6ad55;font-weight:bold;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #f6ad55;font-family:sans-serif;">🪙 MATBIA</span>'
+    };
+
         initCardknoxFields() {
             if (typeof setAccount !== 'function') return;
 
@@ -1721,6 +1779,19 @@
             var invalidStyle = Object.assign({}, fieldStyle, { 'color': '#ff5252' });
 
             addIfieldKeyPressCallback(function(data) {
+                // Card / DAF Brand Badge detection via verified data.issuer
+                var brandBadgeEl = document.getElementById('card-brand-icon');
+                if (brandBadgeEl) {
+                    var issuer = (data.issuer || '').toLowerCase().trim();
+                    if (issuer && typeof CARD_BRAND_BADGES !== 'undefined' && CARD_BRAND_BADGES[issuer]) {
+                        brandBadgeEl.innerHTML = CARD_BRAND_BADGES[issuer];
+                        brandBadgeEl.style.display = 'inline-flex';
+                    } else {
+                        brandBadgeEl.innerHTML = '';
+                        brandBadgeEl.style.display = 'none';
+                    }
+                }
+
                 var isCardknox = (typeof GatewayManager !== 'undefined' && GatewayManager.activeGateway === 'cardknox');
                 if (data.cardNumberFormattedLength > 0) {
                     var isCardValid = data.cardNumberIsValid || (isCardknox && (data.cardNumberFormattedLength >= 19 || (data.cardNumberLength && data.cardNumberLength >= 16)));
@@ -1910,27 +1981,59 @@
         var customWrapper = document.getElementById('custom-amount-wrapper');
         var customInput = document.getElementById('custom-amount');
 
+        if (customWrapper) {
+            customWrapper.style.display = 'block';
+        }
+
         amountBtns.forEach(function(btn) {
             btn.addEventListener('click', function() {
                 amountBtns.forEach(function(b) { b.classList.remove('active'); });
                 this.classList.add('active');
                 if (this.dataset.amount === 'custom') {
-                    customWrapper.style.display = 'block';
-                    customInput.focus();
+                    if (customInput) {
+                        customInput.value = '';
+                        customInput.focus();
+                    }
                     selectedAmount = null;
                 } else {
-                    customWrapper.style.display = 'none';
-                    customInput.value = '';
+                    if (customInput) {
+                        customInput.value = this.dataset.amount;
+                    }
                     selectedAmount = parseFloat(this.dataset.amount);
                 }
-                updateInstallmentSummary();
+                if (typeof updateInstallmentSummary === 'function') {
+                    updateInstallmentSummary();
+                }
             });
         });
 
-        customInput.addEventListener('input', function() {
-            selectedAmount = parseFloat(this.value) || null;
-            updateInstallmentSummary();
-        });
+        if (customInput) {
+            customInput.addEventListener('input', function() {
+                var val = parseFloat(this.value);
+                selectedAmount = (!isNaN(val) && val > 0) ? val : null;
+                var matched = false;
+                amountBtns.forEach(function(b) {
+                    if (b.dataset.amount !== 'custom' && parseFloat(b.dataset.amount) === selectedAmount) {
+                        b.classList.add('active');
+                        matched = true;
+                    } else {
+                        b.classList.remove('active');
+                    }
+                });
+                if (!matched) {
+                    amountBtns.forEach(function(b) {
+                        if (b.dataset.amount === 'custom' && selectedAmount !== null) {
+                            b.classList.add('active');
+                        } else if (b.dataset.amount === 'custom') {
+                            b.classList.remove('active');
+                        }
+                    });
+                }
+                if (typeof updateInstallmentSummary === 'function') {
+                    updateInstallmentSummary();
+                }
+            });
+        }
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -2394,6 +2497,66 @@
         });
     });
 
+    
+    // ════════════════════════════════════════════════════════════════
+    // ROUTE-SCOPED DURABLE CLICK TRACKING & RESILIENT CLIPBOARD
+    // ════════════════════════════════════════════════════════════════
+    var activeClickSessions = {
+        zelle: null,
+        paypal: null
+    };
+
+    function mintClickPk(campId, route) {
+        var prefix = 'LC-' + (campId || 'NC').toUpperCase() + '-' + (route || 'GEN').toUpperCase();
+        var ts = Date.now();
+        var rand = Math.random().toString(36).substring(2, 7).toUpperCase();
+        return prefix + '-' + ts + '-' + rand;
+    }
+
+    function safeCopyText(text) {
+        if (!text) return Promise.resolve(false);
+        if (navigator.clipboard && window.isSecureContext) {
+            return navigator.clipboard.writeText(text).then(function() {
+                return true;
+            }).catch(function() {
+                return fallbackCopyText(text);
+            });
+        }
+        return Promise.resolve(fallbackCopyText(text));
+    }
+
+    function fallbackCopyText(text) {
+        try {
+            var textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            textArea.style.top = '0';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            var successful = document.execCommand('copy');
+            document.body.removeChild(textArea);
+            return !!successful;
+        } catch (err) {
+            return false;
+        }
+    }
+
+    function getRouteSession(route) {
+        var r = (route || 'gen').toLowerCase();
+        if (!activeClickSessions[r]) {
+            var code = r === 'zelle' ? 'ZL' : (r === 'paypal' ? 'PP' : 'LK');
+            var campId = (typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.id) || (typeof CAMPAIGN_CODE !== 'undefined' ? CAMPAIGN_CODE : 'general');
+            var campName = (typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.name) || (typeof CAMPAIGN_NAME !== 'undefined' ? CAMPAIGN_NAME : 'Notzer Chesed');
+            var pk = mintClickPk(campId, code);
+            var memo = campName + ' - Ref: ' + pk;
+            activeClickSessions[r] = { id: pk, memo: memo };
+        }
+        return activeClickSessions[r];
+    }
+
     function handleZelleClick() {
         var zelleInfo = document.getElementById('zelle-info');
         var zelleBtn = document.getElementById('zelle-toggle-btn');
@@ -2404,15 +2567,25 @@
             return;
         }
 
-        var fn = document.getElementById('donor-first-name').value.trim();
-        var ln = document.getElementById('donor-last-name').value.trim();
-        var em = document.getElementById('donor-email').value.trim();
-        var amt = getSelectedAmount();
+        var fnInput = document.getElementById('donor-first-name');
+        var lnInput = document.getElementById('donor-last-name');
+        var emInput = document.getElementById('donor-email');
+        var fn = fnInput ? fnInput.value.trim() : '';
+        var ln = lnInput ? lnInput.value.trim() : '';
+        var em = emInput ? emInput.value.trim() : '';
+        var amt = (typeof getSelectedAmount === 'function') ? getSelectedAmount() : 0;
 
         if (fn && ln && em && amt > 0) {
+            var session = getRouteSession('zelle');
+            var memoEl = document.getElementById('zelle-memo-display');
+            if (memoEl) memoEl.textContent = session.memo;
+            var zDisplay = document.getElementById('zelle-email-display');
+            if (zDisplay && typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.zelleEmail) {
+                zDisplay.textContent = CAMPAIGN_CONFIG.zelleEmail;
+            }
             if (zelleInfo) zelleInfo.style.display = 'block';
             if (zelleBtn) zelleBtn.classList.add('open');
-            logLinkClickMaster('Zelle', amt, fn, ln, em);
+            logLinkClickMaster('Zelle', amt, fn, ln, em, session.id);
         } else {
             pendingDafLink = null;
             pendingDafName = 'Zelle';
@@ -2424,14 +2597,18 @@
     function setupAndShowDafModal() {
         var stepForm = document.getElementById('modal-daf-step-form');
         var stepZelle = document.getElementById('modal-daf-step-zelle');
+        var stepPaypal = document.getElementById('modal-daf-step-paypal');
         if (stepForm) stepForm.style.display = 'block';
         if (stepZelle) stepZelle.style.display = 'none';
+        if (stepPaypal) stepPaypal.style.display = 'none';
 
         var screenshotBox = document.getElementById('daf-confirm-screenshot-box');
-        if (screenshotBox) screenshotBox.style.display = isZelleMode ? 'none' : 'block';
+        if (screenshotBox) screenshotBox.style.display = (isZelleMode || pendingDafName === 'PayPal') ? 'none' : 'block';
 
         var modalZDisplay = document.getElementById('modal-zelle-email-display');
-        if (modalZDisplay) modalZDisplay.textContent = CAMPAIGN_CONFIG.zelleEmail;
+        if (modalZDisplay && typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.zelleEmail) {
+            modalZDisplay.textContent = CAMPAIGN_CONFIG.zelleEmail;
+        }
 
         var platformEl = document.getElementById('daf-confirm-platform');
         if (platformEl) platformEl.textContent = pendingDafName;
@@ -2452,7 +2629,7 @@
         if (modalLn) modalLn.value = lnInput ? lnInput.value.trim() : '';
         if (modalEm) modalEm.value = emInput ? emInput.value.trim() : '';
 
-        var currentAmt = getSelectedAmount();
+        var currentAmt = (typeof getSelectedAmount === 'function') ? getSelectedAmount() : 0;
         if (modalAmt) {
             if (currentAmt > 0) {
                 modalAmt.value = currentAmt.toFixed(2);
@@ -2482,15 +2659,22 @@
         if (modal) modal.classList.remove('active');
         var stepForm = document.getElementById('modal-daf-step-form');
         var stepZelle = document.getElementById('modal-daf-step-zelle');
+        var stepPaypal = document.getElementById('modal-daf-step-paypal');
         if (stepForm) stepForm.style.display = 'block';
         if (stepZelle) stepZelle.style.display = 'none';
+        if (stepPaypal) stepPaypal.style.display = 'none';
         pendingDafLink = null;
         pendingDafName = null;
         isZelleMode = false;
     }
 
-    function logLinkClickMaster(linkName, amount, firstName, lastName, email) {
-        fetch(CAMPAIGN_CONFIG.appsScriptUrl, {
+    function logLinkClickMaster(linkName, amount, firstName, lastName, email, clickId) {
+        var appsUrl = (typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.appsScriptUrl) || (typeof APPS_SCRIPT_URL !== 'undefined' ? APPS_SCRIPT_URL : '');
+        var campName = (typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.name) || (typeof CAMPAIGN_NAME !== 'undefined' ? CAMPAIGN_NAME : '');
+        var campId = (typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.id) || (typeof CAMPAIGN_CODE !== 'undefined' ? CAMPAIGN_CODE : 'general');
+        if (!appsUrl) return;
+
+        fetch(appsUrl, {
             method: 'POST',
             redirect: 'follow',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -2501,10 +2685,22 @@
                 email: email,
                 amount: amount,
                 linkClicked: linkName,
-                campaign: CAMPAIGN_CONFIG.name,
-                campaignId: CAMPAIGN_CONFIG.id
+                campaign: campName,
+                campaignId: campId,
+                clickId: clickId || ''
             })
-        }).catch(function() {});
+        }).then(function(res) {
+            if (!res.ok) {
+                console.warn('Click logging returned non-200 status:', res.status);
+            }
+            return res.json().catch(function() { return {}; });
+        }).then(function(json) {
+            if (json && json.status === 'error') {
+                console.warn('Click logging error from server:', json.message);
+            }
+        }).catch(function(err) {
+            console.warn('Failed to log link click:', err);
+        });
     }
 
     var dafProceedBtn = document.getElementById('daf-confirm-proceed');
@@ -2551,10 +2747,20 @@
             if (mainLn) mainLn.value = ln;
             if (mainEm) mainEm.value = em;
 
-            logLinkClickMaster(pendingDafName, amt, fn, ln, em);
-
             if (isZelleMode) {
-                navigator.clipboard.writeText(CAMPAIGN_CONFIG.zelleEmail);
+                var session = getRouteSession('zelle');
+                logLinkClickMaster('Zelle', amt, fn, ln, em, session.id);
+
+                var zEmail = (typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.zelleEmail) || (typeof ZELLE_EMAIL !== 'undefined' ? ZELLE_EMAIL : 'kerensy@notzer.org');
+                var modalZDisplay = document.getElementById('modal-zelle-email-display');
+                if (modalZDisplay) modalZDisplay.textContent = zEmail;
+
+                var modalZMemo = document.getElementById('modal-zelle-memo-display');
+                if (modalZMemo) modalZMemo.textContent = session.memo;
+
+                var mainZMemo = document.getElementById('zelle-memo-display');
+                if (mainZMemo) mainZMemo.textContent = session.memo;
+
                 var zelleInfo = document.getElementById('zelle-info');
                 var zelleBtn = document.getElementById('zelle-toggle-btn');
                 if (zelleInfo) zelleInfo.style.display = 'block';
@@ -2563,14 +2769,55 @@
                 // Transition overlay to Zelle instructions
                 var stepForm = document.getElementById('modal-daf-step-form');
                 var stepZelle = document.getElementById('modal-daf-step-zelle');
+                var stepPaypal = document.getElementById('modal-daf-step-paypal');
                 if (stepForm) stepForm.style.display = 'none';
+                if (stepPaypal) stepPaypal.style.display = 'none';
                 if (stepZelle) stepZelle.style.display = 'block';
-                var copyHint = document.getElementById('modal-zelle-copy-hint');
-                if (copyHint) {
-                    copyHint.textContent = 'Copied!';
-                    setTimeout(function() { copyHint.textContent = 'Click to copy'; }, 3000);
-                }
+
+                safeCopyText(session.memo).then(function(copied) {
+                    var copyHint = document.getElementById('modal-zelle-memo-hint');
+                    if (copyHint && copied) {
+                        copyHint.textContent = 'Copied!';
+                        setTimeout(function() { copyHint.textContent = 'Click to copy'; }, 3000);
+                    }
+                });
+
+            } else if (pendingDafName === 'PayPal') {
+                var session = getRouteSession('paypal');
+                logLinkClickMaster('PayPal', amt, fn, ln, em, session.id);
+
+                var modalPPMemo = document.getElementById('modal-paypal-memo-display');
+                if (modalPPMemo) modalPPMemo.textContent = session.memo;
+
+                var modalPPLink = document.getElementById('modal-paypal-open-btn');
+                if (modalPPLink) modalPPLink.href = pendingDafLink || 'https://www.paypal.com/us/fundraiser/charity/3380976';
+
+                safeCopyText(session.memo).then(function(copied) {
+                    var statusText = document.getElementById('modal-paypal-status-text');
+                    var memoHint = document.getElementById('modal-paypal-memo-hint');
+                    if (copied) {
+                        if (statusText) statusText.textContent = '✅ Campaign memo copied to clipboard! Paste it into PayPal:';
+                        if (memoHint) {
+                            memoHint.textContent = 'Copied!';
+                            setTimeout(function() { memoHint.textContent = 'Click to copy'; }, 3000);
+                        }
+                        window.open(pendingDafLink, '_blank');
+                    } else {
+                        if (statusText) statusText.textContent = 'Please copy the campaign memo below before opening PayPal:';
+                    }
+
+                    var stepForm = document.getElementById('modal-daf-step-form');
+                    var stepZelle = document.getElementById('modal-daf-step-zelle');
+                    var stepPaypal = document.getElementById('modal-daf-step-paypal');
+                    if (stepForm) stepForm.style.display = 'none';
+                    if (stepZelle) stepZelle.style.display = 'none';
+                    if (stepPaypal) stepPaypal.style.display = 'block';
+                });
+
             } else if (pendingDafLink) {
+                var dafId = (typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.id) || (typeof CAMPAIGN_CODE !== 'undefined' ? CAMPAIGN_CODE : 'general');
+                var dafPk = mintClickPk(dafId, 'DAF');
+                logLinkClickMaster(pendingDafName, amt, fn, ln, em, dafPk);
                 window.open(pendingDafLink, '_blank');
                 closeDafConfirm();
             } else {
@@ -2579,33 +2826,78 @@
         });
     }
 
+    // Modal Zelle copy email
     var modalZelleBox = document.getElementById('modal-zelle-email-box');
     if (modalZelleBox) {
         modalZelleBox.addEventListener('click', function() {
-            navigator.clipboard.writeText(CAMPAIGN_CONFIG.zelleEmail);
-            var hint = document.getElementById('modal-zelle-copy-hint');
-            if (hint) {
-                hint.textContent = 'Copied!';
-                setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
-            }
+            var zEmail = (typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.zelleEmail) || (typeof ZELLE_EMAIL !== 'undefined' ? ZELLE_EMAIL : 'kerensy@notzer.org');
+            safeCopyText(zEmail).then(function(copied) {
+                var hint = document.getElementById('modal-zelle-copy-hint');
+                if (hint && copied) {
+                    hint.textContent = 'Copied!';
+                    setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
+                }
+            });
         });
     }
 
-    // Zelle copy email
+    // Modal Zelle copy memo
+    var modalZelleMemoBox = document.getElementById('modal-zelle-memo-box');
+    if (modalZelleMemoBox) {
+        modalZelleMemoBox.addEventListener('click', function() {
+            var session = getRouteSession('zelle');
+            safeCopyText(session.memo).then(function(copied) {
+                var hint = document.getElementById('modal-zelle-memo-hint');
+                if (hint && copied) {
+                    hint.textContent = 'Copied!';
+                    setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
+                }
+            });
+        });
+    }
+
+    // Modal PayPal copy memo
+    var modalPaypalMemoBox = document.getElementById('modal-paypal-memo-box');
+    if (modalPaypalMemoBox) {
+        modalPaypalMemoBox.addEventListener('click', function() {
+            var session = getRouteSession('paypal');
+            safeCopyText(session.memo).then(function(copied) {
+                var hint = document.getElementById('modal-paypal-memo-hint');
+                if (hint && copied) {
+                    hint.textContent = 'Copied!';
+                    setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
+                }
+            });
+        });
+    }
+
+    // Main page Zelle copy email
     var zelleEmailBox = document.getElementById('zelle-email-box');
     if (zelleEmailBox) {
         zelleEmailBox.addEventListener('click', function() {
-            navigator.clipboard.writeText(CAMPAIGN_CONFIG.zelleEmail);
-            var hint = this.querySelector('.copy-hint');
-            if (hint) {
-                hint.textContent = 'Copied!';
-                setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
-            }
-            logLinkClickMaster('Zelle (copied email)', getSelectedAmount(),
-                document.getElementById('donor-first-name').value.trim(),
-                document.getElementById('donor-last-name').value.trim(),
-                document.getElementById('donor-email').value.trim()
-            );
+            var zEmail = (typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.zelleEmail) || (typeof ZELLE_EMAIL !== 'undefined' ? ZELLE_EMAIL : 'kerensy@notzer.org');
+            safeCopyText(zEmail).then(function(copied) {
+                var hint = document.getElementById('zelle-email-hint') || zelleEmailBox.querySelector('.copy-hint');
+                if (hint && copied) {
+                    hint.textContent = 'Copied!';
+                    setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
+                }
+            });
+        });
+    }
+
+    // Main page Zelle copy memo
+    var zelleMemoBox = document.getElementById('zelle-memo-box');
+    if (zelleMemoBox) {
+        zelleMemoBox.addEventListener('click', function() {
+            var session = getRouteSession('zelle');
+            safeCopyText(session.memo).then(function(copied) {
+                var hint = document.getElementById('zelle-memo-hint') || zelleMemoBox.querySelector('.copy-hint');
+                if (hint && copied) {
+                    hint.textContent = 'Copied!';
+                    setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
+                }
+            });
         });
     }
 
@@ -2613,12 +2905,14 @@
     var dafEmailBox = document.getElementById('daf-confirm-email-box');
     if (dafEmailBox) {
         dafEmailBox.addEventListener('click', function() {
-            navigator.clipboard.writeText(CAMPAIGN_CONFIG.dafConfirmEmail);
-            var hint = this.querySelector('.copy-hint');
-            if (hint) {
-                hint.textContent = 'Copied!';
-                setTimeout(function() { hint.textContent = 'Copy'; }, 2000);
-            }
+            var zEmail = (typeof CAMPAIGN_CONFIG !== 'undefined' && CAMPAIGN_CONFIG.zelleEmail) || (typeof ZELLE_EMAIL !== 'undefined' ? ZELLE_EMAIL : 'office+ksy@notzer.org');
+            safeCopyText(zEmail).then(function(copied) {
+                var hint = dafEmailBox.querySelector('.copy-hint');
+                if (hint && copied) {
+                    hint.textContent = 'Copied!';
+                    setTimeout(function() { hint.textContent = 'Click to copy'; }, 2000);
+                }
+            });
         });
     }
 

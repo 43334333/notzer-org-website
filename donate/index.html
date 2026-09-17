@@ -1047,7 +1047,17 @@
         .animate-delay-1 { animation-delay: 0.1s; }
         .animate-delay-2 { animation-delay: 0.2s; }
         .animate-delay-3 { animation-delay: 0.3s; }
-    </style>
+    
+        /* Remove up-down spin buttons on number inputs */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+</style>
 </head>
 <body>
 
@@ -1210,7 +1220,10 @@
                                 <!-- Cardknox iFields -->
                                 <div id="cardknox-fields">
                                     <div class="ifield-container">
-                                        <label>Card Number (Credit, Debit, Donors Fund, OJC, Pledger, Matbia)</label>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                            <label style="margin-bottom: 0;">Card Number (Credit, Debit, Donors Fund, OJC, Pledger, Matbia)</label>
+                                            <span id="card-brand-icon" class="card-brand-badge" style="display: none; align-items: center;"></span>
+                                        </div>
                                         <iframe id="card-number-iframe" data-ifields-id="card-number" data-ifields-placeholder="Card Number" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
                                         <input data-ifields-id="card-number-token" name="xCardNum" type="hidden">
                                     </div>
@@ -1432,7 +1445,33 @@
             var invalidStyle = Object.assign({}, fieldStyle, { 'color': '#ff5252' });
 
             if (typeof addIfieldKeyPressCallback === 'function') {
-                addIfieldKeyPressCallback(function(data) {
+                
+    // Verified Cardknox iFields data.issuer badges (no card-prefix sniffing)
+    var CARD_BRAND_BADGES = {
+        'visa': '<span style="display:inline-flex;align-items:center;background:#1a1f71;color:#fff;font-weight:bold;font-size:11px;padding:2px 7px;border-radius:4px;letter-spacing:0.5px;font-family:sans-serif;">VISA</span>',
+        'mastercard': '<span style="display:inline-flex;align-items:center;background:#222;padding:2px 6px;border-radius:4px;gap:2px;"><svg width="22" height="14" viewBox="0 0 28 18"><circle cx="9" cy="9" r="8" fill="#eb001b"/><circle cx="19" cy="9" r="8" fill="#f79e1b" fill-opacity="0.85"/></svg><span style="font-size:10px;font-weight:600;color:#fff;font-family:sans-serif;">MC</span></span>',
+        'amex': '<span style="display:inline-flex;align-items:center;background:#006fcf;color:#fff;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:4px;letter-spacing:0.5px;font-family:sans-serif;">AMEX</span>',
+        'discover': '<span style="display:inline-flex;align-items:center;background:#ff6000;color:#fff;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:4px;letter-spacing:0.5px;font-family:sans-serif;">DISCOVER</span>',
+        'donors': '<span style="display:inline-flex;align-items:center;background:#0a2540;color:#635bff;font-weight:bold;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #635bff;font-family:sans-serif;">🏦 THE DONORS FUND</span>',
+        'ojc': '<span style="display:inline-flex;align-items:center;background:#003366;color:#64b5f6;font-weight:bold;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #64b5f6;font-family:sans-serif;">🏛️ OJC FUND</span>',
+        'pledger': '<span style="display:inline-flex;align-items:center;background:#0f382c;color:#4ade80;font-weight:bold;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #4ade80;font-family:sans-serif;">💎 PLEDGER</span>',
+        'matbia': '<span style="display:inline-flex;align-items:center;background:#2d3748;color:#f6ad55;font-weight:bold;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #f6ad55;font-family:sans-serif;">🪙 MATBIA</span>'
+    };
+
+addIfieldKeyPressCallback(function(data) {
+                // Card / DAF Brand Badge detection via verified data.issuer
+                var brandBadgeEl = document.getElementById('card-brand-icon');
+                if (brandBadgeEl) {
+                    var issuer = (data.issuer || '').toLowerCase().trim();
+                    if (issuer && typeof CARD_BRAND_BADGES !== 'undefined' && CARD_BRAND_BADGES[issuer]) {
+                        brandBadgeEl.innerHTML = CARD_BRAND_BADGES[issuer];
+                        brandBadgeEl.style.display = 'inline-flex';
+                    } else {
+                        brandBadgeEl.innerHTML = '';
+                        brandBadgeEl.style.display = 'none';
+                    }
+                }
+
                     var isCardknox = (typeof GatewayManager !== 'undefined' && GatewayManager.activeGateway === 'cardknox');
                     if (data.cardNumberFormattedLength > 0) {
                         var isCardValid = data.cardNumberIsValid || (isCardknox && (data.cardNumberFormattedLength >= 19 || (data.cardNumberLength && data.cardNumberLength >= 16)));
@@ -1787,27 +1826,59 @@
         var customWrapper = document.getElementById('custom-amount-wrapper');
         var customInput = document.getElementById('custom-amount');
 
+        if (customWrapper) {
+            customWrapper.style.display = 'block';
+        }
+
         btns.forEach(function(btn) {
             btn.addEventListener('click', function() {
                 btns.forEach(function(b) { b.classList.remove('active'); });
                 this.classList.add('active');
                 if (this.dataset.amount === 'custom') {
-                    customWrapper.style.display = 'block';
-                    customInput.focus();
+                    if (customInput) {
+                        customInput.value = '';
+                        customInput.focus();
+                    }
                     selectedAmount = null;
                 } else {
-                    customWrapper.style.display = 'none';
-                    customInput.value = '';
+                    if (customInput) {
+                        customInput.value = this.dataset.amount;
+                    }
                     selectedAmount = parseFloat(this.dataset.amount);
                 }
-                updateInstallmentSummary();
+                if (typeof updateInstallmentSummary === 'function') {
+                    updateInstallmentSummary();
+                }
             });
         });
 
-        customInput.addEventListener('input', function() {
-            selectedAmount = parseFloat(this.value) || null;
-            updateInstallmentSummary();
-        });
+        if (customInput) {
+            customInput.addEventListener('input', function() {
+                var val = parseFloat(this.value);
+                selectedAmount = (!isNaN(val) && val > 0) ? val : null;
+                var matched = false;
+                btns.forEach(function(b) {
+                    if (b.dataset.amount !== 'custom' && parseFloat(b.dataset.amount) === selectedAmount) {
+                        b.classList.add('active');
+                        matched = true;
+                    } else {
+                        b.classList.remove('active');
+                    }
+                });
+                if (!matched) {
+                    btns.forEach(function(b) {
+                        if (b.dataset.amount === 'custom' && selectedAmount !== null) {
+                            b.classList.add('active');
+                        } else if (b.dataset.amount === 'custom') {
+                            b.classList.remove('active');
+                        }
+                    });
+                }
+                if (typeof updateInstallmentSummary === 'function') {
+                    updateInstallmentSummary();
+                }
+            });
+        }
     })();
 
     // ============================================================
