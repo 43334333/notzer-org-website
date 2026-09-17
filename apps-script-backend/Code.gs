@@ -5297,6 +5297,20 @@ function processGeneralDonation(data) {
     // Determine campaign
     var campaignId = data.campaignId || data.campaignCode || 'general';
 
+    // Pre-validate campaign sheet & Transactions schema fail-closed before processing charge
+    var sheetId = getCampaignSheetId(campaignId);
+    var ss = null;
+    if (sheetId) {
+      ss = SpreadsheetApp.openById(sheetId);
+      var txSheet = ss.getSheetByName('Transactions');
+      if (txSheet) {
+        ensureTransactionFundChargeCol_(txSheet);
+        getTransactionColMap_(txSheet); // Fails closed before charge if headers missing or duplicate
+      }
+    } else {
+      return { status: 'error', message: 'Campaign configuration not found.' };
+    }
+
     // Process payment with failover
     var result = processWithFailover(data, campaignId);
 
@@ -5307,27 +5321,31 @@ function processGeneralDonation(data) {
 
     if (result.xResult === 'A') {
       // Payment approved — log to sheets
-      var sheetId = getCampaignSheetId(campaignId);
-      if (sheetId) {
-        var ss = SpreadsheetApp.openById(sheetId);
+      var customerId = 'ONLINE-' + Utilities.formatDate(new Date(), 'America/New_York', 'yyyyMMddHHmmss');
 
-        // Generate customer ID
-        var customerId = 'ONLINE-' + Utilities.formatDate(new Date(), 'America/New_York', 'yyyyMMddHHmmss');
+      // Log customer
+      logCustomerMaster(ss, customerId, data);
 
-        // Log customer
-        logCustomerMaster(ss, customerId, data);
+      // Log pledge
+      var pledgeId = logPledgeMaster(ss, data, customerId, 'Processed', '', campaignId);
 
-        // Log pledge
-        var pledgeId = logPledgeMaster(ss, data, customerId, 'Processed', '', campaignId);
+      // Log transaction
+      var donorName = (data.firstName || '') + ' ' + (data.lastName || '');
+      var txFee = calculateFee(result.xCardType || 'Credit Card', parseFloat(data.amount), ss);
 
-        // Log transaction
-        var donorName = (data.firstName || '') + ' ' + (data.lastName || '');
-        var txFee = calculateFee(result.xCardType || 'Credit Card', parseFloat(data.amount), ss);
+      try {
         logTransactionMaster(ss, pledgeId, customerId, donorName, parseFloat(data.amount), result, '1', txFee);
-
-        // Send receipt
-        sendDonationReceipt(data, result, campaignId);
+      } catch (logErr) {
+        Logger.log('Accounting logging error after approved charge: ' + logErr.toString());
+        return {
+          status: 'error',
+          refNum: result.xRefNum || '',
+          message: 'Payment approved by gateway (Ref: ' + (result.xRefNum || '') + '), but accounting transaction record could not be written: ' + logErr.message + '. Please contact support.'
+        };
       }
+
+      // Send receipt
+      sendDonationReceipt(data, result, campaignId);
 
       return {
         status: 'success',
@@ -6364,6 +6382,7 @@ function issueManualReceipt(data, user) {
       }
     } catch (sheetErr) {
       Logger.log('Failed to write manual donation to campaign sheet: ' + sheetErr.toString());
+      return { status: 'error', receiptId: receiptId, message: 'Receipt generated (' + receiptId + '), but failed to write to campaign accounting: ' + sheetErr.message };
     }
 
     return {
@@ -7898,6 +7917,7 @@ function logTransactionMaster(ss, pledgeId, customerId, donorName, amount, payme
     sheet.appendRow(rowArray);
   } catch (err) {
     Logger.log('logTransactionMaster failed: ' + err.toString());
+    throw err;
   }
 }
 
