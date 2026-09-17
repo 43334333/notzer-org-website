@@ -1779,31 +1779,42 @@ function ensureDefaultFeeConfigSheet_(masterSS) {
   var sheet = masterSS.getSheetByName('Fee_Config_Defaults');
   if (!sheet) {
     sheet = masterSS.insertSheet('Fee_Config_Defaults');
-    sheet.getRange('A1:C1').setValues([['Method', 'Rate', 'Flat Fee']]);
+    sheet.getRange('A1:D1').setValues([['Method', 'Rate', 'Flat Fee', 'Fund_Charge']]);
     var feeDefaults = [
-      ['Credit Card', 0.03, 0.30],
-      ['Cardknox', 0.03, 0.30],
-      ['USAePay', 0.03, 0.30],
-      ['Matbia', 0.025, 0.00],
-      ['DAF - OJCF', 0.00, 0.00],
-      ['DAF - Pledger', 0.00, 0.00],
-      ['DAF - Matbia', 0.00, 0.00],
-      ['DAF - The Donors Fund', 0.00, 0.00],
-      ['Check', 0.00, 0.00],
-      ['Zelle', 0.00, 0.00],
-      ['PayPal', 0.029, 0.30],
-      ['Wire Transfer', 0.00, 0.00],
-      ['Cash', 0.00, 0.00],
-      ['Bank Transfer', 0.00, 0.00],
-      ['Other', 0.00, 0.00]
+      ['Credit Card', 0.03, 0.30, 0.01],
+      ['Cardknox', 0.03, 0.30, 0.01],
+      ['USAePay', 0.03, 0.30, 0.01],
+      ['Matbia', 0.025, 0.00, 0.01],
+      ['DAF - OJCF', 0.00, 0.00, 0.01],
+      ['DAF - Pledger', 0.00, 0.00, 0.01],
+      ['DAF - Matbia', 0.00, 0.00, 0.01],
+      ['DAF - The Donors Fund', 0.00, 0.00, 0.01],
+      ['Check', 0.00, 0.00, 0.01],
+      ['Zelle', 0.00, 0.00, 0.01],
+      ['PayPal', 0.029, 0.30, 0.01],
+      ['Wire Transfer', 0.00, 0.00, 0.01],
+      ['Cash', 0.00, 0.00, 0.01],
+      ['Bank Transfer', 0.00, 0.00, 0.01],
+      ['Other', 0.00, 0.00, 0.01]
     ];
-    sheet.getRange(2, 1, feeDefaults.length, 3).setValues(feeDefaults);
-    formatHeaderRow_(sheet, 'A1:C1');
+    sheet.getRange(2, 1, feeDefaults.length, 4).setValues(feeDefaults);
+    formatHeaderRow_(sheet, 'A1:D1');
     sheet.setColumnWidth(1, 220);
     sheet.setColumnWidth(2, 100);
     sheet.setColumnWidth(3, 100);
+    sheet.setColumnWidth(4, 100);
     sheet.getRange('B2:B100').setNumberFormat('0.00%');
     sheet.getRange('C2:C100').setNumberFormat('$#,##0.00');
+    sheet.getRange('D2:D100').setNumberFormat('0.00%');
+  } else {
+    // Ensure 4th column Fund_Charge exists
+    if (sheet.getLastColumn() < 4) {
+      sheet.getRange(1, 4).setValue('Fund_Charge');
+      sheet.getRange(2, 4, Math.max(1, sheet.getLastRow() - 1), 1).setValue(0.01);
+      formatHeaderRow_(sheet, 'A1:D1');
+      sheet.setColumnWidth(4, 100);
+      sheet.getRange('D2:D100').setNumberFormat('0.00%');
+    }
   }
   return sheet;
 }
@@ -1811,7 +1822,7 @@ function ensureDefaultFeeConfigSheet_(masterSS) {
 /**
  * Reads the fee defaults schedule from Master Platform Sheet.
  * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} [masterSS]
- * @returns {Array<Array>} [ [method, rate, flatFee], ... ]
+ * @returns {Array<Array>} [ [method, rate, flatFee, fundCharge], ... ]
  */
 function getMasterFeeDefaults_(masterSS) {
   try {
@@ -1823,14 +1834,16 @@ function getMasterFeeDefaults_(masterSS) {
     if (masterSS) {
       var sheet = ensureDefaultFeeConfigSheet_(masterSS);
       if (sheet && sheet.getLastRow() >= 2) {
-        var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 3).getValues();
+        var numCols = Math.min(sheet.getLastColumn(), 4);
+        var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, numCols).getValues();
         var list = [];
         for (var i = 0; i < data.length; i++) {
           var m = String(data[i][0] || '').trim();
           if (m) {
             var r = parseFloat(data[i][1]) || 0;
             var f = parseFloat(data[i][2]) || 0;
-            list.push([m, r, f]);
+            var fc = (numCols >= 4 && data[i][3] !== undefined && data[i][3] !== null && String(data[i][3]).trim() !== '' && !isNaN(data[i][3])) ? parseFloat(data[i][3]) : 0.01;
+            list.push([m, r, f, fc]);
           }
         }
         if (list.length > 0) return list;
@@ -1840,33 +1853,33 @@ function getMasterFeeDefaults_(masterSS) {
     Logger.log('getMasterFeeDefaults_ error: ' + e.toString());
   }
   return [
-    ['Credit Card', 0.03, 0.30],
-    ['Cardknox', 0.03, 0.30],
-    ['USAePay', 0.03, 0.30],
-    ['Matbia', 0.025, 0.00],
-    ['DAF - OJCF', 0.00, 0.00],
-    ['DAF - Pledger', 0.00, 0.00],
-    ['DAF - Matbia', 0.00, 0.00],
-    ['DAF - The Donors Fund', 0.00, 0.00],
-    ['Check', 0.00, 0.00],
-    ['Zelle', 0.00, 0.00],
-    ['PayPal', 0.029, 0.30],
-    ['Wire Transfer', 0.00, 0.00],
-    ['Cash', 0.00, 0.00],
-    ['Bank Transfer', 0.00, 0.00],
-    ['Other', 0.00, 0.00]
+    ['Credit Card', 0.03, 0.30, 0.01],
+    ['Cardknox', 0.03, 0.30, 0.01],
+    ['USAePay', 0.03, 0.30, 0.01],
+    ['Matbia', 0.025, 0.00, 0.01],
+    ['DAF - OJCF', 0.00, 0.00, 0.01],
+    ['DAF - Pledger', 0.00, 0.00, 0.01],
+    ['DAF - Matbia', 0.00, 0.00, 0.01],
+    ['DAF - The Donors Fund', 0.00, 0.00, 0.01],
+    ['Check', 0.00, 0.00, 0.01],
+    ['Zelle', 0.00, 0.00, 0.01],
+    ['PayPal', 0.029, 0.30, 0.01],
+    ['Wire Transfer', 0.00, 0.00, 0.01],
+    ['Cash', 0.00, 0.00, 0.01],
+    ['Bank Transfer', 0.00, 0.00, 0.01],
+    ['Other', 0.00, 0.00, 0.01]
   ];
 }
 
 /**
  * Returns fee defaults formatted for API clients.
- * @returns {Object} { status: 'success', defaults: [ { method, rate, flat } ] }
+ * @returns {Object} { status: 'success', defaults: [ { method, rate, flat, fundCharge } ] }
  */
 function getMasterFeeDefaultsJson_() {
   try {
     var list = getMasterFeeDefaults_();
     var defaults = list.map(function(item) {
-      return { method: item[0], rate: item[1], flat: item[2] };
+      return { method: item[0], rate: item[1], flat: item[2], fundCharge: item[3] !== undefined ? item[3] : 0.01 };
     });
     return { status: 'success', defaults: defaults };
   } catch (err) {
@@ -1876,7 +1889,7 @@ function getMasterFeeDefaultsJson_() {
 
 /**
  * Updates the 'Fee_Config_Defaults' tab in the Master Platform Sheet.
- * @param {Array<Object>} defaults - Array of { method, rate, flat }
+ * @param {Array<Object>} defaults - Array of { method, rate, flat, fundCharge }
  * @returns {Object}
  */
 function updateMasterFeeDefaults_(defaults) {
@@ -1896,7 +1909,7 @@ function updateMasterFeeDefaults_(defaults) {
     } else {
       sheet.clearContents();
     }
-    sheet.getRange('A1:C1').setValues([['Method', 'Rate', 'Flat Fee']]);
+    sheet.getRange('A1:D1').setValues([['Method', 'Rate', 'Flat Fee', 'Fund_Charge']]);
     var rows = [];
     for (var i = 0; i < defaults.length; i++) {
       var item = defaults[i];
@@ -1904,18 +1917,22 @@ function updateMasterFeeDefaults_(defaults) {
       if (m) {
         var r = parseFloat(item.rate !== undefined ? item.rate : item[1]) || 0;
         var f = parseFloat(item.flat !== undefined ? item.flat : (item.flatFee !== undefined ? item.flatFee : item[2])) || 0;
-        rows.push([m, r, f]);
+        var rawFc = item.fundCharge !== undefined ? item.fundCharge : item[3];
+        var fc = (rawFc !== undefined && rawFc !== null && String(rawFc).trim() !== '' && !isNaN(rawFc)) ? parseFloat(rawFc) : 0.01;
+        rows.push([m, r, f, fc]);
       }
     }
     if (rows.length > 0) {
-      sheet.getRange(2, 1, rows.length, 3).setValues(rows);
+      sheet.getRange(2, 1, rows.length, 4).setValues(rows);
     }
-    formatHeaderRow_(sheet, 'A1:C1');
+    formatHeaderRow_(sheet, 'A1:D1');
     sheet.setColumnWidth(1, 220);
     sheet.setColumnWidth(2, 100);
     sheet.setColumnWidth(3, 100);
+    sheet.setColumnWidth(4, 100);
     sheet.getRange('B2:B100').setNumberFormat('0.00%');
     sheet.getRange('C2:C100').setNumberFormat('$#,##0.00');
+    sheet.getRange('D2:D100').setNumberFormat('0.00%');
     return { status: 'success', message: 'Master fee defaults updated successfully (' + rows.length + ' methods).' };
   } catch (err) {
     Logger.log('updateMasterFeeDefaults_ error: ' + err.toString());
@@ -2374,16 +2391,20 @@ function provisionCampaignSheet(campaignId) {
     formatHeaderRow_(pledgesSheet, 'A1:P1');
     pledgesSheet.getRange('F2:I1000').setNumberFormat('$#,##0.00');
 
-    // ── Tab 2: Transactions (14 cols - KSY Schema) ──
+    // ── Tab 2: Transactions (15 cols - KSY Schema with Fund Charge) ──
     var txnSheet = campaignSS.getSheetByName('Transactions');
-    if (!txnSheet) txnSheet = campaignSS.insertSheet('Transactions');
-    txnSheet.getRange('A1:N1').setValues([[
-      'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Net',
-      'Donor Name', 'Pledge ID', 'Customer ID', 'Result', 'Method',
-      'Card Type', 'Payment #', 'Funded', 'Funded Date'
-    ]]);
-    formatHeaderRow_(txnSheet, 'A1:N1');
-    txnSheet.getRange('C2:E1000').setNumberFormat('$#,##0.00');
+    if (!txnSheet) {
+      txnSheet = campaignSS.insertSheet('Transactions');
+      txnSheet.getRange('A1:O1').setValues([[
+        'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net',
+        'Donor Name', 'Pledge ID', 'Customer ID', 'Result', 'Method',
+        'Card Type', 'Payment #', 'Funded', 'Funded Date'
+      ]]);
+      formatHeaderRow_(txnSheet, 'A1:O1');
+      txnSheet.getRange('C2:F1000').setNumberFormat('$#,##0.00');
+    } else {
+      ensureTransactionFundChargeCol_(txnSheet);
+    }
 
     // ── Tab 3: Customers (11 cols) ──
     var custSheet = campaignSS.getSheetByName('Customers');
@@ -2416,26 +2437,56 @@ function provisionCampaignSheet(campaignId) {
     formatHeaderRow_(teamsSheet, 'A1:G1');
     teamsSheet.getRange('F2:F100').setNumberFormat('$#,##0.00');
 
-    // ── Tab 6: LinkClicks (7 cols) ──
+    // ── Tab 6: LinkClicks (8 cols) ──
     var clicksSheet = campaignSS.getSheetByName('LinkClicks');
-    if (!clicksSheet) clicksSheet = campaignSS.insertSheet('LinkClicks');
-    clicksSheet.getRange('A1:G1').setValues([[
-      'Timestamp', 'First Name', 'Last Name',
-      'Email', 'Link Clicked', 'Campaign', 'Amount'
-    ]]);
-    formatHeaderRow_(clicksSheet, 'A1:G1');
+    if (!clicksSheet) {
+      clicksSheet = campaignSS.insertSheet('LinkClicks');
+      clicksSheet.getRange('A1:H1').setValues([[
+        'Click ID', 'Timestamp', 'First Name', 'Last Name',
+        'Email', 'Link Clicked', 'Campaign', 'Amount'
+      ]]);
+      formatHeaderRow_(clicksSheet, 'A1:H1');
+      clicksSheet.setColumnWidth(1, 180);
+    } else {
+      var firstH = String(clicksSheet.getRange(1, 1).getValue() || '').trim().toLowerCase();
+      if (firstH !== 'click id' && firstH !== 'clickid' && firstH !== 'pk') {
+        clicksSheet.insertColumnBefore(1);
+        clicksSheet.getRange(1, 1).setValue('Click ID');
+        clicksSheet.getRange(1, 1).setFontWeight('bold');
+        clicksSheet.setColumnWidth(1, 180);
+      }
+      if (clicksSheet.getLastColumn() < 8) {
+        clicksSheet.getRange(1, 8).setValue('Amount');
+        clicksSheet.getRange(1, 8).setFontWeight('bold');
+      }
+    }
 
-    // ——— Tab 7: Fee_Config (3 cols - Fee Schedule) ———
+    // ——— Tab 7: Fee_Config (4 cols - Fee Schedule) ———
     var feeSheet = campaignSS.getSheetByName('Fee_Config');
     if (!feeSheet) {
       feeSheet = campaignSS.insertSheet('Fee_Config');
-      feeSheet.getRange('A1:C1').setValues([['Method', 'Rate', 'Flat Fee']]);
+      feeSheet.getRange('A1:D1').setValues([['Method', 'Rate', 'Flat Fee', 'Fund_Charge']]);
       var feeDefaults = getMasterFeeDefaults_(ss);
-      feeSheet.getRange(2, 1, feeDefaults.length, 3).setValues(feeDefaults);
+      feeSheet.getRange(2, 1, feeDefaults.length, 4).setValues(feeDefaults);
+      formatHeaderRow_(feeSheet, 'A1:D1');
+      feeSheet.setColumnWidth(1, 200);
+      feeSheet.setColumnWidth(2, 80);
+      feeSheet.setColumnWidth(3, 80);
+      feeSheet.setColumnWidth(4, 100);
+      feeSheet.getRange('B2:B100').setNumberFormat('0.00%');
+      feeSheet.getRange('C2:C100').setNumberFormat('$#,##0.00');
+      feeSheet.getRange('D2:D100').setNumberFormat('0.00%');
+    } else {
+      if (feeSheet.getLastColumn() < 4) {
+        feeSheet.getRange(1, 4).setValue('Fund_Charge');
+        feeSheet.getRange(1, 4).setFontWeight('bold');
+        feeSheet.setColumnWidth(4, 100);
+        if (feeSheet.getLastRow() >= 2) {
+          feeSheet.getRange(2, 4, feeSheet.getLastRow() - 1, 1).setValue(0.01);
+          feeSheet.getRange(2, 4, feeSheet.getLastRow() - 1, 1).setNumberFormat('0.00%');
+        }
+      }
     }
-    formatHeaderRow_(feeSheet, 'A1:C1');
-    feeSheet.getRange('B2:B100').setNumberFormat('0.00%');
-    feeSheet.getRange('C2:C100').setNumberFormat('$#,##0.00');
 
     // ── Tab 8: Expenses (7 cols - Expense Tracker) ──
     var expSheet = campaignSS.getSheetByName('Expenses');
@@ -3346,6 +3397,154 @@ function getPledges(campaignId, filters) {
 
 
 // ============================================================
+// TRANSACTION COLUMN MAPPING & SCHEMA HELPERS
+// ============================================================
+/**
+ * Resolves column positions dynamically from header row.
+ * Throws fail-closed on duplicate headers or missing required headers.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet - Sheet to inspect
+ * @param {Array<string>} [requiredFields] - List of canonical field keys that must exist
+ * @returns {Object} Mapping of canonical keys to 0-based column indices
+ */
+function getTransactionColMap_(sheet, requiredFields) {
+  if (!sheet) throw new Error('getTransactionColMap_: sheet is required');
+  var lastCol = sheet.getLastColumn();
+  if (lastCol < 1) throw new Error('getTransactionColMap_: sheet has no columns');
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+
+  // Strict duplicate detection
+  var seen = {};
+  for (var c = 0; c < headers.length; c++) {
+    var rawH = String(headers[c] || '').trim();
+    if (rawH) {
+      var normH = rawH.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (seen[normH] !== undefined) {
+        throw new Error('getTransactionColMap_: Duplicate header detected: "' + rawH + '" at cols ' + (seen[normH] + 1) + ' and ' + (c + 1));
+      }
+      seen[normH] = c;
+    }
+  }
+
+  var map = {
+    timestamp: -1,
+    reference: -1,
+    amount: -1,
+    fees: -1,
+    fundCharge: -1,
+    net: -1,
+    donorName: -1,
+    pledgeId: -1,
+    customerId: -1,
+    result: -1,
+    method: -1,
+    cardType: -1,
+    paymentNum: -1,
+    funded: -1,
+    fundedDate: -1,
+    depositBatchId: -1,
+    headers: headers,
+    lastCol: lastCol
+  };
+
+  for (var i = 0; i < headers.length; i++) {
+    var h = String(headers[i] || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!h) continue;
+    if (h === 'timestamp' || h === 'date') map.timestamp = i;
+    else if (h === 'reference' || h === 'ref' || h === 'refnum' || h === 'transactionid') map.reference = i;
+    else if (h === 'amountcharged' || h === 'amount' || h === 'gross' || h === 'grossamount') map.amount = i;
+    else if (h === 'fees' || h === 'fee') map.fees = i;
+    else if (h === 'fundcharge' || h === 'fundfee' || h === 'nccharge' || h === 'ncfee') map.fundCharge = i;
+    else if (h === 'net' || h === 'nettotal' || h === 'netamount') map.net = i;
+    else if (h === 'donorname' || h === 'donor' || h === 'name') map.donorName = i;
+    else if (h === 'pledgeid' || h === 'pledge') map.pledgeId = i;
+    else if (h === 'customerid' || h === 'customer') map.customerId = i;
+    else if (h === 'result' || h === 'status') map.result = i;
+    else if (h === 'method' || h === 'paymentmethod') map.method = i;
+    else if (h === 'cardtype' || h === 'brand' || h === 'type') map.cardType = i;
+    else if (h === 'paymentnum' || h === 'payment' || h === 'installment') map.paymentNum = i;
+    else if (h === 'funded' || h === 'iscleared') map.funded = i;
+    else if (h === 'fundeddate' || h === 'cleareddate') map.fundedDate = i;
+    else if (h === 'depositbatchid' || h === 'depositbatch' || h === 'batchid') map.depositBatchId = i;
+  }
+
+  var reqs = requiredFields !== undefined ? requiredFields : ['timestamp', 'reference', 'amount', 'fees', 'net'];
+  for (var r = 0; r < reqs.length; r++) {
+    var field = reqs[r];
+    if (map[field] === undefined || map[field] === -1) {
+      throw new Error('getTransactionColMap_: Required header "' + field + '" missing from sheet "' + sheet.getName() + '"');
+    }
+  }
+
+  return map;
+}
+
+/**
+ * Ensures column 'Fund Charge' exists before Net in Transactions sheet.
+ * Non-destructive and idempotent.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
+ * @returns {Object} Updated column map
+ */
+function ensureTransactionFundChargeCol_(sheet) {
+  if (!sheet) return null;
+  var colMap = getTransactionColMap_(sheet, []);
+  if (colMap.fundCharge === -1) {
+    if (colMap.net !== -1) {
+      sheet.insertColumnBefore(colMap.net + 1);
+      sheet.getRange(1, colMap.net + 1).setValue('Fund Charge');
+      sheet.getRange(1, colMap.net + 1).setFontWeight('bold');
+      sheet.setColumnWidth(colMap.net + 1, 100);
+      if (sheet.getLastRow() >= 2) {
+        sheet.getRange(2, colMap.net + 1, sheet.getLastRow() - 1, 1).setNumberFormat('$#,##0.00');
+      }
+    } else {
+      var newCol = sheet.getLastColumn() + 1;
+      sheet.getRange(1, newCol).setValue('Fund Charge');
+      sheet.getRange(1, newCol).setFontWeight('bold');
+      sheet.setColumnWidth(newCol, 100);
+      if (sheet.getLastRow() >= 2) {
+        sheet.getRange(2, newCol, sheet.getLastRow() - 1, 1).setNumberFormat('$#,##0.00');
+      }
+    }
+    colMap = getTransactionColMap_(sheet, []);
+  }
+  return colMap;
+}
+
+/**
+ * Builds a row array matching sheet columns from a dictionary of field values.
+ *
+ * @param {Object} colMap - Column mapping from getTransactionColMap_
+ * @param {Object} fields - Field values
+ * @returns {Array} Array sized to max column index
+ */
+function buildTransactionRowArray_(colMap, fields) {
+  var maxCol = Math.max(colMap.lastCol, 15);
+  var row = new Array(maxCol);
+  for (var i = 0; i < maxCol; i++) row[i] = '';
+
+  if (colMap.timestamp !== -1 && fields.timestamp !== undefined) row[colMap.timestamp] = fields.timestamp;
+  if (colMap.reference !== -1 && fields.reference !== undefined) row[colMap.reference] = fields.reference;
+  if (colMap.amount !== -1 && fields.amount !== undefined) row[colMap.amount] = fields.amount;
+  if (colMap.fees !== -1 && fields.fees !== undefined) row[colMap.fees] = fields.fees;
+  if (colMap.fundCharge !== -1 && fields.fundCharge !== undefined) row[colMap.fundCharge] = fields.fundCharge;
+  if (colMap.net !== -1 && fields.net !== undefined) row[colMap.net] = fields.net;
+  if (colMap.donorName !== -1 && fields.donorName !== undefined) row[colMap.donorName] = fields.donorName;
+  if (colMap.pledgeId !== -1 && fields.pledgeId !== undefined) row[colMap.pledgeId] = fields.pledgeId;
+  if (colMap.customerId !== -1 && fields.customerId !== undefined) row[colMap.customerId] = fields.customerId;
+  if (colMap.result !== -1 && fields.result !== undefined) row[colMap.result] = fields.result;
+  if (colMap.method !== -1 && fields.method !== undefined) row[colMap.method] = fields.method;
+  if (colMap.cardType !== -1 && fields.cardType !== undefined) row[colMap.cardType] = fields.cardType;
+  if (colMap.paymentNum !== -1 && fields.paymentNum !== undefined) row[colMap.paymentNum] = fields.paymentNum;
+  if (colMap.funded !== -1 && fields.funded !== undefined) row[colMap.funded] = fields.funded;
+  if (colMap.fundedDate !== -1 && fields.fundedDate !== undefined) row[colMap.fundedDate] = fields.fundedDate;
+  if (colMap.depositBatchId !== -1 && fields.depositBatchId !== undefined) row[colMap.depositBatchId] = fields.depositBatchId;
+
+  return row;
+}
+
+// ============================================================
 // TRANSACTIONS — READ FROM TAB 2 TRANSACTIONS
 // ============================================================
 /**
@@ -3385,8 +3584,9 @@ function getTransactionsMaster_(campaignId, filters) {
       };
     }
 
+    var colMap = getTransactionColMap_(sheet, ['timestamp', 'reference', 'amount', 'fees', 'net']);
     var lastRow = sheet.getLastRow();
-    var lastCol = Math.max(15, sheet.getLastColumn());
+    var lastCol = sheet.getLastColumn();
     var data = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
 
     var page = parseInt(filters.page) || 1;
@@ -3401,26 +3601,28 @@ function getTransactionsMaster_(campaignId, filters) {
     var filtered = [];
     var sumCharged = 0;
     var sumFees = 0;
+    var sumFundCharge = 0;
     var sumNet = 0;
 
     // Scan newest first (from bottom row up to row 2)
     for (var i = data.length - 1; i >= 0; i--) {
       var row = data[i];
-      var rawTimestamp = row[0];
-      var refNum = String(row[1] || '').trim();
-      var amountCharged = parseFloat(row[2]) || 0;
-      var fees = parseFloat(row[3]) || 0;
-      var net = parseFloat(row[4]) || 0;
-      var donorName = String(row[5] || '').trim();
-      var pledgeId = String(row[6] || '').trim();
-      var customerId = String(row[7] || '').trim();
-      var result = String(row[8] || '').trim();
-      var method = String(row[9] || '').trim();
-      var cardType = String(row[10] || '').trim();
-      var paymentNum = String(row[11] || '').trim();
-      var funded = String(row[12] || '').trim();
-      var fundedDate = row[13] ? formatDateEdt_(row[13]) : '';
-      var depositBatchId = String(row[14] || '').trim();
+      var rawTimestamp = colMap.timestamp !== -1 ? row[colMap.timestamp] : row[0];
+      var refNum = colMap.reference !== -1 ? String(row[colMap.reference] || '').trim() : '';
+      var amountCharged = colMap.amount !== -1 ? (parseFloat(row[colMap.amount]) || 0) : 0;
+      var fees = colMap.fees !== -1 ? (parseFloat(row[colMap.fees]) || 0) : 0;
+      var fundCharge = colMap.fundCharge !== -1 ? (parseFloat(row[colMap.fundCharge]) || 0) : 0;
+      var net = colMap.net !== -1 ? (parseFloat(row[colMap.net]) || 0) : 0;
+      var donorName = colMap.donorName !== -1 ? String(row[colMap.donorName] || '').trim() : '';
+      var pledgeId = colMap.pledgeId !== -1 ? String(row[colMap.pledgeId] || '').trim() : '';
+      var customerId = colMap.customerId !== -1 ? String(row[colMap.customerId] || '').trim() : '';
+      var result = colMap.result !== -1 ? String(row[colMap.result] || '').trim() : '';
+      var method = colMap.method !== -1 ? String(row[colMap.method] || '').trim() : '';
+      var cardType = colMap.cardType !== -1 ? String(row[colMap.cardType] || '').trim() : '';
+      var paymentNum = colMap.paymentNum !== -1 ? String(row[colMap.paymentNum] || '').trim() : '';
+      var funded = colMap.funded !== -1 ? String(row[colMap.funded] || '').trim() : '';
+      var fundedDate = (colMap.fundedDate !== -1 && row[colMap.fundedDate]) ? formatDateEdt_(row[colMap.fundedDate]) : '';
+      var depositBatchId = colMap.depositBatchId !== -1 ? String(row[colMap.depositBatchId] || '').trim() : '';
 
       var txDate = rawTimestamp ? (rawTimestamp instanceof Date ? rawTimestamp : new Date(rawTimestamp)) : null;
 
@@ -3453,6 +3655,7 @@ function getTransactionsMaster_(campaignId, filters) {
 
       sumCharged += amountCharged;
       sumFees += fees;
+      sumFundCharge += fundCharge;
       sumNet += net;
 
       filtered.push({
@@ -3462,6 +3665,7 @@ function getTransactionsMaster_(campaignId, filters) {
         reference: refNum,
         amount: amountCharged,
         fees: fees,
+        fundCharge: fundCharge,
         net: net,
         donorName: donorName,
         pledgeId: pledgeId,
@@ -3490,6 +3694,7 @@ function getTransactionsMaster_(campaignId, filters) {
         count: total,
         totalCharged: Math.round(sumCharged * 100) / 100,
         totalFees: Math.round(sumFees * 100) / 100,
+        totalFundCharge: Math.round(sumFundCharge * 100) / 100,
         totalNet: Math.round(sumNet * 100) / 100
       }
     };
@@ -3722,19 +3927,23 @@ function recordPledgePayment(data) {
     if (!txSheet) {
       txSheet = ss.insertSheet('Transactions');
       txSheet.appendRow([
-        'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Net', 'Donor Name', 'Pledge ID',
+        'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID',
         'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date'
       ]);
       txSheet.getRange('1:1').setFontWeight('bold');
+    } else {
+      ensureTransactionFundChargeCol_(txSheet);
     }
+
+    var colMap = getTransactionColMap_(txSheet);
 
     // Determine payment number
     var paymentNum = data.paymentNum || '';
     if (!paymentNum) {
       // Count existing transactions for this pledge
       var txLastRow = txSheet.getLastRow();
-      if (txLastRow >= 2) {
-        var txPledgeIds = txSheet.getRange(2, 7, txLastRow - 1, 1).getValues().flat();
+      if (txLastRow >= 2 && colMap.pledgeId !== -1) {
+        var txPledgeIds = txSheet.getRange(2, colMap.pledgeId + 1, txLastRow - 1, 1).getValues().flat();
         var existingCount = 0;
         for (var t = 0; t < txPledgeIds.length; t++) {
           if (String(txPledgeIds[t] || '').trim() === data.pledgeId) existingCount++;
@@ -3746,23 +3955,28 @@ function recordPledgePayment(data) {
     }
 
     var rpFee = parseFloat(data.fee) || 0;
-    var rpNet = paymentAmount - rpFee;
-    txSheet.appendRow([
-      paymentDate,        // A: Timestamp
-      refNum,             // B: Reference
-      paymentAmount,      // C: Amount Charged
-      rpFee,              // D: Fees
-      rpNet,              // E: Net
-      donor,              // F: Donor Name
-      data.pledgeId,      // G: Pledge ID
-      customerId,         // H: Customer ID
-      'Manual',           // I: Result
-      method,             // J: Method
-      '',                 // K: Card Type
-      paymentNum,         // L: Payment #
-      'Pending',          // M: Funded
-      ''                  // N: Funded Date
-    ]);
+    var rpFundCharge = calculateFundCharge(method, paymentAmount, ss);
+    var rpNet = paymentAmount - rpFee - rpFundCharge;
+
+    var rowArray = buildTransactionRowArray_(colMap, {
+      timestamp: paymentDate,
+      reference: refNum,
+      amount: paymentAmount,
+      fees: rpFee,
+      fundCharge: rpFundCharge,
+      net: rpNet,
+      donorName: donor,
+      pledgeId: data.pledgeId,
+      customerId: customerId,
+      result: 'Manual',
+      method: method,
+      cardType: '',
+      paymentNum: paymentNum,
+      funded: 'Pending',
+      fundedDate: ''
+    });
+
+    txSheet.appendRow(rowArray);
 
     // Update Pledge paid/balance
     var newPaid = currentPaid + paymentAmount;
@@ -3875,30 +4089,39 @@ function updateScheduledPayment(data) {
           if (!txSheet) {
             txSheet = ss.insertSheet('Transactions');
             txSheet.appendRow([
-              'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Net', 'Donor Name', 'Pledge ID',
+              'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID',
               'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date'
             ]);
             txSheet.getRange('1:1').setFontWeight('bold');
+          } else {
+            ensureTransactionFundChargeCol_(txSheet);
           }
 
+          var colMap = getTransactionColMap_(txSheet);
+
           var mpFee = calculateFee(data.method || 'Other', perPaymentAmt, ss);
-          var mpNet = perPaymentAmt - mpFee;
-          txSheet.appendRow([
-            new Date(),          // A: Timestamp
-            refNum,              // B: Reference
-            perPaymentAmt,       // C: Amount Charged
-            mpFee,               // D: Fees
-            mpNet,               // E: Net
-            donor,               // F: Donor Name
-            pledgeId,            // G: Pledge ID
-            customerId,          // H: Customer ID
-            'Manual',            // I: Result
-            data.method || 'Manual', // J: Method
-            '',                  // K: Card Type
-            spPayNum,            // L: Payment #
-            'Pending',           // M: Funded
-            ''                   // N: Funded Date
-          ]);
+          var mpFundCharge = calculateFundCharge(data.method || 'Other', perPaymentAmt, ss);
+          var mpNet = perPaymentAmt - mpFee - mpFundCharge;
+
+          var rowArray = buildTransactionRowArray_(colMap, {
+            timestamp: new Date(),
+            reference: refNum,
+            amount: perPaymentAmt,
+            fees: mpFee,
+            fundCharge: mpFundCharge,
+            net: mpNet,
+            donorName: donor,
+            pledgeId: pledgeId,
+            customerId: customerId,
+            result: 'Manual',
+            method: data.method || 'Manual',
+            cardType: '',
+            paymentNum: spPayNum,
+            funded: 'Pending',
+            fundedDate: ''
+          });
+
+          txSheet.appendRow(rowArray);
 
           // Update Scheduled Payment row
           spSheet.getRange(spRow, 12).setValue('Paid');      // L: Status
@@ -4023,15 +4246,16 @@ function markTransactionFunded(data) {
       return { status: 'error', message: 'Transaction not found.' };
     }
 
+    var colMap = getTransactionColMap_(txSheet, ['reference', 'funded', 'fundedDate']);
     var lastRow = txSheet.getLastRow();
-    var refs = txSheet.getRange(2, 2, lastRow - 1, 1).getValues(); // col B: Reference
+    var refs = txSheet.getRange(2, colMap.reference + 1, lastRow - 1, 1).getValues();
 
     for (var i = 0; i < refs.length; i++) {
       if (String(refs[i][0] || '').trim() === data.transactionRef) {
         var txRow = i + 2;
         var fundedDate = new Date();
-        txSheet.getRange(txRow, 13).setValue('Cleared');   // M: Funded
-        txSheet.getRange(txRow, 14).setValue(fundedDate);  // N: Funded Date
+        txSheet.getRange(txRow, colMap.funded + 1).setValue('Cleared');
+        txSheet.getRange(txRow, colMap.fundedDate + 1).setValue(fundedDate);
         return {
           status: 'success',
           transactionRef: data.transactionRef,
@@ -4074,8 +4298,10 @@ function bulkMarkFunded(data) {
       return { status: 'error', message: 'No transactions found.' };
     }
 
+    var colMap = getTransactionColMap_(txSheet, ['reference', 'funded', 'fundedDate']);
     var lastRow = txSheet.getLastRow();
-    var allData = txSheet.getRange(2, 1, lastRow - 1, 14).getValues(); // cols A-N
+    var lastCol = txSheet.getLastColumn();
+    var allData = txSheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
     var fundedDate = new Date();
     var refsToFind = {};
     for (var r = 0; r < data.transactionRefs.length; r++) {
@@ -4084,16 +4310,16 @@ function bulkMarkFunded(data) {
 
     var updatedCount = 0;
     for (var i = 0; i < allData.length; i++) {
-      var ref = String(allData[i][1] || '').trim(); // col B
+      var ref = String(allData[i][colMap.reference] || '').trim();
       if (refsToFind[ref]) {
-        allData[i][12] = 'Cleared';    // col M: Funded
-        allData[i][13] = fundedDate;   // col N: Funded Date
+        allData[i][colMap.funded] = 'Cleared';
+        allData[i][colMap.fundedDate] = fundedDate;
         updatedCount++;
       }
     }
 
     if (updatedCount > 0) {
-      txSheet.getRange(2, 1, allData.length, 14).setValues(allData);
+      txSheet.getRange(2, 1, allData.length, lastCol).setValues(allData);
     }
 
     return {
@@ -4225,16 +4451,12 @@ function ensureExpandedExpensesSheet_(ss) {
  */
 function ensureTransactionDepositCol_(txSheet) {
   if (!txSheet) return;
-  var lastCol = txSheet.getLastColumn();
-  if (lastCol < 15) {
-    txSheet.getRange(1, 15).setValue('Deposit Batch ID');
-    txSheet.getRange(1, 15).setFontWeight('bold');
-  } else {
-    var col15Header = String(txSheet.getRange(1, 15).getValue() || '').trim();
-    if (!col15Header) {
-      txSheet.getRange(1, 15).setValue('Deposit Batch ID');
-      txSheet.getRange(1, 15).setFontWeight('bold');
-    }
+  var colMap = getTransactionColMap_(txSheet, []);
+  if (colMap.depositBatchId === -1) {
+    var newCol = txSheet.getLastColumn() + 1;
+    txSheet.getRange(1, newCol).setValue('Deposit Batch ID');
+    txSheet.getRange(1, newCol).setFontWeight('bold');
+    txSheet.setColumnWidth(newCol, 150);
   }
 }
 
@@ -4374,8 +4596,9 @@ function createDepositBatchMaster_(campaignId, data, callerEmail) {
     var randSuffix = Math.floor(1000 + Math.random() * 9000);
     var batchId = 'DEP-' + Utilities.formatDate(new Date(), 'America/New_York', 'yyyyMMdd') + '-' + randSuffix;
 
+    var colMap = getTransactionColMap_(txSheet, ['reference', 'amount', 'fees', 'net', 'funded', 'fundedDate', 'depositBatchId']);
     var lastRow = txSheet.getLastRow();
-    var lastCol = Math.max(15, txSheet.getLastColumn());
+    var lastCol = txSheet.getLastColumn();
     var txData = txSheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
 
     var refsToFind = {};
@@ -4386,18 +4609,21 @@ function createDepositBatchMaster_(campaignId, data, callerEmail) {
     var matchedCount = 0;
     var totalGross = 0;
     var totalFees = 0;
+    var totalNet = 0;
     var fundedDate = new Date();
 
     for (var i = 0; i < txData.length; i++) {
-      var ref = String(txData[i][1] || '').trim(); // col B: Reference
+      var ref = String(txData[i][colMap.reference] || '').trim();
       if (refsToFind[ref]) {
-        var charged = parseFloat(txData[i][2]) || 0; // col C: Amount Charged
-        var fee = parseFloat(txData[i][3]) || 0;     // col D: Fees
-        txData[i][12] = 'Cleared';                   // col M: Funded
-        txData[i][13] = fundedDate;                  // col N: Funded Date
-        txData[i][14] = batchId;                     // col O: Deposit Batch ID
+        var charged = parseFloat(txData[i][colMap.amount]) || 0;
+        var fee = parseFloat(txData[i][colMap.fees]) || 0;
+        var storedNet = parseFloat(txData[i][colMap.net]) || 0;
+        txData[i][colMap.funded] = 'Cleared';
+        txData[i][colMap.fundedDate] = fundedDate;
+        txData[i][colMap.depositBatchId] = batchId;
         totalGross += charged;
         totalFees += fee;
+        totalNet += storedNet; // Literal sum of stored Net across legacy and new rows
         matchedCount++;
       }
     }
@@ -4409,7 +4635,6 @@ function createDepositBatchMaster_(campaignId, data, callerEmail) {
     // Write back updated transactions
     txSheet.getRange(2, 1, txData.length, lastCol).setValues(txData);
 
-    var totalNet = totalGross - totalFees;
     var depDateVal = data.depositDate ? new Date(data.depositDate) : fundedDate;
 
     // Append to Deposits tab
@@ -4472,16 +4697,17 @@ function reverseDepositBatchMaster_(campaignId, data) {
 
     var reversedCount = 0;
     if (txSheet && txSheet.getLastRow() >= 2) {
+      var colMap = getTransactionColMap_(txSheet, ['funded', 'fundedDate', 'depositBatchId']);
       var lastRow = txSheet.getLastRow();
-      var lastCol = Math.max(15, txSheet.getLastColumn());
+      var lastCol = txSheet.getLastColumn();
       var txData = txSheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
 
       for (var i = 0; i < txData.length; i++) {
-        var txBatchId = String(txData[i][14] || '').trim(); // col O
+        var txBatchId = String(txData[i][colMap.depositBatchId] || '').trim();
         if (txBatchId === batchIdToReverse) {
-          txData[i][12] = ''; // col M: Funded
-          txData[i][13] = ''; // col N: Funded Date
-          txData[i][14] = ''; // col O: Deposit Batch ID
+          txData[i][colMap.funded] = '';
+          txData[i][colMap.fundedDate] = '';
+          txData[i][colMap.depositBatchId] = '';
           reversedCount++;
         }
       }
@@ -4918,16 +5144,17 @@ function getReconciliationDataMaster_(campaignId) {
     var totalTxnCount = 0, totalTxnNet = 0;
 
     if (txSheet && txSheet.getLastRow() >= 2) {
+      var colMap = getTransactionColMap_(txSheet, ['net']);
       var lastRow = txSheet.getLastRow();
-      var txData = txSheet.getRange(2, 1, lastRow - 1, Math.max(14, txSheet.getLastColumn())).getValues();
+      var txData = txSheet.getRange(2, 1, lastRow - 1, txSheet.getLastColumn()).getValues();
       for (var t = 0; t < txData.length; t++) {
         var tr = txData[t];
-        var result = String(tr[8] || '').trim().toLowerCase();
+        var result = colMap.result !== -1 ? String(tr[colMap.result] || '').trim().toLowerCase() : '';
         // Skip failed transactions
         if (result === 'failed' || result === 'declined' || result === 'error') continue;
 
-        var net = parseFloat(tr[4]) || 0;
-        var isCleared = String(tr[12] || '').trim().toLowerCase() === 'cleared';
+        var net = colMap.net !== -1 ? (parseFloat(tr[colMap.net]) || 0) : 0;
+        var isCleared = colMap.funded !== -1 ? (String(tr[colMap.funded] || '').trim().toLowerCase() === 'cleared') : false;
 
         totalTxnCount++;
         totalTxnNet += net;
@@ -5700,21 +5927,35 @@ function logLinkClickMaster_(data) {
     var sheet = ss.getSheetByName('LinkClicks');
     if (!sheet) {
       sheet = ss.insertSheet('LinkClicks');
-      sheet.getRange('A1:G1').setValues([[
-        'Timestamp', 'First Name', 'Last Name',
+      sheet.getRange('A1:H1').setValues([[
+        'Click ID', 'Timestamp', 'First Name', 'Last Name',
         'Email', 'Link Clicked', 'Campaign', 'Amount'
       ]]);
-      formatHeaderRow_(sheet, 'A1:G1');
+      formatHeaderRow_(sheet, 'A1:H1');
+      sheet.setColumnWidth(1, 180);
     } else {
-      // Ensure header row includes Amount column
-      if (sheet.getLastColumn() < 7) {
-        sheet.getRange(1, 7).setValue('Amount');
-        formatHeaderRow_(sheet, 'A1:G1');
+      var firstH = String(sheet.getRange(1, 1).getValue() || '').trim().toLowerCase();
+      if (firstH !== 'click id' && firstH !== 'clickid' && firstH !== 'pk') {
+        sheet.insertColumnBefore(1);
+        sheet.getRange(1, 1).setValue('Click ID');
+        sheet.getRange(1, 1).setFontWeight('bold');
+        sheet.setColumnWidth(1, 180);
+      }
+      if (sheet.getLastColumn() < 8) {
+        sheet.getRange(1, 8).setValue('Amount');
+        sheet.getRange(1, 8).setFontWeight('bold');
       }
     }
 
     var amt = parseFloat(data.amount) || '';
+    var clickId = String(data.clickId || data.clickPk || '').trim();
+    if (!clickId) {
+      var campPrefix = String(campaignId || 'CAMP').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      clickId = 'LC-' + (campPrefix || 'CAMP') + '-' + Utilities.formatDate(new Date(), 'America/New_York', 'yyyyMMddHHmmss') + '-' + Math.floor(1000 + Math.random() * 9000);
+    }
+
     sheet.appendRow([
+      clickId,
       new Date(),
       String(data.firstName || '').trim(),
       String(data.lastName || '').trim(),
@@ -5725,10 +5966,10 @@ function logLinkClickMaster_(data) {
     ]);
 
     if (amt && sheet.getLastRow() >= 2) {
-      sheet.getRange(sheet.getLastRow(), 7).setNumberFormat('$#,##0.00');
+      sheet.getRange(sheet.getLastRow(), 8).setNumberFormat('$#,##0.00');
     }
 
-    return { status: 'success' };
+    return { status: 'success', clickId: clickId };
   } catch (err) {
     Logger.log('logLinkClickMaster_ error: ' + err.toString());
     return { status: 'error', message: err.toString() };
@@ -6197,10 +6438,11 @@ function resendReceipt(data, user) {
     var transactionRef = '';
     var txSheet = campaignSS.getSheetByName('Transactions');
     if (txSheet && txSheet.getLastRow() >= 2) {
-      var txData = txSheet.getRange(2, 1, txSheet.getLastRow() - 1, 14).getValues();
+      var colMap = getTransactionColMap_(txSheet, ['reference', 'pledgeId']);
+      var txData = txSheet.getRange(2, 1, txSheet.getLastRow() - 1, txSheet.getLastColumn()).getValues();
       for (var t = 0; t < txData.length; t++) {
-        if (String(txData[t][6] || '').trim() === data.pledgeId) {
-          transactionRef = String(txData[t][1] || '').trim();
+        if (String(txData[t][colMap.pledgeId] || '').trim() === data.pledgeId) {
+          transactionRef = String(txData[t][colMap.reference] || '').trim();
           break;
         }
       }
@@ -7612,39 +7854,48 @@ function generatePledgeIdMaster(sheet) {
  * @param {Object} paymentResult - Gateway result or manual result
  * @param {string} paymentNum - Payment number
  */
-function logTransactionMaster(ss, pledgeId, customerId, donorName, amount, paymentResult, paymentNum, fee) {
+function logTransactionMaster(ss, pledgeId, customerId, donorName, amount, paymentResult, paymentNum, fee, fundCharge) {
   try {
     var sheet = ss.getSheetByName('Transactions');
     if (!sheet) {
       sheet = ss.insertSheet('Transactions');
       sheet.appendRow([
-        'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Net', 'Donor Name', 'Pledge ID',
+        'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID',
         'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date'
       ]);
       sheet.getRange('1:1').setFontWeight('bold');
+    } else {
+      ensureTransactionFundChargeCol_(sheet);
     }
 
-    var isGatewayTx = paymentResult.xResult === 'A';
+    var colMap = getTransactionColMap_(sheet);
+
+    var isGatewayTx = paymentResult.xResult === 'A' || paymentResult.xResult === 'Approved';
     var funded = isGatewayTx ? 'Pending' : '';
     var txFee = parseFloat(fee) || 0;
-    var txNet = amount - txFee;
+    var txFundCharge = (fundCharge !== undefined && fundCharge !== null) ? parseFloat(fundCharge) : calculateFundCharge(paymentResult.xCardType || paymentResult.method || 'Credit Card', amount, ss);
+    if (isNaN(txFundCharge)) txFundCharge = 0;
+    var txNet = amount - txFee - txFundCharge;
 
-    sheet.appendRow([
-      new Date(),                                    // A: Timestamp
-      paymentResult.xRefNum || '',                   // B: Reference
-      amount,                                        // C: Amount Charged
-      txFee,                                         // D: Fees
-      txNet,                                         // E: Net
-      donorName || '',                               // F: Donor Name
-      pledgeId || '',                                // G: Pledge ID
-      customerId || '',                              // H: Customer ID
-      paymentResult.xResult || 'Manual',             // I: Result
-      paymentResult.xMaskedCardNumber || '',          // J: Method
-      paymentResult.xCardType || '',                  // K: Card Type
-      paymentNum || '',                              // L: Payment #
-      funded,                                        // M: Funded
-      ''                                             // N: Funded Date
-    ]);
+    var rowArray = buildTransactionRowArray_(colMap, {
+      timestamp: new Date(),
+      reference: paymentResult.xRefNum || '',
+      amount: amount,
+      fees: txFee,
+      fundCharge: txFundCharge,
+      net: txNet,
+      donorName: donorName || '',
+      pledgeId: pledgeId || '',
+      customerId: customerId || '',
+      result: paymentResult.xResult || 'Manual',
+      method: paymentResult.xMaskedCardNumber || '',
+      cardType: paymentResult.xCardType || '',
+      paymentNum: paymentNum || '',
+      funded: funded,
+      fundedDate: ''
+    });
+
+    sheet.appendRow(rowArray);
   } catch (err) {
     Logger.log('logTransactionMaster failed: ' + err.toString());
   }
@@ -7803,32 +8054,49 @@ function loadFeeSchedule_(ss) {
     if (!sheet) {
       // Auto-create with comprehensive defaults
       sheet = ss.insertSheet('Fee_Config');
-      sheet.appendRow(['Method', 'Rate', 'Flat Fee']);
+      sheet.appendRow(['Method', 'Rate', 'Flat Fee', 'Fund_Charge']);
       var defaults = getMasterFeeDefaults_();
       for (var d = 0; d < defaults.length; d++) {
         sheet.appendRow(defaults[d]);
       }
-      sheet.getRange('A1:C1').setFontWeight('bold');
+      sheet.getRange('A1:D1').setFontWeight('bold');
       sheet.setColumnWidth(1, 200);
       sheet.setColumnWidth(2, 80);
       sheet.setColumnWidth(3, 80);
-      sheet.getRange('B2:B100').setNumberFormat('0.000');
+      sheet.setColumnWidth(4, 100);
+      sheet.getRange('B2:B100').setNumberFormat('0.00%');
       sheet.getRange('C2:C100').setNumberFormat('$#,##0.00');
+      sheet.getRange('D2:D100').setNumberFormat('0.00%');
       syncFeeConfigFromPledges_(ss, sheet);
       Logger.log('Created Fee_Config sheet for ' + ssId);
+    } else {
+      // Ensure column 4 Fund_Charge exists
+      if (sheet.getLastColumn() < 4) {
+        sheet.getRange(1, 4).setValue('Fund_Charge');
+        sheet.getRange(1, 4).setFontWeight('bold');
+        sheet.setColumnWidth(4, 100);
+        if (sheet.getLastRow() >= 2) {
+          sheet.getRange(2, 4, sheet.getLastRow() - 1, 1).setValue(0.01);
+          sheet.getRange(2, 4, sheet.getLastRow() - 1, 1).setNumberFormat('0.00%');
+        }
+      }
     }
     if (sheet.getLastRow() < 2) {
-      _feeScheduleCaches[ssId] = { 'Credit Card': { rate: 0.029, flat: 0.30 } };
+      _feeScheduleCaches[ssId] = { 'Credit Card': { rate: 0.029, flat: 0.30, fundCharge: 0.01 } };
       return _feeScheduleCaches[ssId];
     }
-    var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 3).getValues();
+    var numCols = Math.min(sheet.getLastColumn(), 4);
+    var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, numCols).getValues();
     var schedule = {};
     for (var i = 0; i < data.length; i++) {
       var method = String(data[i][0] || '').trim();
       if (method) {
+        var rawFc = numCols >= 4 ? data[i][3] : undefined;
+        var fc = (rawFc !== undefined && rawFc !== null && String(rawFc).trim() !== '' && !isNaN(rawFc)) ? parseFloat(rawFc) : 0.01;
         schedule[method] = {
           rate: parseFloat(data[i][1]) || 0,
-          flat: parseFloat(data[i][2]) || 0
+          flat: parseFloat(data[i][2]) || 0,
+          fundCharge: fc
         };
       }
     }
@@ -7836,9 +8104,42 @@ function loadFeeSchedule_(ss) {
     return schedule;
   } catch (e) {
     Logger.log('loadFeeSchedule_ error: ' + e.toString());
-    _feeScheduleCaches[ssId] = { 'Credit Card': { rate: 0.029, flat: 0.30 } };
+    _feeScheduleCaches[ssId] = { 'Credit Card': { rate: 0.029, flat: 0.30, fundCharge: 0.01 } };
     return _feeScheduleCaches[ssId];
   }
+}
+
+/**
+ * Calculates the NC Fund Charge for a given transaction method and amount.
+ *
+ * @param {string} method - Payment method or card brand
+ * @param {number} amount - Gross amount charged
+ * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} [ss] - Campaign spreadsheet
+ * @returns {number} Fund charge rounded to 2 decimal places
+ */
+function calculateFundCharge(method, amount, ss) {
+  var amt = parseFloat(amount) || 0;
+  if (amt <= 0) return 0;
+  var schedule;
+  if (ss) {
+    schedule = loadFeeSchedule_(ss);
+  } else {
+    schedule = { 'Credit Card': { rate: 0.029, flat: 0.30, fundCharge: 0.01 } };
+  }
+  var rate = 0.01;
+  if (schedule && schedule[method] && schedule[method].fundCharge !== undefined) {
+    rate = schedule[method].fundCharge;
+  } else {
+    var ml = (method || '').toLowerCase();
+    if (ml.startsWith('daf') && schedule && schedule['DAF'] && schedule['DAF'].fundCharge !== undefined) {
+      rate = schedule['DAF'].fundCharge;
+    } else if ((/^d/.test(method) || ml.includes('visa') || ml.includes('mastercard') || ml.includes('card') || ml.includes('amex') || ml.includes('american express') || ml.includes('discover') || ml.includes('diners') || ml.includes('jcb')) && schedule && schedule['Credit Card'] && schedule['Credit Card'].fundCharge !== undefined) {
+      rate = schedule['Credit Card'].fundCharge;
+    } else if (ml.includes('matbia') && schedule && schedule['Matbia'] && schedule['Matbia'].fundCharge !== undefined) {
+      rate = schedule['Matbia'].fundCharge;
+    }
+  }
+  return Math.round(amt * rate * 100) / 100;
 }
 
 function calculateFee(method, amount, ss) {
@@ -7916,7 +8217,7 @@ function syncFeeConfigFromPledges_(ss, feeSheet) {
     }
     var added = Object.keys(newMethods);
     for (var k = 0; k < added.length; k++) {
-      feeSheet.appendRow([added[k], 0, 0]);
+      feeSheet.appendRow([added[k], 0, 0, 0.01]);
     }
     if (added.length > 0) {
       Logger.log('syncFeeConfig: added ' + added.length + ' methods from Pledges: ' + added.join(', '));
@@ -8231,8 +8532,9 @@ function processBookkeeperPayment(data) {
     }
 
     var fee = parseFloat(data.fee) || 0;
-    var net = amount - fee;
     var method = data.method || 'Manual';
+    var fundCharge = calculateFundCharge(method, amount, ss);
+    var net = amount - fee - fundCharge;
 
     // Generate transaction reference
     var refNum = 'BK-' + Utilities.formatDate(new Date(), 'America/New_York', 'yyyyMMddHHmmss') + '-' + Math.floor(Math.random() * 1000);
@@ -8242,28 +8544,35 @@ function processBookkeeperPayment(data) {
     if (!txSheet) {
       txSheet = ss.insertSheet('Transactions');
       txSheet.appendRow([
-        'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Net', 'Donor Name', 'Pledge ID',
+        'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID',
         'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date'
       ]);
       txSheet.getRange('1:1').setFontWeight('bold');
+    } else {
+      ensureTransactionFundChargeCol_(txSheet);
     }
 
-    txSheet.appendRow([
-      new Date(),              // A: Timestamp
-      refNum,                  // B: Reference
-      amount,                  // C: Amount Charged
-      fee,                     // D: Fees
-      net,                     // E: Net
-      donor,                   // F: Donor Name
-      data.pledgeId,           // G: Pledge ID
-      customerId,              // H: Customer ID
-      'Bookkeeper',            // I: Result
-      method,                  // J: Method
-      '',                      // K: Card Type
-      String(data.paymentNum || '1'), // L: Payment #
-      'Pending',               // M: Funded
-      ''                       // N: Funded Date
-    ]);
+    var colMap = getTransactionColMap_(txSheet);
+
+    var rowArray = buildTransactionRowArray_(colMap, {
+      timestamp: new Date(),
+      reference: refNum,
+      amount: amount,
+      fees: fee,
+      fundCharge: fundCharge,
+      net: net,
+      donorName: donor,
+      pledgeId: data.pledgeId,
+      customerId: customerId,
+      result: 'Bookkeeper',
+      method: method,
+      cardType: '',
+      paymentNum: String(data.paymentNum || '1'),
+      funded: 'Pending',
+      fundedDate: ''
+    });
+
+    txSheet.appendRow(rowArray);
 
     // Update Scheduled Payment row if found
     if (spSheet && spRow > 0) {
@@ -8676,7 +8985,7 @@ function setupMasterSheets_(mode, campaignSheetId) {
       {
         name: 'Transactions',
         headers: [
-          'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Net', 'Donor Name', 'Pledge ID',
+          'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID',
           'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date'
         ]
       },
@@ -8705,13 +9014,13 @@ function setupMasterSheets_(mode, campaignSheetId) {
       {
         name: 'LinkClicks',
         headers: [
-          'Timestamp', 'First Name', 'Last Name', 'Email', 'Link Clicked', 'Campaign', 'Amount'
+          'Click ID', 'Timestamp', 'First Name', 'Last Name', 'Email', 'Link Clicked', 'Campaign', 'Amount'
         ]
       },
       {
         name: 'Fee_Config',
         headers: [
-          'Method', 'Rate', 'Flat Fee'
+          'Method', 'Rate', 'Flat Fee', 'Fund_Charge'
         ]
       },
       {

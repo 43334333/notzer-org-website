@@ -377,15 +377,15 @@ function createGeneralCampaignSheet_() {
   formatHeaderRow_(pledgesSheet, 'A1:P1');
   pledgesSheet.getRange('F2:I1000').setNumberFormat('$#,##0.00');
 
-  // ── Tab 2: Transactions (cols A-N) ──
+  // ── Tab 2: Transactions (cols A-O) ──
   var txnSheet = ss.insertSheet('Transactions');
-  txnSheet.getRange('A1:N1').setValues([[
-    'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Net',
+  txnSheet.getRange('A1:O1').setValues([[
+    'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net',
     'Donor Name', 'Pledge ID', 'Customer ID', 'Result', 'Method',
     'Card Type', 'Payment #', 'Funded', 'Funded Date'
   ]]);
-  formatHeaderRow_(txnSheet, 'A1:N1');
-  txnSheet.getRange('C2:E1000').setNumberFormat('$#,##0.00');
+  formatHeaderRow_(txnSheet, 'A1:O1');
+  txnSheet.getRange('C2:F1000').setNumberFormat('$#,##0.00');
 
   // ── Tab 3: Customers (cols A-K) ──
   var custSheet = ss.insertSheet('Customers');
@@ -415,38 +415,44 @@ function createGeneralCampaignSheet_() {
   formatHeaderRow_(teamsSheet, 'A1:G1');
   teamsSheet.getRange('F2:F100').setNumberFormat('$#,##0.00');
 
-  // ── Tab 6: LinkClicks (cols A-F) ──
+  // ── Tab 6: LinkClicks (cols A-H) ──
   var clicksSheet = ss.insertSheet('LinkClicks');
-  clicksSheet.getRange('A1:F1').setValues([[
-    'Timestamp', 'First Name', 'Last Name',
-    'Email', 'Link Clicked', 'Campaign'
+  clicksSheet.getRange('A1:H1').setValues([[
+    'Click ID', 'Timestamp', 'First Name', 'Last Name',
+    'Email', 'Link Clicked', 'Campaign', 'Amount'
   ]]);
-  formatHeaderRow_(clicksSheet, 'A1:F1');
+  formatHeaderRow_(clicksSheet, 'A1:H1');
+  clicksSheet.setColumnWidth(1, 180);
 
-  // ── Tab 7: Fee_Config (cols A-C) ──
+  // ── Tab 7: Fee_Config (cols A-D) ──
   var feeSheet = ss.insertSheet('Fee_Config');
-  feeSheet.getRange('A1:C1').setValues([['Method', 'Rate', 'Flat Fee']]);
+  feeSheet.getRange('A1:D1').setValues([['Method', 'Rate', 'Flat Fee', 'Fund_Charge']]);
   var feeDefaults = [
-    ['Credit Card', 0.03, 0.30],
-    ['Cardknox', 0.03, 0.30],
-    ['USAePay', 0.03, 0.30],
-    ['Matbia', 0.025, 0.00],
-    ['DAF - OJCF', 0.00, 0.00],
-    ['DAF - Pledger', 0.00, 0.00],
-    ['DAF - Matbia', 0.00, 0.00],
-    ['DAF - The Donors Fund', 0.00, 0.00],
-    ['Check', 0.00, 0.00],
-    ['Zelle', 0.00, 0.00],
-    ['PayPal', 0.029, 0.30],
-    ['Wire Transfer', 0.00, 0.00],
-    ['Cash', 0.00, 0.00],
-    ['Bank Transfer', 0.00, 0.00],
-    ['Other', 0.00, 0.00]
+    ['Credit Card', 0.03, 0.30, 0.01],
+    ['Cardknox', 0.03, 0.30, 0.01],
+    ['USAePay', 0.03, 0.30, 0.01],
+    ['Matbia', 0.025, 0.00, 0.01],
+    ['DAF - OJCF', 0.00, 0.00, 0.01],
+    ['DAF - Pledger', 0.00, 0.00, 0.01],
+    ['DAF - Matbia', 0.00, 0.00, 0.01],
+    ['DAF - The Donors Fund', 0.00, 0.00, 0.01],
+    ['Check', 0.00, 0.00, 0.01],
+    ['Zelle', 0.00, 0.00, 0.01],
+    ['PayPal', 0.029, 0.30, 0.01],
+    ['Wire Transfer', 0.00, 0.00, 0.01],
+    ['Cash', 0.00, 0.00, 0.01],
+    ['Bank Transfer', 0.00, 0.00, 0.01],
+    ['Other', 0.00, 0.00, 0.01]
   ];
-  feeSheet.getRange(2, 1, feeDefaults.length, 3).setValues(feeDefaults);
-  formatHeaderRow_(feeSheet, 'A1:C1');
+  feeSheet.getRange(2, 1, feeDefaults.length, 4).setValues(feeDefaults);
+  formatHeaderRow_(feeSheet, 'A1:D1');
+  feeSheet.setColumnWidth(1, 200);
+  feeSheet.setColumnWidth(2, 80);
+  feeSheet.setColumnWidth(3, 80);
+  feeSheet.setColumnWidth(4, 100);
   feeSheet.getRange('B2:B100').setNumberFormat('0.00%');
   feeSheet.getRange('C2:C100').setNumberFormat('$#,##0.00');
+  feeSheet.getRange('D2:D100').setNumberFormat('0.00%');
 
   // ── Tab 8: Expenses (cols A-G) ──
   var expSheet = ss.insertSheet('Expenses');
