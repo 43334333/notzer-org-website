@@ -8120,20 +8120,13 @@ function loadFeeSchedule_(ss) {
 function resolveFeeScheduleEntry_(method, schedule) {
   if (!schedule || typeof schedule !== 'object') return null;
 
-  // 1. Direct exact match
-  if (schedule[method]) return schedule[method];
-
   var ml = (method || '').toLowerCase().trim();
   if (!ml) return schedule['Credit Card'] || null;
 
-  // 2. Case-insensitive direct match
-  for (var key in schedule) {
-    if (key.toLowerCase().trim() === ml) {
-      return schedule[key];
-    }
-  }
+  // 1. DAF Brand mappings (from Cardknox xCardType or user input)
+  // Evaluated before direct exact match so configured DAF rates (e.g. 'DAF - Matbia')
+  // take precedence over generic rows (e.g. 'Matbia') when both exist in the schedule.
 
-  // 3. DAF Brand mappings (from Cardknox xCardType or user input)
   // The Donors Fund
   if (ml.includes('donors') || ml.includes('tdf')) {
     if (schedule['DAF - The Donors Fund']) return schedule['DAF - The Donors Fund'];
@@ -8159,7 +8152,7 @@ function resolveFeeScheduleEntry_(method, schedule) {
     if (schedule['DAF']) return schedule['DAF'];
   }
 
-  // Matbia (DAF or payment method)
+  // Matbia (DAF or payment method) - 'DAF - Matbia' takes precedence over 'Matbia'
   if (ml.includes('matbia')) {
     if (schedule['DAF - Matbia']) return schedule['DAF - Matbia'];
     if (schedule['Matbia']) return schedule['Matbia'];
@@ -8171,6 +8164,16 @@ function resolveFeeScheduleEntry_(method, schedule) {
     if (schedule['DAF']) return schedule['DAF'];
     for (var k in schedule) {
       if (k.toLowerCase().startsWith('daf')) return schedule[k];
+    }
+  }
+
+  // 2. Direct exact match
+  if (schedule[method]) return schedule[method];
+
+  // 3. Case-insensitive direct match
+  for (var key in schedule) {
+    if (key.toLowerCase().trim() === ml) {
+      return schedule[key];
     }
   }
 

@@ -643,10 +643,11 @@ it('Scenario 10: calculateFundCharge preserves explicit 0.00% rate and maps DAF 
   const feeSheet = ss.insertSheet('Fee_Config');
   feeSheet.appendRow(['Method', 'Rate', 'Flat Fee', 'Fund_Charge']);
   feeSheet.appendRow(['Credit Card', 0.03, 0.30, 0.01]);             // 1.00%
+  feeSheet.appendRow(['Matbia', 0.025, 0.00, 0.01]);                 // Generic Matbia: 2.50% fee / 1.00% fund charge
   feeSheet.appendRow(['DAF - The Donors Fund', 0.00, 0.00, 0.00]);    // Explicit 0.00%
   feeSheet.appendRow(['DAF - OJCF', 0.00, 0.00, 0.005]);             // 0.50%
   feeSheet.appendRow(['DAF - Pledger', 0.00, 0.00, 0.02]);           // 2.00%
-  feeSheet.appendRow(['DAF - Matbia', 0.025, 0.00, 0.015]);          // 1.50%
+  feeSheet.appendRow(['DAF - Matbia', 0.00, 0.00, 0.015]);           // DAF - Matbia: 0.00% fee / 1.50% fund charge
 
   // 1. Direct method name with explicit 0.00%
   const chargeDirect = sandbox.calculateFundCharge('DAF - The Donors Fund', 1000.00, ss);
@@ -668,7 +669,7 @@ it('Scenario 10: calculateFundCharge preserves explicit 0.00% rate and maps DAF 
   const chargePledger = sandbox.calculateFundCharge('Pledger', 1000.00, ss);
   assert.strictEqual(chargePledger, 20.00);
 
-  // 6. Cardknox xCardType: 'Matbia' -> maps to 'DAF - Matbia' (1.50%)
+  // 6. Cardknox xCardType: 'Matbia' -> maps to 'DAF - Matbia' (1.50%) when both 'Matbia' and 'DAF - Matbia' exist
   const chargeMatbia = sandbox.calculateFundCharge('Matbia', 1000.00, ss);
   assert.strictEqual(chargeMatbia, 15.00);
 
@@ -679,6 +680,18 @@ it('Scenario 10: calculateFundCharge preserves explicit 0.00% rate and maps DAF 
   // 8. calculateFee with DAF card type 'DonorsFund' -> resolves to 'DAF - The Donors Fund' ($0 fee)
   const feeDonors = sandbox.calculateFee('DonorsFund', 1000.00, ss);
   assert.strictEqual(feeDonors, 0.00);
+
+  // 8b. calculateFee with 'Matbia' -> resolves to 'DAF - Matbia' ($0 fee) rather than 'Matbia' (2.5% = $25 fee)
+  const feeMatbia = sandbox.calculateFee('Matbia', 1000.00, ss);
+  assert.strictEqual(feeMatbia, 0.00);
+
+  // 8c. Fallback test: when 'DAF - Matbia' is absent, 'Matbia' falls back to the 'Matbia' row
+  const ssFallback = new MockSpreadsheet('camp-matbia-fallback');
+  const feeFallback = ssFallback.insertSheet('Fee_Config');
+  feeFallback.appendRow(['Method', 'Rate', 'Flat Fee', 'Fund_Charge']);
+  feeFallback.appendRow(['Matbia', 0.025, 0.00, 0.01]);
+  assert.strictEqual(sandbox.calculateFee('Matbia', 1000.00, ssFallback), 25.00);
+  assert.strictEqual(sandbox.calculateFundCharge('Matbia', 1000.00, ssFallback), 10.00);
 
   // 9. Full logTransactionMaster path with xCardType='DonorsFund' and configured 0% rate
   const txSheet = ss.insertSheet('Transactions');
