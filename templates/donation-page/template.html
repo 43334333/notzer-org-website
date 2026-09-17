@@ -550,6 +550,44 @@
             display: none;
             font-family: inherit;
         }
+        .schedule-type-group {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-light, #333);
+            border-radius: 6px;
+            padding: 3px;
+            gap: 4px;
+            margin-top: 6px;
+        }
+        .schedule-btn {
+            flex: 1;
+            padding: 8px 10px;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            color: #aaa;
+            font-size: 0.88rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .schedule-btn.active {
+            background: var(--accent, #4dabf7);
+            color: #000;
+            font-weight: 600;
+        }
+        .schedule-btn:hover:not(.active) {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .schedule-panel {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-light, #333);
+            border-radius: 6px;
+        }
 
         /* ============================================================
            DONATE BUTTON
@@ -1084,7 +1122,7 @@
                                  ════════════════════════════════════════ -->
                             <div id="cardknox-fields">
                                 <div class="ifield-container">
-                                    <label>Card Number</label>
+                                    <label>Card Number <span class="card-hint" style="font-size: 0.78rem; color: #888; font-weight: normal; margin-left: 6px;">(Credit, Debit, Donors Fund, OJC, Pledger, Matbia)</span></label>
                                     <iframe id="card-number-iframe" data-ifields-id="card-number" data-ifields-placeholder="Card Number" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
                                     <input data-ifields-id="card-number-token" name="xCardNum" type="hidden">
                                 </div>
@@ -1098,8 +1136,8 @@
                                         <input type="text" id="card-exp" name="xExp" placeholder="MMYY" maxlength="4" required>
                                     </div>
                                     <div class="ifield-container ifield-cvv" style="flex: 1;">
-                                        <label>CVV</label>
-                                        <iframe id="cvv-iframe" data-ifields-id="cvv" data-ifields-placeholder="CVV" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
+                                        <label>CVV / PIN</label>
+                                        <iframe id="cvv-iframe" data-ifields-id="cvv" data-ifields-placeholder="CVV / PIN" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
                                         <input data-ifields-id="cvv-token" name="xCVV" type="hidden">
                                     </div>
                                 </div>
@@ -1135,44 +1173,79 @@
                                 <span class="gw-badge" id="gateway-badge"></span>
                             </div>
 
-                            <!-- Recurring section -->
+                            <!-- Schedule section (Separate choices for One-Time, Recurring, Installments) -->
                             <div class="recurring-section" id="recurring-section" style="display: block;">
-                                <label class="toggle-label">
-                                    <input type="checkbox" id="recurring-check">
-                                    <span>Make this a recurring donation</span>
-                                </label>
-                                <div id="recurring-options" style="display: none;">
-                                    <select class="recurring-select" id="recurring-frequency" style="display: block;">
-                                        <option value="">Select frequency...</option>
-                                        <option value="weekly">Weekly</option>
-                                        <option value="biweekly">Every 2 Weeks</option>
-                                        <option value="monthly">Monthly</option>
-                                        <option value="quarterly">Quarterly</option>
-                                        <option value="annually">Annually</option>
-                                    </select>
+                                <label class="col-heading" style="margin: 0; font-size: 0.95rem; display: block;">Donation Schedule</label>
+                                <div class="schedule-type-group">
+                                    <button type="button" class="schedule-btn active" id="btn-schedule-onetime" onclick="setScheduleType('onetime')">One-Time</button>
+                                    <button type="button" class="schedule-btn" id="btn-schedule-recurring" onclick="setScheduleType('recurring')">Recurring</button>
+                                    <button type="button" class="schedule-btn" id="btn-schedule-installment" onclick="setScheduleType('installment')">Installments</button>
+                                </div>
+
+                                <!-- Hidden native checkboxes for form logic & backward compatibility -->
+                                <input type="checkbox" id="recurring-check" style="display: none;">
+                                <input type="checkbox" id="installment-check" style="display: none;">
+
+                                <!-- Recurring Options Panel -->
+                                <div id="recurring-panel" class="schedule-panel" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="recurring-frequency">Frequency <span style="color: var(--accent, #4dabf7);">*</span></label>
+                                        <select class="recurring-select" id="recurring-frequency" style="display: block;">
+                                            <option value="">Select frequency...</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="biweekly">Every 2 Weeks</option>
+                                            <option value="monthly" selected>Monthly</option>
+                                            <option value="quarterly">Quarterly</option>
+                                            <option value="annually">Annually</option>
+                                        </select>
+                                    </div>
                                     <div class="form-group" style="margin-top: 10px;">
                                         <label for="recurring-count">Number of payments <span style="color: #888; font-weight: normal;">(blank = ongoing)</span></label>
-                                        <input type="number" id="recurring-count" min="2" max="999" placeholder="e.g. 12">
+                                        <input type="number" id="recurring-count" min="2" max="999" placeholder="Leave blank for ongoing">
                                     </div>
-                                    <label class="toggle-label">
-                                        <input type="checkbox" id="installment-check">
-                                        <span>Split total into installments</span>
-                                    </label>
-                                    <p id="installment-summary" style="display: none; font-size: 0.85rem; color: #4dabf7; margin: 4px 0 0; line-height: 1.4;"></p>
                                     <div class="form-group" style="margin-top: 10px;">
                                         <label for="recurring-start-date">Start Date <span style="color: #888; font-weight: normal;">(blank = start now)</span></label>
                                         <input type="date" id="recurring-start-date">
                                     </div>
                                     <div class="form-group" style="margin-top: 10px;">
                                         <label for="initial-amount">Initial Payment Amount <span style="color: #888; font-weight: normal;">(optional, different first payment)</span></label>
-                                        <input type="number" id="initial-amount" min="1" step="0.01" placeholder="e.g. 1000">
+                                        <input type="number" id="initial-amount" min="1" step="0.01" placeholder="e.g. 100">
                                     </div>
-                                    <button type="button" id="preview-schedule-btn" style="display: none;" onclick="openSchedulePreview()">📋 Preview Payment Schedule</button>
+                                    <p id="recurring-summary" style="display: none; font-size: 0.85rem; color: var(--accent, #4dabf7); margin: 6px 0 0; line-height: 1.4;"></p>
+                                    <button type="button" id="preview-schedule-btn" style="display: none; margin-top: 10px;" onclick="openSchedulePreview()">📋 Preview Payment Schedule</button>
+                                </div>
+
+                                <!-- Installment Options Panel -->
+                                <div id="installment-panel" class="schedule-panel" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="installment-count">Number of Installments <span style="color: var(--accent, #4dabf7);">*</span></label>
+                                        <input type="number" id="installment-count" min="2" max="999" placeholder="e.g. 12" value="12">
+                                    </div>
+                                    <div class="form-group" style="margin-top: 10px;">
+                                        <label for="installment-frequency">Payment Frequency</label>
+                                        <select class="recurring-select" id="installment-frequency" style="display: block;">
+                                            <option value="monthly" selected>Monthly</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="biweekly">Every 2 Weeks</option>
+                                            <option value="quarterly">Quarterly</option>
+                                            <option value="annually">Annually</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-top: 10px;">
+                                        <label for="installment-start-date">Start Date <span style="color: #888; font-weight: normal;">(blank = start now)</span></label>
+                                        <input type="date" id="installment-start-date">
+                                    </div>
+                                    <div class="form-group" style="margin-top: 10px;">
+                                        <label for="installment-initial-amount">Initial Payment Amount <span style="color: #888; font-weight: normal;">(optional, different first payment)</span></label>
+                                        <input type="number" id="installment-initial-amount" min="1" step="0.01" placeholder="e.g. 100">
+                                    </div>
+                                    <p id="installment-summary" style="display: none; font-size: 0.85rem; color: var(--accent, #4dabf7); margin: 6px 0 0; line-height: 1.4;"></p>
+                                    <button type="button" id="preview-installment-schedule-btn" style="display: none; margin-top: 10px;" onclick="openSchedulePreview()">📋 Preview Payment Schedule</button>
                                 </div>
                             </div>
 
                             <!-- ════════════════════════════════════════
-                                 Other Ways to Give (Zelle & DAF)
+                                 Other Ways to Give (Zelle, PayPal & DAF)
                                  ════════════════════════════════════════ -->
                             <div class="other-ways-container" id="other-ways-section" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color, rgba(255,255,255,0.1));">
                                 <h4 class="col-heading" style="margin-bottom: 15px;">Other Ways to Give</h4>
@@ -1193,66 +1266,73 @@
                                     </div>
                                 </div>
 
-                                <!-- DAF Links -->
-                                <p style="color: #aaa; margin: 16px 0 10px; font-size: 0.85rem;">Contribute through your Donor-Advised Fund:</p>
-                                <div class="daf-links">
-                                    <!-- TDF Inline Form Toggle -->
-                                    <button type="button" class="daf-link tdf-toggle-btn" id="tdf-toggle-btn" onclick="toggleTdfForm()">
-                                        🏦 The Donors Fund
-                                    </button>
-                                    <a href="https://portal.ojcfund.org/account/recommendGrant?recurring=false&orgid=MQAAADQAAAA0AAAANwAAADUAAAA=" target="_blank" rel="noopener" class="daf-link" data-link-name="OJC Fund">OJC Fund</a>
-                                    <a href="https://org.pledgercharitable.org/ChargeCard?ein=113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="Pledger Charitable">Pledger Charitable</a>
-                                    <a href="https://matbia.org/d/00124211329" target="_blank" rel="noopener" class="daf-link" data-link-name="Matbia">Matbia</a>
-                                    <a href="https://www.paypal.com/us/fundraiser/charity/3380976" target="_blank" rel="noopener" class="daf-link" data-link-name="PayPal">PayPal</a>
+                                <!-- PayPal -->
+                                <div class="paypal-toggle" style="margin-top: 10px;">
+                                    <a href="https://www.paypal.com/us/fundraiser/charity/3380976" target="_blank" rel="noopener" class="daf-link paypal-btn" data-link-name="PayPal" style="display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;">
+                                        <span>🅿</span> Donate with PayPal
+                                    </a>
                                 </div>
 
-                                <!-- TDF Inline Giving Card Form -->
-                                <div id="tdf-form-container" style="display: none; margin-top: 16px; padding: 16px; background: #1F1F1F; border: 1px solid #333; border-radius: 8px;">
-                                    <h4 style="margin: 0 0 4px; font-size: 1rem; color: var(--accent, #4dabf7);">The Donors Fund — Giving Card</h4>
-                                    <p style="font-size: 0.8rem; color: #888; margin: 0 0 16px;">Submit a grant recommendation directly from your Donor-Advised Fund.</p>
-
-                                    <!-- Recovery Banner -->
-                                    <div id="tdf-recovery-banner" style="display: none; padding: 12px; margin-bottom: 16px; background: #2a2a1a; border: 1px solid #665500; border-radius: 6px;">
-                                        <p style="margin: 0; font-size: 0.9rem; color: #ffcc00;">⏳ You have a pending grant submission. Checking status...</p>
-                                    </div>
-
-                                    <div id="tdf-form-fields">
-                                        <div style="margin-bottom: 12px;">
-                                            <label for="tdf-card-number" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">Giving Card Number</label>
-                                            <input type="text" id="tdf-card-number" placeholder="Enter your Donors Fund card number" maxlength="25"
-                                                   style="width: 100%; padding: 10px 12px; background: #111; border: 1px solid #444; border-radius: 5px; color: #EFEFEF; font-size: 0.95rem; box-sizing: border-box;"
-                                                   oninput="this.value = this.value.replace(/[^0-9\-]/g, '')">
-                                        </div>
-                                        <div style="margin-bottom: 12px;">
-                                            <label for="tdf-card-pin" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">Giving Card PIN / CVV</label>
-                                            <input type="password" id="tdf-card-pin" placeholder="3 or 4-digit PIN" maxlength="4" autocomplete="off"
-                                                   style="width: 100%; padding: 10px 12px; background: #111; border: 1px solid #444; border-radius: 5px; color: #EFEFEF; font-size: 0.95rem; box-sizing: border-box;"
-                                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                                        </div>
-                                        <div style="margin-bottom: 12px;">
-                                            <label for="tdf-amount" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">Grant Amount ($)</label>
-                                            <input type="number" id="tdf-amount" placeholder="0.00" min="1" max="100000" step="0.01"
-                                                   style="width: 100%; padding: 10px 12px; background: #111; border: 1px solid #444; border-radius: 5px; color: #EFEFEF; font-size: 0.95rem; box-sizing: border-box;">
-                                        </div>
-                                        <div id="tdf-status" style="display: none; padding: 10px; margin-bottom: 12px; border-radius: 5px; font-size: 0.9rem;"></div>
-                                        <button type="button" id="tdf-submit-btn" onclick="submitTdfGrant()" 
-                                                style="width: 100%; padding: 12px; background: var(--accent, #4dabf7); color: #000; font-weight: 600; font-size: 1rem; border: none; border-radius: 5px; cursor: pointer; transition: background 0.2s;">
-                                            Submit Grant Recommendation
+                                <!-- DAF Options (Managed by gateway: visible for USAePay, handled via Sola card fields for Sola) -->
+                                <div id="daf-options-container" class="daf-options-container" style="display: none;">
+                                    <p class="daf-section-heading" id="daf-links-heading" style="color: #aaa; margin: 16px 0 10px; font-size: 0.85rem;">Contribute through your Donor-Advised Fund:</p>
+                                    <div class="daf-links">
+                                        <!-- TDF Inline Form Toggle -->
+                                        <button type="button" class="daf-link tdf-toggle-btn" id="tdf-toggle-btn" onclick="toggleTdfForm()">
+                                            🏦 The Donors Fund
                                         </button>
-                                        <p style="font-size: 0.75rem; color: #666; margin: 8px 0 0; text-align: center;">
-                                            Or <a href="https://thedonorsfund.org/donate/notzer-chesed/113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="The Donors Fund (Direct)" style="color: var(--accent, #4dabf7);">donate directly on The Donors Fund website →</a>
-                                        </p>
+                                        <a href="https://portal.ojcfund.org/account/recommendGrant?recurring=false&orgid=MQAAADQAAAA0AAAANwAAADUAAAA=" target="_blank" rel="noopener" class="daf-link" data-link-name="OJC Fund">OJC Fund</a>
+                                        <a href="https://org.pledgercharitable.org/ChargeCard?ein=113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="Pledger Charitable">Pledger Charitable</a>
+                                        <a href="https://matbia.org/d/00124211329" target="_blank" rel="noopener" class="daf-link" data-link-name="Matbia">Matbia</a>
                                     </div>
 
-                                    <!-- TDF Success Result -->
-                                    <div id="tdf-result" style="display: none; text-align: center; padding: 10px 0;">
-                                        <div style="font-size: 2rem; margin-bottom: 8px;">✅</div>
-                                        <h4 style="margin: 0 0 8px; color: var(--accent, #4dabf7);">Grant Recommendation Submitted!</h4>
-                                        <p style="margin: 0; font-size: 0.9rem; color: #ccc;">Confirmation: <strong id="tdf-confirmation-number"></strong></p>
-                                        <p style="font-size: 0.8rem; color: #888; margin: 8px 0 0;">The Donors Fund will process your grant recommendation.</p>
+                                    <!-- TDF Inline Giving Card Form -->
+                                    <div id="tdf-form-container" style="display: none; margin-top: 16px; padding: 16px; background: #1F1F1F; border: 1px solid #333; border-radius: 8px;">
+                                        <h4 style="margin: 0 0 4px; font-size: 1rem; color: var(--accent, #4dabf7);">The Donors Fund — Giving Card</h4>
+                                        <p style="font-size: 0.8rem; color: #888; margin: 0 0 16px;">Submit a grant recommendation directly from your Donor-Advised Fund.</p>
+
+                                        <!-- Recovery Banner -->
+                                        <div id="tdf-recovery-banner" style="display: none; padding: 12px; margin-bottom: 16px; background: #2a2a1a; border: 1px solid #665500; border-radius: 6px;">
+                                            <p style="margin: 0; font-size: 0.9rem; color: #ffcc00;">⏳ You have a pending grant submission. Checking status...</p>
+                                        </div>
+
+                                        <div id="tdf-form-fields">
+                                            <div style="margin-bottom: 12px;">
+                                                <label for="tdf-card-number" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">Giving Card Number</label>
+                                                <input type="text" id="tdf-card-number" placeholder="Enter your Donors Fund card number" maxlength="25"
+                                                       style="width: 100%; padding: 10px 12px; background: #111; border: 1px solid #444; border-radius: 5px; color: #EFEFEF; font-size: 0.95rem; box-sizing: border-box;"
+                                                       oninput="this.value = this.value.replace(/[^0-9\-]/g, '')">
+                                            </div>
+                                            <div style="margin-bottom: 12px;">
+                                                <label for="tdf-card-pin" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">Giving Card PIN / CVV</label>
+                                                <input type="password" id="tdf-card-pin" placeholder="3 or 4-digit PIN" maxlength="4" autocomplete="off"
+                                                       style="width: 100%; padding: 10px 12px; background: #111; border: 1px solid #444; border-radius: 5px; color: #EFEFEF; font-size: 0.95rem; box-sizing: border-box;"
+                                                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                            </div>
+                                            <div style="margin-bottom: 12px;">
+                                                <label for="tdf-amount" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 4px;">Grant Amount ($)</label>
+                                                <input type="number" id="tdf-amount" placeholder="0.00" min="1" max="100000" step="0.01"
+                                                       style="width: 100%; padding: 10px 12px; background: #111; border: 1px solid #444; border-radius: 5px; color: #EFEFEF; font-size: 0.95rem; box-sizing: border-box;">
+                                            </div>
+                                            <div id="tdf-status" style="display: none; padding: 10px; margin-bottom: 12px; border-radius: 5px; font-size: 0.9rem;"></div>
+                                            <button type="button" id="tdf-submit-btn" onclick="submitTdfGrant()" 
+                                                    style="width: 100%; padding: 12px; background: var(--accent, #4dabf7); color: #000; font-weight: 600; font-size: 1rem; border: none; border-radius: 5px; cursor: pointer; transition: background 0.2s;">
+                                                Submit Grant Recommendation
+                                            </button>
+                                            <p style="font-size: 0.75rem; color: #666; margin: 8px 0 0; text-align: center;">
+                                                Or <a href="https://thedonorsfund.org/donate/notzer-chesed/113049033" target="_blank" rel="noopener" class="daf-link" data-link-name="The Donors Fund (Direct)" style="color: var(--accent, #4dabf7);">donate directly on The Donors Fund website →</a>
+                                            </p>
+                                        </div>
+
+                                        <!-- TDF Success Result -->
+                                        <div id="tdf-result" style="display: none; text-align: center; padding: 10px 0;">
+                                            <div style="font-size: 2rem; margin-bottom: 8px;">✅</div>
+                                            <h4 style="margin: 0 0 8px; color: var(--accent, #4dabf7);">Grant Recommendation Submitted!</h4>
+                                            <p style="margin: 0; font-size: 0.9rem; color: #ccc;">Confirmation: <strong id="tdf-confirmation-number"></strong></p>
+                                            <p style="font-size: 0.8rem; color: #888; margin: 8px 0 0;">The Donors Fund will process your grant recommendation.</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
                         </div>
                     </div>
 
@@ -1635,17 +1715,24 @@
             var ckFields = document.getElementById('cardknox-fields');
             var ueFields = document.getElementById('usaepay-fields');
             var expInput = document.getElementById('card-exp');
+            var dafContainer = document.getElementById('daf-options-container');
+            var dafWarn = document.getElementById('daf-card-warning');
 
             if (gateway === 'cardknox') {
                 ckFields.style.display = 'block';
                 ueFields.style.display = 'none';
                 // Cardknox uses its own exp field (the standard input)
                 if (expInput) expInput.required = true;
+                // Sola handles DAF cards directly via card entry fields
+                if (dafContainer) dafContainer.style.display = 'none';
+                if (dafWarn) dafWarn.style.display = 'none';
             } else {
                 ckFields.style.display = 'none';
                 ueFields.style.display = 'block';
                 // USAePay handles exp in its own hosted field
                 if (expInput) expInput.required = false;
+                // USAePay requires standalone DAF options
+                if (dafContainer) dafContainer.style.display = 'block';
             }
         },
 
@@ -1666,8 +1753,10 @@
             var invalidStyle = Object.assign({}, fieldStyle, { 'color': '#ff5252' });
 
             addIfieldKeyPressCallback(function(data) {
+                var isCardknox = (typeof GatewayManager !== 'undefined' && GatewayManager.activeGateway === 'cardknox');
                 if (data.cardNumberFormattedLength > 0) {
-                    setIfieldStyle('card-number', data.cardNumberIsValid ? validStyle : invalidStyle);
+                    var isCardValid = data.cardNumberIsValid || (isCardknox && (data.cardNumberFormattedLength >= 19 || (data.cardNumberLength && data.cardNumberLength >= 16)));
+                    setIfieldStyle('card-number', isCardValid ? validStyle : invalidStyle);
                 } else {
                     setIfieldStyle('card-number', fieldStyle);
                 }
@@ -1678,11 +1767,15 @@
                         setIfieldStyle('cvv', fieldStyle);
                     }
                 }
-                // DAF card detection: full-length (16-digit) number that fails standard brand validation
+                // DAF card detection: only show warning for USAePay (Sola handles DAF natively)
                 var dafWarn = document.getElementById('daf-card-warning');
                 if (dafWarn) {
-                    var isFullLength = (data.cardNumberFormattedLength >= 19) || (data.cardNumberLength && data.cardNumberLength >= 16);
-                    dafWarn.style.display = (isFullLength && !data.cardNumberIsValid) ? 'block' : 'none';
+                    if (isCardknox) {
+                        dafWarn.style.display = 'none';
+                    } else {
+                        var isFullLength = (data.cardNumberFormattedLength >= 19) || (data.cardNumberLength && data.cardNumberLength >= 16);
+                        dafWarn.style.display = (isFullLength && !data.cardNumberIsValid) ? 'block' : 'none';
+                    }
                 }
             });
         },
@@ -1873,84 +1966,153 @@
     }
 
     // ════════════════════════════════════════════════════════════════
-    // RECURRING TOGGLE & INSTALLMENT LOGIC
+    // SCHEDULE SELECTION & INSTALLMENT LOGIC (Separate Choices)
     // ════════════════════════════════════════════════════════════════
+    var currentScheduleType = 'onetime';
     var recurringCheck = document.getElementById('recurring-check');
+    var installmentCheck = document.getElementById('installment-check');
     var recurringSelect = document.getElementById('recurring-frequency');
 
-    if (recurringCheck) {
-        recurringCheck.addEventListener('change', function() {
-            document.getElementById('recurring-options').style.display = this.checked ? 'block' : 'none';
-            if (!this.checked) {
-                recurringSelect.value = '';
-                document.getElementById('recurring-count').value = '';
-                document.getElementById('installment-check').checked = false;
-                document.getElementById('installment-summary').style.display = 'none';
-                document.getElementById('recurring-start-date').value = '';
-                document.getElementById('initial-amount').value = '';
-                document.getElementById('preview-schedule-btn').style.display = 'none';
-            }
-            updateInstallmentSummary();
-        });
+    function setScheduleType(type) {
+        currentScheduleType = type;
+        var btnOneTime = document.getElementById('btn-schedule-onetime');
+        var btnRecurring = document.getElementById('btn-schedule-recurring');
+        var btnInstallment = document.getElementById('btn-schedule-installment');
+        var recPanel = document.getElementById('recurring-panel');
+        var instPanel = document.getElementById('installment-panel');
+
+        if (btnOneTime) btnOneTime.classList.toggle('active', type === 'onetime');
+        if (btnRecurring) btnRecurring.classList.toggle('active', type === 'recurring');
+        if (btnInstallment) btnInstallment.classList.toggle('active', type === 'installment');
+
+        if (type === 'onetime') {
+            if (recurringCheck) recurringCheck.checked = false;
+            if (installmentCheck) installmentCheck.checked = false;
+            if (recPanel) recPanel.style.display = 'none';
+            if (instPanel) instPanel.style.display = 'none';
+        } else if (type === 'recurring') {
+            if (recurringCheck) recurringCheck.checked = true;
+            if (installmentCheck) installmentCheck.checked = false;
+            if (recPanel) recPanel.style.display = 'block';
+            if (instPanel) instPanel.style.display = 'none';
+            if (recurringSelect && !recurringSelect.value) recurringSelect.value = 'monthly';
+            syncScheduleInputs('recurring');
+        } else if (type === 'installment') {
+            if (recurringCheck) recurringCheck.checked = true;
+            if (installmentCheck) installmentCheck.checked = true;
+            if (recPanel) recPanel.style.display = 'none';
+            if (instPanel) instPanel.style.display = 'block';
+            syncScheduleInputs('installment');
+        }
+        updateInstallmentSummary();
+    }
+
+    function syncScheduleInputs(source) {
+        var recCount = document.getElementById('recurring-count');
+        var instCount = document.getElementById('installment-count');
+        var recFreq = document.getElementById('recurring-frequency');
+        var instFreq = document.getElementById('installment-frequency');
+        var recDate = document.getElementById('recurring-start-date');
+        var instDate = document.getElementById('installment-start-date');
+        var recInit = document.getElementById('initial-amount');
+        var instInit = document.getElementById('installment-initial-amount');
+
+        if (source === 'installment') {
+            if (instCount && recCount) recCount.value = instCount.value || '12';
+            if (instFreq && recFreq) recFreq.value = instFreq.value || 'monthly';
+            if (instDate && recDate) recDate.value = instDate.value;
+            if (instInit && recInit) recInit.value = instInit.value;
+        } else if (source === 'recurring') {
+            if (recCount && instCount && recCount.value) instCount.value = recCount.value;
+            if (recFreq && instFreq && recFreq.value) instFreq.value = recFreq.value;
+            if (recDate && instDate) instDate.value = recDate.value;
+            if (recInit && instInit) instInit.value = recInit.value;
+        }
     }
 
     function updateInstallmentSummary() {
         var customInput = document.getElementById('custom-amount');
         var amt = selectedAmount || parseFloat(customInput.value);
+        var isRecurring = recurringCheck && recurringCheck.checked;
+        var isInst = isRecurring && installmentCheck && installmentCheck.checked;
         var count = parseInt(document.getElementById('recurring-count').value) || 0;
         var freq = document.getElementById('recurring-frequency').value;
-        var isInst = document.getElementById('installment-check').checked;
-        var summary = document.getElementById('installment-summary');
-        var previewBtn = document.getElementById('preview-schedule-btn');
+        var recSummary = document.getElementById('recurring-summary');
+        var instSummary = document.getElementById('installment-summary');
+        var previewRecBtn = document.getElementById('preview-schedule-btn');
+        var previewInstBtn = document.getElementById('preview-installment-schedule-btn');
         var freqLabels = { weekly: 'weekly', biweekly: 'bi-weekly', monthly: 'monthly', quarterly: 'quarterly', annually: 'annual' };
 
-        if (!recurringCheck.checked || !amt || !freq) { summary.style.display = 'none'; previewBtn.style.display = 'none'; return; }
+        if (recSummary) recSummary.style.display = 'none';
+        if (instSummary) instSummary.style.display = 'none';
+        if (previewRecBtn) previewRecBtn.style.display = 'none';
+        if (previewInstBtn) previewInstBtn.style.display = 'none';
 
-        if (count >= 2) {
-            var initialAmt = parseFloat(document.getElementById('initial-amount').value) || 0;
-            if (isInst) {
-                var perPayment;
-                if (initialAmt > 0 && count > 1) {
-                    perPayment = ((amt - initialAmt) / (count - 1)).toFixed(2);
-                    summary.innerHTML = count + ' ' + (freqLabels[freq] || freq) + ' payments: 1st payment of <strong>$' + Number(initialAmt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong>, followed by ' + (count - 1) + ' payments of <strong>$' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> each (total pledge: $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
-                } else {
-                    perPayment = (amt / count).toFixed(2);
-                    summary.innerHTML = count + ' ' + (freqLabels[freq] || freq) + ' payments of <strong>$' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> each (total pledge: $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
-                }
+        if (!isRecurring || !amt || !freq) return;
+
+        var initialAmt = parseFloat(document.getElementById('initial-amount').value) || 0;
+
+        if (isInst) {
+            var instCnt = count >= 2 ? count : 12;
+            var perPayment;
+            if (initialAmt > 0 && instCnt > 1) {
+                perPayment = ((amt - initialAmt) / (instCnt - 1)).toFixed(2);
+                instSummary.innerHTML = instCnt + ' ' + (freqLabels[freq] || freq) + ' installments: 1st of <strong>$' + Number(initialAmt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong>, followed by ' + (instCnt - 1) + ' of <strong>$' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> (Total pledge: $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
             } else {
+                perPayment = (amt / instCnt).toFixed(2);
+                instSummary.innerHTML = instCnt + ' ' + (freqLabels[freq] || freq) + ' installments of <strong>$' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> each (Total pledge: $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+            }
+            instSummary.style.display = 'block';
+            if (previewInstBtn) previewInstBtn.style.display = 'block';
+        } else {
+            // Pure Recurring
+            if (count >= 2) {
                 var total;
                 if (initialAmt > 0 && count > 1) {
                     total = (initialAmt + amt * (count - 1)).toFixed(2);
-                    summary.innerHTML = count + ' ' + (freqLabels[freq] || freq) + ' payments: 1st payment of <strong>$' + Number(initialAmt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong>, followed by ' + (count - 1) + ' payments of <strong>$' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+                    recSummary.innerHTML = count + ' ' + (freqLabels[freq] || freq) + ' payments: 1st of <strong>$' + Number(initialAmt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong>, followed by ' + (count - 1) + ' of <strong>$' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
                 } else {
                     total = (amt * count).toFixed(2);
-                    summary.innerHTML = count + ' ' + (freqLabels[freq] || freq) + ' payments of <strong>$' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+                    recSummary.innerHTML = count + ' ' + (freqLabels[freq] || freq) + ' payments of <strong>$' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
                 }
+            } else {
+                recSummary.innerHTML = (freqLabels[freq] ? (freqLabels[freq].charAt(0).toUpperCase() + freqLabels[freq].slice(1)) : 'Recurring') + ' donation of <strong>$' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</strong> (ongoing)';
             }
-            summary.style.display = 'block';
-            previewBtn.style.display = 'block';
-        } else {
-            summary.style.display = 'none';
-            previewBtn.style.display = freq ? 'block' : 'none';
+            recSummary.style.display = 'block';
+            if (previewRecBtn) previewRecBtn.style.display = 'block';
         }
 
         // Set date input constraints
-        var startDateInput = document.getElementById('recurring-start-date');
-        var tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        startDateInput.min = tomorrow.toISOString().split('T')[0];
-        var maxDate = new Date();
-        maxDate.setFullYear(maxDate.getFullYear() + 1);
-        startDateInput.max = maxDate.toISOString().split('T')[0];
+        ['recurring-start-date', 'installment-start-date'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            var tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            el.min = tomorrow.toISOString().split('T')[0];
+            var maxDate = new Date();
+            maxDate.setFullYear(maxDate.getFullYear() + 1);
+            el.max = maxDate.toISOString().split('T')[0];
+        });
     }
 
     if (recurringSelect) {
-        recurringSelect.addEventListener('change', updateInstallmentSummary);
+        recurringSelect.addEventListener('change', function() { syncScheduleInputs('recurring'); updateInstallmentSummary(); });
     }
-    document.getElementById('recurring-count').addEventListener('input', updateInstallmentSummary);
-    document.getElementById('installment-check').addEventListener('change', updateInstallmentSummary);
-    document.getElementById('recurring-start-date').addEventListener('change', updateInstallmentSummary);
-    document.getElementById('initial-amount').addEventListener('input', updateInstallmentSummary);
+    ['recurring-count', 'initial-amount'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', function() { syncScheduleInputs('recurring'); updateInstallmentSummary(); });
+    });
+    var recDateEl = document.getElementById('recurring-start-date');
+    if (recDateEl) recDateEl.addEventListener('change', function() { syncScheduleInputs('recurring'); updateInstallmentSummary(); });
+
+    var instFreqEl = document.getElementById('installment-frequency');
+    if (instFreqEl) instFreqEl.addEventListener('change', function() { syncScheduleInputs('installment'); updateInstallmentSummary(); });
+    ['installment-count', 'installment-initial-amount'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', function() { syncScheduleInputs('installment'); updateInstallmentSummary(); });
+    });
+    var instDateEl = document.getElementById('installment-start-date');
+    if (instDateEl) instDateEl.addEventListener('change', function() { syncScheduleInputs('installment'); updateInstallmentSummary(); });
 
     // ════════════════════════════════════════════════════════════════
     // TURNSTILE

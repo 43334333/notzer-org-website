@@ -634,6 +634,42 @@
             margin-top: 8px;
         }
 
+        /* Schedule Selection (Separate Choices) */
+        .schedule-type-group {
+            display: flex;
+            gap: 8px;
+            margin: 14px 0 10px;
+        }
+        .schedule-btn {
+            flex: 1;
+            padding: 9px 6px;
+            background: var(--bg-input, #2a2a2a);
+            border: 1px solid var(--border-primary, #444);
+            border-radius: 4px;
+            color: var(--text-primary, #EFEFEF);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .schedule-btn:hover {
+            border-color: var(--accent);
+            background: var(--bg-input-hover, #333);
+        }
+        .schedule-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .schedule-panel {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-primary, #333);
+            border-radius: 6px;
+            margin-bottom: 14px;
+        }
+
         .recurring-select {
             width: 100%;
             height: 40px;
@@ -1174,7 +1210,7 @@
                                 <!-- Cardknox iFields -->
                                 <div id="cardknox-fields">
                                     <div class="ifield-container">
-                                        <label>Card Number</label>
+                                        <label>Card Number (Credit, Debit, Donors Fund, OJC, Pledger, Matbia)</label>
                                         <iframe id="card-number-iframe" data-ifields-id="card-number" data-ifields-placeholder="Card Number" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
                                         <input data-ifields-id="card-number-token" name="xCardNum" type="hidden">
                                     </div>
@@ -1188,8 +1224,8 @@
                                             <input type="text" id="card-exp" name="xExp" placeholder="MMYY" maxlength="4" required>
                                         </div>
                                         <div class="ifield-container" style="flex: 1;">
-                                            <label>CVV</label>
-                                            <iframe id="cvv-iframe" data-ifields-id="cvv" data-ifields-placeholder="CVV" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
+                                            <label>CVV / PIN</label>
+                                            <iframe id="cvv-iframe" data-ifields-id="cvv" data-ifields-placeholder="CVV / PIN" src="https://cdn.cardknox.com/ifields/3.4.2602.2001/ifield.htm" scrolling="no"></iframe>
                                             <input data-ifields-id="cvv-token" name="xCVV" type="hidden">
                                         </div>
                                     </div>
@@ -1215,30 +1251,55 @@
                                     </div>
                                 </div>
 
-                                <!-- Recurring Section -->
-                                <div class="recurring-section">
-                                    <label class="toggle-label" style="margin: 0;">
-                                        <input type="checkbox" id="recurring-check">
-                                        <span>Make this a recurring donation</span>
-                                    </label>
-                                    <div id="recurring-options" style="display: none; margin-top: 12px;">
-                                        <select class="recurring-select" id="recurring-frequency">
-                                            <option value="">Select frequency...</option>
-                                            <option value="weekly">Weekly</option>
-                                            <option value="biweekly">Every 2 Weeks</option>
-                                            <option value="monthly">Monthly</option>
-                                            <option value="quarterly">Quarterly</option>
-                                            <option value="annually">Annually</option>
-                                        </select>
-                                        <div class="form-group" style="margin-top: 10px;">
-                                            <label for="recurring-count">Number of payments <span style="color: var(--text-muted); font-weight: 400;">(blank = ongoing)</span></label>
-                                            <input type="number" id="recurring-count" min="2" max="999" placeholder="e.g. 12">
+                                <!-- Schedule section (Separate Choices) -->
+                                <div class="recurring-section" id="recurring-section" style="display: block;">
+                                    <div class="schedule-type-group" role="group" aria-label="Donation frequency">
+                                        <button type="button" class="schedule-btn active" id="btn-schedule-onetime" onclick="setScheduleType('onetime')">One-Time</button>
+                                        <button type="button" class="schedule-btn" id="btn-schedule-recurring" onclick="setScheduleType('recurring')">Recurring</button>
+                                        <button type="button" class="schedule-btn" id="btn-schedule-installment" onclick="setScheduleType('installment')">Installments</button>
+                                    </div>
+
+                                    <!-- Hidden underlying checkboxes for form/API logic compatibility -->
+                                    <input type="checkbox" id="recurring-check" style="display: none;">
+                                    <input type="checkbox" id="installment-check" style="display: none;">
+
+                                    <!-- Recurring Panel -->
+                                    <div id="recurring-panel" class="schedule-panel" style="display: none;">
+                                        <div class="form-group" style="margin-bottom: 10px;">
+                                            <label for="recurring-frequency">Frequency</label>
+                                            <select class="recurring-select" id="recurring-frequency" style="display: block;">
+                                                <option value="weekly">Weekly</option>
+                                                <option value="biweekly">Every 2 Weeks</option>
+                                                <option value="monthly" selected>Monthly</option>
+                                                <option value="quarterly">Quarterly</option>
+                                                <option value="annually">Annually</option>
+                                            </select>
                                         </div>
-                                        <label class="toggle-label">
-                                            <input type="checkbox" id="installment-check">
-                                            <span>Split total into installments</span>
-                                        </label>
-                                        <p id="installment-summary" style="display: none; font-size: 0.82rem; color: var(--accent-light); margin: 4px 0 0; line-height: 1.4;"></p>
+                                        <div class="form-group" style="margin-bottom: 10px;">
+                                            <label for="recurring-count">Number of payments <span style="color: var(--text-muted); font-weight: normal;">(blank = ongoing)</span></label>
+                                            <input type="number" id="recurring-count" min="2" max="999" placeholder="Leave blank for ongoing">
+                                        </div>
+                                        <p id="recurring-summary" style="display: none; font-size: 0.82rem; color: var(--accent-light); margin: 8px 0 0; line-height: 1.4;"></p>
+                                    </div>
+
+                                    <!-- Installment Panel -->
+                                    <div id="installment-panel" class="schedule-panel" style="display: none;">
+                                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 10px; line-height: 1.4;">Split your total donation into scheduled installments:</p>
+                                        <div class="form-group" style="margin-bottom: 10px;">
+                                            <label for="installment-count">Number of installments</label>
+                                            <input type="number" id="installment-count" min="2" max="999" value="12" placeholder="e.g. 12">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 10px;">
+                                            <label for="installment-frequency">Installment Frequency</label>
+                                            <select class="recurring-select" id="installment-frequency" style="display: block;">
+                                                <option value="weekly">Weekly</option>
+                                                <option value="biweekly">Every 2 Weeks</option>
+                                                <option value="monthly" selected>Monthly</option>
+                                                <option value="quarterly">Quarterly</option>
+                                                <option value="annually">Annually</option>
+                                            </select>
+                                        </div>
+                                        <p id="installment-summary" style="display: none; font-size: 0.82rem; color: var(--accent-light); margin: 8px 0 0; line-height: 1.4;"></p>
                                     </div>
                                 </div>
                             </div>
@@ -1372,8 +1433,10 @@
 
             if (typeof addIfieldKeyPressCallback === 'function') {
                 addIfieldKeyPressCallback(function(data) {
+                    var isCardknox = (typeof GatewayManager !== 'undefined' && GatewayManager.activeGateway === 'cardknox');
                     if (data.cardNumberFormattedLength > 0) {
-                        setIfieldStyle('card-number', data.cardNumberIsValid ? validStyle : invalidStyle);
+                        var isCardValid = data.cardNumberIsValid || (isCardknox && (data.cardNumberFormattedLength >= 19 || (data.cardNumberLength && data.cardNumberLength >= 16)));
+                        setIfieldStyle('card-number', isCardValid ? validStyle : invalidStyle);
                     } else {
                         setIfieldStyle('card-number', fieldStyle);
                     }
@@ -1384,11 +1447,15 @@
                             setIfieldStyle('cvv', fieldStyle);
                         }
                     }
-                    // DAF card detection: full-length (16-digit) number that fails standard brand validation
+                    // DAF card detection: only show warning for USAePay (Sola handles DAF natively)
                     var dafWarn = document.getElementById('daf-card-warning');
                     if (dafWarn) {
-                        var isFullLength = (data.cardNumberFormattedLength >= 19) || (data.cardNumberLength && data.cardNumberLength >= 16);
-                        dafWarn.style.display = (isFullLength && !data.cardNumberIsValid) ? 'block' : 'none';
+                        if (isCardknox) {
+                            dafWarn.style.display = 'none';
+                        } else {
+                            var isFullLength = (data.cardNumberFormattedLength >= 19) || (data.cardNumberLength && data.cardNumberLength >= 16);
+                            dafWarn.style.display = (isFullLength && !data.cardNumberIsValid) ? 'block' : 'none';
+                        }
                     }
                 });
             }
@@ -1426,6 +1493,10 @@
                 gateway === 'cardknox' ? 'block' : 'none';
             document.getElementById('usaepay-fields').style.display =
                 gateway === 'usaepay' ? 'block' : 'none';
+            var dafWarn = document.getElementById('daf-card-warning');
+            if (dafWarn && gateway === 'cardknox') {
+                dafWarn.style.display = 'none';
+            }
         },
 
         updateIndicator() {
@@ -1740,49 +1811,107 @@
     })();
 
     // ============================================================
-    // RECURRING TOGGLE & INSTALLMENT LOGIC
+    // SCHEDULE SELECTION & INSTALLMENT LOGIC (Separate Choices)
     // ============================================================
+    var currentScheduleType = 'onetime';
     var recurringCheck = document.getElementById('recurring-check');
+    var installmentCheck = document.getElementById('installment-check');
     var recurringFrequency = document.getElementById('recurring-frequency');
     var recurringCountInput = document.getElementById('recurring-count');
-    var installmentCheck = document.getElementById('installment-check');
 
-    recurringCheck.addEventListener('change', function() {
-        document.getElementById('recurring-options').style.display = this.checked ? 'block' : 'none';
-        if (!this.checked) {
-            recurringFrequency.value = '';
-            recurringCountInput.value = '';
-            installmentCheck.checked = false;
-            document.getElementById('installment-summary').style.display = 'none';
+    function setScheduleType(type) {
+        currentScheduleType = type;
+        var btnOneTime = document.getElementById('btn-schedule-onetime');
+        var btnRecurring = document.getElementById('btn-schedule-recurring');
+        var btnInstallment = document.getElementById('btn-schedule-installment');
+        var recPanel = document.getElementById('recurring-panel');
+        var instPanel = document.getElementById('installment-panel');
+
+        if (btnOneTime) btnOneTime.classList.toggle('active', type === 'onetime');
+        if (btnRecurring) btnRecurring.classList.toggle('active', type === 'recurring');
+        if (btnInstallment) btnInstallment.classList.toggle('active', type === 'installment');
+
+        if (type === 'onetime') {
+            if (recurringCheck) recurringCheck.checked = false;
+            if (installmentCheck) installmentCheck.checked = false;
+            if (recPanel) recPanel.style.display = 'none';
+            if (instPanel) instPanel.style.display = 'none';
+        } else if (type === 'recurring') {
+            if (recurringCheck) recurringCheck.checked = true;
+            if (installmentCheck) installmentCheck.checked = false;
+            if (recPanel) recPanel.style.display = 'block';
+            if (instPanel) instPanel.style.display = 'none';
+            if (recurringFrequency && !recurringFrequency.value) recurringFrequency.value = 'monthly';
+            syncScheduleInputs('recurring');
+        } else if (type === 'installment') {
+            if (recurringCheck) recurringCheck.checked = true;
+            if (installmentCheck) installmentCheck.checked = true;
+            if (recPanel) recPanel.style.display = 'none';
+            if (instPanel) instPanel.style.display = 'block';
+            syncScheduleInputs('installment');
         }
         updateInstallmentSummary();
-    });
+    }
 
-    recurringFrequency.addEventListener('change', updateInstallmentSummary);
-    recurringCountInput.addEventListener('input', updateInstallmentSummary);
-    installmentCheck.addEventListener('change', updateInstallmentSummary);
+    function syncScheduleInputs(source) {
+        var recCount = document.getElementById('recurring-count');
+        var instCount = document.getElementById('installment-count');
+        var recFreq = document.getElementById('recurring-frequency');
+        var instFreq = document.getElementById('installment-frequency');
+
+        if (source === 'installment') {
+            if (instCount && recCount) recCount.value = instCount.value || '12';
+            if (instFreq && recFreq) recFreq.value = instFreq.value || 'monthly';
+        } else if (source === 'recurring') {
+            if (recCount && instCount && recCount.value) instCount.value = recCount.value;
+            if (recFreq && instFreq && recFreq.value) instFreq.value = recFreq.value;
+        }
+    }
 
     function updateInstallmentSummary() {
         var amt = selectedAmount || parseFloat(document.getElementById('custom-amount').value);
-        var count = parseInt(recurringCountInput.value) || 0;
-        var freq = recurringFrequency.value;
-        var isInst = installmentCheck.checked;
-        var summary = document.getElementById('installment-summary');
+        var isRecurring = recurringCheck && recurringCheck.checked;
+        var isInst = isRecurring && installmentCheck && installmentCheck.checked;
+        var count = parseInt(document.getElementById('recurring-count').value) || 0;
+        var freq = recurringFrequency ? recurringFrequency.value : '';
+        var recSummary = document.getElementById('recurring-summary');
+        var instSummary = document.getElementById('installment-summary');
         var freqLabels = { weekly: 'weekly', biweekly: 'bi-weekly', monthly: 'monthly', quarterly: 'quarterly', annually: 'annual' };
 
-        if (!recurringCheck.checked || !amt || count < 2 || !freq) {
-            summary.style.display = 'none';
-            return;
-        }
+        if (recSummary) recSummary.style.display = 'none';
+        if (instSummary) instSummary.style.display = 'none';
+
+        if (!isRecurring || !amt || !freq) return;
 
         if (isInst) {
-            var perPayment = (amt / count).toFixed(2);
-            summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' each';
+            var instCnt = count >= 2 ? count : 12;
+            var perPayment = (amt / instCnt).toFixed(2);
+            instSummary.textContent = instCnt + ' ' + (freqLabels[freq] || freq) + ' installments of $' + Number(perPayment).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' each';
+            instSummary.style.display = 'block';
         } else {
-            var total = (amt * count).toFixed(2);
-            summary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+            if (count >= 2) {
+                var total = (amt * count).toFixed(2);
+                recSummary.textContent = count + ' ' + (freqLabels[freq] || freq) + ' payments of $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' (total: $' + Number(total).toLocaleString('en-US', {minimumFractionDigits: 2}) + ')';
+            } else {
+                recSummary.textContent = (freqLabels[freq] ? (freqLabels[freq].charAt(0).toUpperCase() + freqLabels[freq].slice(1)) : 'Recurring') + ' donation of $' + Number(amt).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' (ongoing)';
+            }
+            recSummary.style.display = 'block';
         }
-        summary.style.display = 'block';
+    }
+
+    if (recurringFrequency) {
+        recurringFrequency.addEventListener('change', function() { syncScheduleInputs('recurring'); updateInstallmentSummary(); });
+    }
+    if (recurringCountInput) {
+        recurringCountInput.addEventListener('input', function() { syncScheduleInputs('recurring'); updateInstallmentSummary(); });
+    }
+    var instFreqEl = document.getElementById('installment-frequency');
+    if (instFreqEl) {
+        instFreqEl.addEventListener('change', function() { syncScheduleInputs('installment'); updateInstallmentSummary(); });
+    }
+    var instCountEl = document.getElementById('installment-count');
+    if (instCountEl) {
+        instCountEl.addEventListener('input', function() { syncScheduleInputs('installment'); updateInstallmentSummary(); });
     }
 
     // ============================================================
