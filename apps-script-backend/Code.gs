@@ -1795,6 +1795,7 @@ function ensureDefaultFeeConfigSheet_(masterSS) {
       ['Wire Transfer', 0.00, 0.00, 0.01],
       ['Cash', 0.00, 0.00, 0.01],
       ['Bank Transfer', 0.00, 0.00, 0.01],
+      ['Manual', 0.00, 0.00, 0.01],
       ['Other', 0.00, 0.00, 0.01]
     ];
     sheet.getRange(2, 1, feeDefaults.length, 4).setValues(feeDefaults);
