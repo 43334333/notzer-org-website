@@ -229,7 +229,7 @@ Write-Host "`n[7/7] Updating production deployment ($NOTZER_PROD_DEPLOYMENT_ID).
 Push-Location $claspMasterDir
 try {
     Write-Host "  Updating deployment $NOTZER_PROD_DEPLOYMENT_ID to version $versionNumber..." -ForegroundColor White
-    $deployOutput = & $InvokeClasp -Profile notzer_org -AutoRefresh deploy -i $NOTZER_PROD_DEPLOYMENT_ID -V $versionNumber -d "v$versionNumber - Fund Charge & DAF card resolution" 2>&1 | Out-String
+    $deployOutput = & $InvokeClasp -Profile notzer_org -AutoRefresh -- deploy --deploymentId $NOTZER_PROD_DEPLOYMENT_ID --versionNumber $versionNumber --description "v$versionNumber - Fund Charge & DAF card resolution" 2>&1 | Out-String
     Write-Host $deployOutput
     if ($LASTEXITCODE -ne 0) {
         Write-Host "  [FAIL] Deployment update failed with exit code $LASTEXITCODE." -ForegroundColor Red
