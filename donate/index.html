@@ -2190,11 +2190,25 @@ addIfieldKeyPressCallback(function(data) {
                         campaignName
                     );
                     return;
+                } else if (fallbackData.status === 'accounting_error' || (fallbackData.refNum && fallbackData.status !== 'success')) {
+                    var refMsg = fallbackData.refNum ? ' (Reference: ' + fallbackData.refNum + ')' : '';
+                    showStatus('error', 'Your payment was approved by your card issuer' + refMsg + ', but our system encountered an issue recording the receipt. Please DO NOT submit again to prevent duplicate charges. Contact support at info@notzer.org with your reference number.');
+                    btn.disabled = true;
+                    btn.classList.remove('loading');
+                    btn.textContent = 'Payment Processed (Contact Support)';
+                    return;
                 } else if (fallbackData.status === 'declined') {
                     showStatus('error', 'Declined: ' + (fallbackData.message || 'Please check your card details.'));
                 } else {
                     showStatus('error', fallbackData.message || 'An error occurred. Please try again.');
                 }
+            } else if (data.status === 'accounting_error' || (data.refNum && data.status !== 'success')) {
+                var refMsg = data.refNum ? ' (Reference: ' + data.refNum + ')' : '';
+                showStatus('error', 'Your payment was approved by your card issuer' + refMsg + ', but our system encountered an issue recording the receipt. Please DO NOT submit again to prevent duplicate charges. Contact support at info@notzer.org with your reference number.');
+                btn.disabled = true;
+                btn.classList.remove('loading');
+                btn.textContent = 'Payment Processed (Contact Support)';
+                return;
             } else if (data.status === 'declined') {
                 showStatus('error', 'Declined: ' + (data.message || 'Please check your card details.'));
             } else {
@@ -2204,6 +2218,7 @@ addIfieldKeyPressCallback(function(data) {
             console.error('Donation error:', err);
             showStatus('error', 'Could not process your donation. Please check your card details and try again.');
         } finally {
+            if (btn.textContent === 'Payment Processed (Contact Support)') return;
             btn.disabled = false;
             btn.classList.remove('loading');
             btn.textContent = 'Donate Now';

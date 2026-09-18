@@ -2454,6 +2454,15 @@
             } else if (data.status === 'declined') {
                 // Step 6: Card declined → show declined modal
                 showDeclinedModal(data.message || 'Your card was declined. Please check your card details and try again.');
+            } else if (data.status === 'accounting_error' || (data.refNum && data.status !== 'success')) {
+                // Payment was approved by gateway, but accounting recording failed.
+                // CRITICAL: Do NOT re-enable Donate button to prevent double-charging the donor!
+                var refMsg = data.refNum ? ' (Reference: ' + data.refNum + ')' : '';
+                showStatus('error', 'Your payment was approved by your card issuer' + refMsg + ', but our system encountered an issue recording the receipt. Please DO NOT submit again to prevent duplicate charges. Contact support at info@notzer.org with your reference number.');
+                btn.disabled = true;
+                btn.classList.remove('loading');
+                btn.textContent = 'Payment Processed (Contact Support)';
+                return; // Early return to prevent button re-enable
             } else {
                 // Other error
                 showStatus('error', data.message || 'An error occurred. Please try again.');
@@ -2467,7 +2476,7 @@
             console.error('Payment error:', err);
         }
 
-        // Reset button state on any non-success outcome
+        // Reset button state on any standard retryable outcome
         btn.disabled = false;
         btn.classList.remove('loading');
         btn.textContent = 'Donate Now';
