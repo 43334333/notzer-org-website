@@ -5297,7 +5297,7 @@ function processGeneralDonation(data) {
     // Determine campaign
     var campaignId = data.campaignId || data.campaignCode || 'general';
 
-    // Pre-validate campaign sheet, Customers, Pledges & Transactions schema fail-closed before processing charge
+    // Pre-validate campaign sheet, Customers, Pledges, Fee_Config & Transactions schema fail-closed before processing charge
     var sheetId = getCampaignSheetId(campaignId);
     var ss = null;
     if (!sheetId) {
@@ -5307,6 +5307,8 @@ function processGeneralDonation(data) {
       ss = SpreadsheetApp.openById(sheetId);
       ensureCustomerSheet_(ss);
       ensurePledgeSheet_(ss);
+      ensureFeeConfigSheet_(ss);
+      loadFeeSchedule_(ss);
       var txSheet = ss.getSheetByName('Transactions');
       if (!txSheet) {
         txSheet = ss.insertSheet('Transactions');
@@ -5357,10 +5359,17 @@ function processGeneralDonation(data) {
         accountingErrors.push('Pledge: ' + pledgeErr.message);
       }
 
+      // Calculate fees
+      var txFee = 0;
+      try {
+        txFee = calculateFee(result.xCardType || 'Credit Card', parseFloat(data.amount), ss);
+      } catch (feeErr) {
+        Logger.log('Accounting fee calculation error: ' + feeErr.toString());
+        accountingErrors.push('Fee Calculation: ' + feeErr.message);
+      }
+
       // Log transaction
       var donorName = (data.firstName || '') + ' ' + (data.lastName || '');
-      var txFee = calculateFee(result.xCardType || 'Credit Card', parseFloat(data.amount), ss);
-
       try {
         logTransactionMaster(ss, pledgeId || '', customerId, donorName, parseFloat(data.amount), result, '1', txFee);
       } catch (txErr) {
@@ -8139,45 +8148,66 @@ function formatDateShort(date) {
 // ── Fee Schedule (reads from campaign's Fee_Config sheet, auto-creates with defaults) ──
 var _feeScheduleCaches = {};
 
+/**
+ * Ensures Fee_Config sheet exists on campaign spreadsheet and validates required headers and rows.
+ * @param {Spreadsheet} ss - Campaign spreadsheet
+ * @returns {Sheet} Validated Fee_Config sheet
+ */
+function ensureFeeConfigSheet_(ss) {
+  if (!ss) throw new Error('Spreadsheet reference required for Fee_Config.');
+  var sheet = ss.getSheetByName('Fee_Config');
+  if (!sheet) {
+    // Auto-create with comprehensive defaults
+    sheet = ss.insertSheet('Fee_Config');
+    sheet.appendRow(['Method', 'Rate', 'Flat Fee', 'Fund_Charge']);
+    var defaults = getMasterFeeDefaults_();
+    for (var d = 0; d < defaults.length; d++) {
+      sheet.appendRow(defaults[d]);
+    }
+    sheet.getRange('A1:D1').setFontWeight('bold');
+    sheet.setColumnWidth(1, 200);
+    sheet.setColumnWidth(2, 80);
+    sheet.setColumnWidth(3, 80);
+    sheet.setColumnWidth(4, 100);
+    sheet.getRange('B2:B100').setNumberFormat('0.00%');
+    sheet.getRange('C2:C100').setNumberFormat('$#,##0.00');
+    sheet.getRange('D2:D100').setNumberFormat('0.00%');
+    syncFeeConfigFromPledges_(ss, sheet);
+    Logger.log('Created Fee_Config sheet for ' + ss.getId());
+  } else {
+    // Ensure column 4 Fund_Charge exists
+    if (sheet.getLastColumn() < 4) {
+      sheet.getRange(1, 4).setValue('Fund_Charge');
+      sheet.getRange(1, 4).setFontWeight('bold');
+      sheet.setColumnWidth(4, 100);
+      if (sheet.getLastRow() >= 2) {
+        sheet.getRange(2, 4, sheet.getLastRow() - 1, 1).setValue(0.01);
+        sheet.getRange(2, 4, sheet.getLastRow() - 1, 1).setNumberFormat('0.00%');
+      }
+    }
+  }
+
+  // Header validation
+  var headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+  var headerStr = headers.map(function(h) { return String(h).trim().toLowerCase(); });
+  if (headerStr.indexOf('method') === -1) {
+    throw new Error('Required header "Method" missing from Fee_Config sheet.');
+  }
+
+  // Row validation
+  if (sheet.getLastRow() < 2) {
+    throw new Error('Fee_Config sheet has no configuration rows.');
+  }
+
+  return sheet;
+}
+
 function loadFeeSchedule_(ss) {
+  if (!ss) throw new Error('Spreadsheet reference required to load fee schedule.');
   var ssId = ss.getId();
   if (_feeScheduleCaches[ssId]) return _feeScheduleCaches[ssId];
   try {
-    var sheet = ss.getSheetByName('Fee_Config');
-    if (!sheet) {
-      // Auto-create with comprehensive defaults
-      sheet = ss.insertSheet('Fee_Config');
-      sheet.appendRow(['Method', 'Rate', 'Flat Fee', 'Fund_Charge']);
-      var defaults = getMasterFeeDefaults_();
-      for (var d = 0; d < defaults.length; d++) {
-        sheet.appendRow(defaults[d]);
-      }
-      sheet.getRange('A1:D1').setFontWeight('bold');
-      sheet.setColumnWidth(1, 200);
-      sheet.setColumnWidth(2, 80);
-      sheet.setColumnWidth(3, 80);
-      sheet.setColumnWidth(4, 100);
-      sheet.getRange('B2:B100').setNumberFormat('0.00%');
-      sheet.getRange('C2:C100').setNumberFormat('$#,##0.00');
-      sheet.getRange('D2:D100').setNumberFormat('0.00%');
-      syncFeeConfigFromPledges_(ss, sheet);
-      Logger.log('Created Fee_Config sheet for ' + ssId);
-    } else {
-      // Ensure column 4 Fund_Charge exists
-      if (sheet.getLastColumn() < 4) {
-        sheet.getRange(1, 4).setValue('Fund_Charge');
-        sheet.getRange(1, 4).setFontWeight('bold');
-        sheet.setColumnWidth(4, 100);
-        if (sheet.getLastRow() >= 2) {
-          sheet.getRange(2, 4, sheet.getLastRow() - 1, 1).setValue(0.01);
-          sheet.getRange(2, 4, sheet.getLastRow() - 1, 1).setNumberFormat('0.00%');
-        }
-      }
-    }
-    if (sheet.getLastRow() < 2) {
-      _feeScheduleCaches[ssId] = { 'Credit Card': { rate: 0.029, flat: 0.30, fundCharge: 0.01 } };
-      return _feeScheduleCaches[ssId];
-    }
+    var sheet = ensureFeeConfigSheet_(ss);
     var numCols = Math.min(sheet.getLastColumn(), 4);
     var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, numCols).getValues();
     var schedule = {};
@@ -8193,12 +8223,15 @@ function loadFeeSchedule_(ss) {
         };
       }
     }
+    if (Object.keys(schedule).length === 0) {
+      throw new Error('Fee_Config sheet contains no valid method entries.');
+    }
     _feeScheduleCaches[ssId] = schedule;
     return schedule;
   } catch (e) {
+    delete _feeScheduleCaches[ssId];
     Logger.log('loadFeeSchedule_ error: ' + e.toString());
-    _feeScheduleCaches[ssId] = { 'Credit Card': { rate: 0.029, flat: 0.30, fundCharge: 0.01 } };
-    return _feeScheduleCaches[ssId];
+    throw new Error('Failed to load fee schedule from Fee_Config: ' + e.message);
   }
 }
 
