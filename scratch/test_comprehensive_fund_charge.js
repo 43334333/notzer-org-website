@@ -189,6 +189,9 @@ const sandbox = {
       put: () => {}
     })
   },
+  MailApp: {
+    sendEmail: () => {}
+  },
   verifyTurnstile: () => ({ success: true }),
   Math: Math,
   Date: Date,
@@ -646,6 +649,100 @@ it('Scenario 1r: Standard and non-DAF card types processed via Sola resolve to C
   assert.strictEqual(txRow[3], 3.30); // Fees (NOT zero!)
   assert.strictEqual(txRow[4], 1.00); // Fund Charge
   assert.strictEqual(txRow[5], 95.70); // Net
+});
+
+it('Scenario 1s: issueManualReceipt with omitted method on representative schedule calculates $0.00 fee (NOT $3.30)', () => {
+  // Ensure master sheet has Receipt_Log
+  const masterSS = getMockSS('mock-master-sheet-id');
+  if (!masterSS.getSheetByName('Receipt_Log')) {
+    masterSS.insertSheet('Receipt_Log').appendRow([
+      'Receipt ID', 'Timestamp', 'Campaign ID', 'Donor Name', 'Company Name',
+      'Donor Email', 'Sent-To Email', 'Amount', 'Issued By',
+      'Source', 'Original Transaction Ref', 'Also Sent to Original', 'Notes'
+    ]);
+  }
+
+  // Setup campaign spreadsheet with representative standard schedule (NO Manual row!)
+  const campSS = getMockSS('camp-manual-omitted-method');
+  campSS.insertSheet('Customers').appendRow(['Customer ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Street', 'City', 'State', 'Zip', 'Created Date', 'Source']);
+  campSS.insertSheet('Pledges').appendRow(['Pledge ID', 'Customer ID', 'Created Date', 'Donor', 'Campaign', 'Amount', 'Status', 'Amount Paid', 'Balance', 'Display Name', 'Memo', 'Anonymous', 'Teams', 'Method', 'Schedule ID', 'Notes']);
+  const tx = campSS.insertSheet('Transactions');
+  tx.appendRow(['Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID', 'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date']);
+
+  const feeSheet = campSS.insertSheet('Fee_Config');
+  feeSheet.appendRow(['Method', 'Rate', 'Flat Fee', 'Fund_Charge']);
+  feeSheet.appendRow(['Credit Card', 0.03, 0.30, 0.01]);
+  feeSheet.appendRow(['Cardknox', 0.03, 0.30, 0.01]);
+  feeSheet.appendRow(['Check', 0.00, 0.00, 0.01]);
+  feeSheet.appendRow(['Zelle', 0.00, 0.00, 0.01]);
+  feeSheet.appendRow(['PayPal', 0.029, 0.30, 0.01]);
+  feeSheet.appendRow(['Wire Transfer', 0.00, 0.00, 0.01]);
+  feeSheet.appendRow(['Cash', 0.00, 0.00, 0.01]);
+  feeSheet.appendRow(['Other', 0.00, 0.00, 0.01]);
+
+  const originalGetCampaignSheetId = sandbox.getCampaignSheetId;
+  sandbox.getCampaignSheetId = () => 'camp-manual-omitted-method';
+
+  try {
+    const res = sandbox.issueManualReceipt({
+      firstName: 'Dovid',
+      lastName: 'Cohen',
+      amount: '100',
+      campaignId: 'kfw87'
+      // Note: method is omitted intentionally!
+    }, { email: 'admin@notzer.org' });
+
+    assert.strictEqual(res.status, 'success');
+    assert(res.receiptId.startsWith('NC-R-'));
+    assert.strictEqual(tx.getLastRow(), 2, 'Transaction row must be logged');
+
+    const txRow = tx.cells[1];
+    assert.strictEqual(txRow[2], 100, 'Amount Charged must be 100');
+    assert.strictEqual(txRow[3], 0.00, 'Fees must be $0.00, NOT $3.30 credit-card fee!');
+    assert.strictEqual(txRow[4], 1.00, 'Fund Charge must be $1.00 (1%)');
+    assert.strictEqual(txRow[5], 99.00, 'Net must be $99.00 (100 - 0 - 1)');
+    assert.strictEqual(txRow[9], 'Manual', 'Result must be Manual');
+    assert.strictEqual(txRow[10], 'Manual', 'Method must default to Manual');
+    assert.strictEqual(txRow[11], '', 'Card Type must be empty');
+  } finally {
+    sandbox.getCampaignSheetId = originalGetCampaignSheetId;
+  }
+});
+
+it('Scenario 1t: Fee engine on standard schedule gives $0 for Manual/Other/Wire, $3.30 for cards, and fails closed on unknown', () => {
+  const ss = getMockSS('camp-standard-fee-checks');
+  const feeSheet = ss.insertSheet('Fee_Config');
+  feeSheet.appendRow(['Method', 'Rate', 'Flat Fee', 'Fund_Charge']);
+  feeSheet.appendRow(['Credit Card', 0.03, 0.30, 0.01]);
+  feeSheet.appendRow(['Cardknox', 0.03, 0.30, 0.01]);
+  feeSheet.appendRow(['Check', 0.00, 0.00, 0.01]);
+  feeSheet.appendRow(['Wire Transfer', 0.00, 0.00, 0.01]);
+  feeSheet.appendRow(['Other', 0.00, 0.00, 0.01]);
+
+  // Offline and manual methods get $0 fee
+  assert.strictEqual(sandbox.calculateFee('Manual', 100, ss), 0.00, 'Manual fee must be 0.00');
+  assert.strictEqual(sandbox.calculateFee('Other', 100, ss), 0.00, 'Other fee must be 0.00');
+  assert.strictEqual(sandbox.calculateFee('Wire Transfer', 100, ss), 0.00, 'Wire Transfer fee must be 0.00');
+  assert.strictEqual(sandbox.calculateFee('Check', 100, ss), 0.00, 'Check fee must be 0.00');
+
+  // Fund charges are preserved at 1%
+  assert.strictEqual(sandbox.calculateFundCharge('Manual', 100, ss), 1.00);
+  assert.strictEqual(sandbox.calculateFundCharge('Other', 100, ss), 1.00);
+  assert.strictEqual(sandbox.calculateFundCharge('Wire Transfer', 100, ss), 1.00);
+
+  // Card types get credit card rate
+  assert.strictEqual(sandbox.calculateFee('CorporateCard', 100, ss), 3.30);
+  assert.strictEqual(sandbox.calculateFee('Visa', 100, ss), 3.30);
+
+  // Unconfigured DAF card throws fail-closed
+  assert.throws(() => {
+    sandbox.calculateFee('Pledger', 100, ss);
+  }, /No fee schedule entry configured for payment method: "Pledger"/);
+
+  // Unknown non-card method throws fail-closed (does NOT fall back to credit card)
+  assert.throws(() => {
+    sandbox.calculateFee('UnknownMethod', 100, ss);
+  }, /No fee schedule entry configured for payment method: "UnknownMethod"/);
 });
 
 // SCENARIO 2: Legacy Row Reading & Non-Retroactivity
