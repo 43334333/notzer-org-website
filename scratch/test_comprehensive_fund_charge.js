@@ -549,9 +549,103 @@ it('Scenario 1o: processGeneralDonation returns accounting_error with refNum if 
     assert.strictEqual(res.refNum, 'GW-APPROVED-FEEREADFAIL');
     assert(res.message.includes('Fee Calculation: Simulated post-charge Fee_Config read failure'));
     assert.notStrictEqual(res.status, 'success', 'Transaction with failed fee schedule MUST NEVER report success');
+    assert.strictEqual(tx.getLastRow(), 1, 'Transaction row MUST NOT be written with zero fee on calculation failure!');
   } finally {
     sandbox.calculateFee = originalCalculateFee;
   }
+});
+
+it('Scenario 1p: Distinguishes configured 0% fee from missing fee rule (unmatched method throws fail-closed)', () => {
+  const ss = new MockSpreadsheet('camp-configured-vs-missing');
+  const feeSheet = ss.insertSheet('Fee_Config');
+  feeSheet.appendRow(['Method', 'Rate', 'Flat Fee', 'Fund_Charge']);
+  feeSheet.appendRow(['Credit Card', 0.03, 0.30, 0.01]);
+  feeSheet.appendRow(['DAF - The Donors Fund', 0.00, 0.00, 0.01]); // Configured 0% fee
+  feeSheet.appendRow(['Check', 0.00, 0.00, 0.01]);
+
+  // 1. Configured 0% fee returns 0.00 legitimately
+  const feeTDF = sandbox.calculateFee('DonorsFund', 100, ss);
+  assert.strictEqual(feeTDF, 0.00, 'Configured 0.00% fee must return 0.00');
+
+  // 2. Missing fee rule for Pledger must THROW, not return 0
+  assert.throws(() => {
+    sandbox.calculateFee('Pledger', 100, ss);
+  }, /No fee schedule entry configured for payment method: "Pledger"/);
+
+  // 3. calculateFundCharge also throws fail-closed on missing rule
+  assert.throws(() => {
+    sandbox.calculateFundCharge('Pledger', 100, ss);
+  }, /No fee schedule entry configured for payment method: "Pledger"/);
+});
+
+it('Scenario 1q: processGeneralDonation withholds transaction row when Sola DAF card has missing fee rule', () => {
+  sandbox.processWithFailover = () => ({ xResult: 'A', xRefNum: 'GW-SOLA-PLEDGER-MISSING-RULE', xCardType: 'Pledger' });
+  sandbox.getCampaignSheetId = () => 'camp-pledger-missing-rule';
+  const ss = getMockSS('camp-pledger-missing-rule');
+  ss.insertSheet('Customers').appendRow(['Customer ID', 'First Name', 'Last Name', 'Email']);
+  ss.insertSheet('Pledges').appendRow(['Pledge ID', 'Customer ID', 'Amount', 'Status']);
+  const tx = ss.insertSheet('Transactions');
+  tx.appendRow(['Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID', 'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date']);
+
+  // Fee_Config contains standard methods but NO rule for Pledger
+  const feeSheet = ss.insertSheet('Fee_Config');
+  feeSheet.appendRow(['Method', 'Rate', 'Flat Fee', 'Fund_Charge']);
+  feeSheet.appendRow(['Credit Card', 0.03, 0.30, 0.01]);
+  feeSheet.appendRow(['Check', 0.00, 0.00, 0.01]);
+
+  const res = sandbox.processGeneralDonation({
+    turnstileToken: 'mock-valid-turnstile',
+    cardToken: 'tok_test',
+    firstName: 'Yitzchak',
+    lastName: 'Shapiro',
+    email: 'yitz@example.com',
+    amount: '180',
+    campaignId: 'kfw87'
+  });
+
+  // Must fail closed with accounting_error citing missing fee schedule entry
+  assert.strictEqual(res.status, 'accounting_error');
+  assert.strictEqual(res.refNum, 'GW-SOLA-PLEDGER-MISSING-RULE');
+  assert(res.message.includes('Fee Calculation: No fee schedule entry configured for payment method: "Pledger"'));
+  assert(res.message.includes('Record withheld to prevent recording uncalculated zero fee'));
+
+  // CRITICAL: Verify NO row with zero fee was written to Transactions sheet
+  assert.strictEqual(tx.getLastRow(), 1, 'Transaction row MUST NOT be written when fee rule is missing!');
+});
+
+it('Scenario 1r: Standard and non-DAF card types processed via Sola resolve to Credit Card rate', () => {
+  sandbox.processWithFailover = () => ({ xResult: 'A', xRefNum: 'GW-SOLA-CORP-CARD', xCardType: 'CorporateCard' });
+  sandbox.getCampaignSheetId = () => 'camp-sola-standard-card';
+  const ss = getMockSS('camp-sola-standard-card');
+  ss.insertSheet('Customers').appendRow(['Customer ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Street', 'City', 'State', 'Zip', 'Created Date', 'Source']);
+  ss.insertSheet('Pledges').appendRow(['Pledge ID', 'Customer ID', 'Created Date', 'Donor', 'Campaign', 'Amount', 'Status', 'Amount Paid', 'Balance', 'Display Name', 'Memo', 'Anonymous', 'Teams', 'Method', 'Schedule ID', 'Notes']);
+  const tx = ss.insertSheet('Transactions');
+  tx.appendRow(['Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID', 'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date']);
+
+  const feeSheet = ss.insertSheet('Fee_Config');
+  feeSheet.appendRow(['Method', 'Rate', 'Flat Fee', 'Fund_Charge']);
+  feeSheet.appendRow(['Credit Card', 0.03, 0.30, 0.01]); // 3% + $0.30
+
+  const res = sandbox.processGeneralDonation({
+    turnstileToken: 'mock-valid-turnstile',
+    cardToken: 'tok_test',
+    firstName: 'Menachem',
+    lastName: 'Stern',
+    email: 'stern@example.com',
+    amount: '100',
+    campaignId: 'kfw87'
+  });
+
+  assert.strictEqual(res.status, 'success');
+  assert.strictEqual(res.refNum, 'GW-SOLA-CORP-CARD');
+  assert.strictEqual(tx.getLastRow(), 2, 'Transaction row must be written for standard card');
+
+  // Verify non-zero fee: 100 * 0.03 + 0.30 = $3.30, Fund Charge: $1.00, Net: $95.70
+  const txRow = tx.cells[1];
+  assert.strictEqual(txRow[2], 100);  // Amount Charged
+  assert.strictEqual(txRow[3], 3.30); // Fees (NOT zero!)
+  assert.strictEqual(txRow[4], 1.00); // Fund Charge
+  assert.strictEqual(txRow[5], 95.70); // Net
 });
 
 // SCENARIO 2: Legacy Row Reading & Non-Retroactivity
