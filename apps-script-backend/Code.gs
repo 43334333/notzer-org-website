@@ -5297,7 +5297,7 @@ function processGeneralDonation(data) {
     // Determine campaign
     var campaignId = data.campaignId || data.campaignCode || 'general';
 
-    // Pre-validate campaign sheet & Transactions schema fail-closed before processing charge
+    // Pre-validate campaign sheet, Customers, Pledges & Transactions schema fail-closed before processing charge
     var sheetId = getCampaignSheetId(campaignId);
     var ss = null;
     if (!sheetId) {
@@ -5305,6 +5305,8 @@ function processGeneralDonation(data) {
     }
     try {
       ss = SpreadsheetApp.openById(sheetId);
+      ensureCustomerSheet_(ss);
+      ensurePledgeSheet_(ss);
       var txSheet = ss.getSheetByName('Transactions');
       if (!txSheet) {
         txSheet = ss.insertSheet('Transactions');
@@ -5333,25 +5335,44 @@ function processGeneralDonation(data) {
     if (result.xResult === 'A') {
       // Payment approved — log to sheets
       var customerId = 'ONLINE-' + Utilities.formatDate(new Date(), 'America/New_York', 'yyyyMMddHHmmss');
+      var pledgeId = null;
+      var accountingErrors = [];
 
       // Log customer
-      logCustomerMaster(ss, customerId, data);
+      try {
+        logCustomerMaster(ss, customerId, data);
+      } catch (custErr) {
+        Logger.log('Accounting customer logging error: ' + custErr.toString());
+        accountingErrors.push('Customer: ' + custErr.message);
+      }
 
       // Log pledge
-      var pledgeId = logPledgeMaster(ss, data, customerId, 'Processed', '', campaignId);
+      try {
+        pledgeId = logPledgeMaster(ss, data, customerId, 'Processed', '', campaignId);
+        if (!pledgeId) {
+          throw new Error('Pledge ID generation failed');
+        }
+      } catch (pledgeErr) {
+        Logger.log('Accounting pledge logging error: ' + pledgeErr.toString());
+        accountingErrors.push('Pledge: ' + pledgeErr.message);
+      }
 
       // Log transaction
       var donorName = (data.firstName || '') + ' ' + (data.lastName || '');
       var txFee = calculateFee(result.xCardType || 'Credit Card', parseFloat(data.amount), ss);
 
       try {
-        logTransactionMaster(ss, pledgeId, customerId, donorName, parseFloat(data.amount), result, '1', txFee);
-      } catch (logErr) {
-        Logger.log('Accounting logging error after approved charge: ' + logErr.toString());
+        logTransactionMaster(ss, pledgeId || '', customerId, donorName, parseFloat(data.amount), result, '1', txFee);
+      } catch (txErr) {
+        Logger.log('Accounting transaction logging error: ' + txErr.toString());
+        accountingErrors.push('Transaction: ' + txErr.message);
+      }
+
+      if (accountingErrors.length > 0) {
         return {
-          status: 'error',
+          status: 'accounting_error',
           refNum: result.xRefNum || '',
-          message: 'Payment approved by gateway (Ref: ' + (result.xRefNum || '') + '), but accounting transaction record could not be written: ' + logErr.message + '. Please contact support.'
+          message: 'Payment approved by gateway (Ref: ' + (result.xRefNum || '') + '), but accounting records encountered issues (' + accountingErrors.join('; ') + '). Please contact support.'
         };
       }
 
@@ -7745,6 +7766,34 @@ function getCampaignSheetId(campaignId) {
 
 
 // ============================================================
+// HELPER — ENSURE & VALIDATE CUSTOMER SHEET
+// ============================================================
+/**
+ * Ensures Customers sheet exists and validates required headers.
+ * @param {Spreadsheet} ss - Campaign spreadsheet
+ * @returns {Sheet} Validated Customers sheet
+ */
+function ensureCustomerSheet_(ss) {
+  var sheet = ss.getSheetByName('Customers');
+  if (!sheet) {
+    sheet = ss.insertSheet('Customers');
+    sheet.appendRow([
+      'Customer ID', 'First Name', 'Last Name', 'Email', 'Phone',
+      'Street', 'City', 'State', 'Zip', 'Created Date', 'Source'
+    ]);
+    sheet.getRange('1:1').setFontWeight('bold');
+  } else {
+    var headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+    var headerStr = headers.map(function(h) { return String(h).trim().toLowerCase(); });
+    if (headerStr.indexOf('customer id') === -1) {
+      throw new Error('Required header "Customer ID" missing from Customers sheet.');
+    }
+  }
+  return sheet;
+}
+
+
+// ============================================================
 // HELPER — LOG CUSTOMER TO CAMPAIGN SHEET (Master version)
 // ============================================================
 /**
@@ -7757,15 +7806,7 @@ function logCustomerMaster(ss, customerId, data) {
   try {
     if (!customerId) return;
 
-    var sheet = ss.getSheetByName('Customers');
-    if (!sheet) {
-      sheet = ss.insertSheet('Customers');
-      sheet.appendRow([
-        'Customer ID', 'First Name', 'Last Name', 'Email', 'Phone',
-        'Street', 'City', 'State', 'Zip', 'Created Date', 'Source'
-      ]);
-      sheet.getRange('1:1').setFontWeight('bold');
-    }
+    var sheet = ensureCustomerSheet_(ss);
 
     // Check if customer already exists
     var lastRow = sheet.getLastRow();
@@ -7790,7 +7831,38 @@ function logCustomerMaster(ss, customerId, data) {
     ]);
   } catch (err) {
     Logger.log('logCustomerMaster failed: ' + err.toString());
+    throw err;
   }
+}
+
+
+// ============================================================
+// HELPER — ENSURE & VALIDATE PLEDGES SHEET
+// ============================================================
+/**
+ * Ensures Pledges sheet exists and validates required headers.
+ * @param {Spreadsheet} ss - Campaign spreadsheet
+ * @returns {Sheet} Validated Pledges sheet
+ */
+function ensurePledgeSheet_(ss) {
+  var sheet = ss.getSheetByName('Pledges');
+  if (!sheet) {
+    sheet = ss.insertSheet('Pledges');
+    sheet.appendRow([
+      'Pledge ID', 'Customer ID', 'Created Date', 'Donor', 'Campaign',
+      'Amount', 'Status', 'Amount Paid', 'Balance',
+      'Display Name', 'Memo', 'Anonymous', 'Teams',
+      'Method', 'Schedule ID', 'Notes'
+    ]);
+    sheet.getRange('1:1').setFontWeight('bold');
+  } else {
+    var headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+    var headerStr = headers.map(function(h) { return String(h).trim().toLowerCase(); });
+    if (headerStr.indexOf('pledge id') === -1) {
+      throw new Error('Required header "Pledge ID" missing from Pledges sheet.');
+    }
+  }
+  return sheet;
 }
 
 
@@ -7809,17 +7881,7 @@ function logCustomerMaster(ss, customerId, data) {
  */
 function logPledgeMaster(ss, data, customerId, status, scheduleId, campaignId) {
   try {
-    var sheet = ss.getSheetByName('Pledges');
-    if (!sheet) {
-      sheet = ss.insertSheet('Pledges');
-      sheet.appendRow([
-        'Pledge ID', 'Customer ID', 'Created Date', 'Donor', 'Campaign',
-        'Amount', 'Status', 'Amount Paid', 'Balance',
-        'Display Name', 'Memo', 'Anonymous', 'Teams',
-        'Method', 'Schedule ID', 'Notes'
-      ]);
-      sheet.getRange('1:1').setFontWeight('bold');
-    }
+    var sheet = ensurePledgeSheet_(ss);
 
     var pledgeId = generatePledgeIdMaster(sheet);
     var amount = parseFloat(data.amount) || 0;
@@ -7850,7 +7912,7 @@ function logPledgeMaster(ss, data, customerId, status, scheduleId, campaignId) {
     return pledgeId;
   } catch (err) {
     Logger.log('logPledgeMaster failed: ' + err.toString());
-    return null;
+    throw err;
   }
 }
 
