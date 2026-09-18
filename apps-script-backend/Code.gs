@@ -1867,6 +1867,7 @@ function getMasterFeeDefaults_(masterSS) {
     ['Wire Transfer', 0.00, 0.00, 0.01],
     ['Cash', 0.00, 0.00, 0.01],
     ['Bank Transfer', 0.00, 0.00, 0.01],
+    ['Manual', 0.00, 0.00, 0.01],
     ['Other', 0.00, 0.00, 0.01]
   ];
 }
@@ -6421,9 +6422,11 @@ function issueManualReceipt(data, user) {
         logCustomerMaster(campaignSS, customerId, data);
         pledgeId = logPledgeMaster(campaignSS, data, customerId, 'Processed', '', campaignId);
 
-        var paymentResult = { xRefNum: refNum, xResult: 'Manual', xMaskedCardNumber: data.method || 'Manual', xCardType: '' };
-        var txFee = calculateFee(data.method || 'Manual', amount, campaignSS);
-        logTransactionMaster(campaignSS, pledgeId, customerId, donorName, amount, paymentResult, '1', txFee);
+        var method = data.method || 'Manual';
+        var txFee = calculateFee(method, amount, campaignSS);
+        var txFundCharge = calculateFundCharge(method, amount, campaignSS);
+        var paymentResult = { xRefNum: refNum, xResult: 'Manual', xMaskedCardNumber: method, method: method, xCardType: '' };
+        logTransactionMaster(campaignSS, pledgeId, customerId, donorName, amount, paymentResult, '1', txFee, txFundCharge);
       }
     } catch (sheetErr) {
       Logger.log('Failed to write manual donation to campaign sheet: ' + sheetErr.toString());
@@ -8251,7 +8254,7 @@ function resolveFeeScheduleEntry_(method, schedule) {
   if (!schedule || typeof schedule !== 'object') return null;
 
   var ml = (method || '').toLowerCase().trim();
-  if (!ml) return schedule['Credit Card'] || null;
+  if (!ml) return null;
 
   // 1. DAF Brand mappings (from Cardknox xCardType or user input)
   // Evaluated before direct exact match so configured DAF rates (e.g. 'DAF - Matbia')
@@ -8307,22 +8310,31 @@ function resolveFeeScheduleEntry_(method, schedule) {
     }
   }
 
-  // 4. Standard Credit Card brands
-  if (/^\d/.test(method) || ml.includes('visa') || ml.includes('mastercard') || ml.includes('card') ||
-      ml.includes('amex') || ml.includes('american express') || ml.includes('discover') ||
-      ml.includes('diners') || ml.includes('jcb') || ml.includes('credit')) {
-    if (schedule['Credit Card']) return schedule['Credit Card'];
-    if (schedule['Cardknox']) return schedule['Cardknox'];
-    if (schedule['USAePay']) return schedule['USAePay'];
+  // 4. Manual and offline payment handling
+  // If no explicit 'Manual' row exists, fall back to 'Other' or standard zero-fee offline defaults
+  if (ml === 'manual' || ml.includes('manual') || ml === 'offline') {
+    if (schedule['Manual']) return schedule['Manual'];
+    if (schedule['Other']) return schedule['Other'];
+    var fallbackFc = (schedule['Other'] && schedule['Other'].fundCharge !== undefined && schedule['Other'].fundCharge !== null)
+      ? schedule['Other'].fundCharge : 0.01;
+    return { rate: 0.00, flat: 0.00, fundCharge: fallbackFc };
   }
 
-  // 5. Card gateway fallback for standard non-DAF card types processed via Cardknox/Sola/USAePay
-  // DAF cards (Pledger, OJC, DonorsFund, Matbia) must NOT fall back to standard credit card rates;
-  // they require explicit DAF fee rules. But general card types processed via Sola
-  // fall back to the campaign's standard Credit Card / Cardknox rate.
+  // 5. Standard Credit / Debit Card brand & card type detection
+  // Specifically matches card numbers/prefixes (/^\d/), major brands, and card descriptors.
+  var isCardMethod = /^\d/.test(ml) ||
+    ml.includes('visa') || ml.includes('mastercard') || ml.includes('mc') ||
+    ml.includes('amex') || ml.includes('american express') ||
+    ml.includes('discover') || ml.includes('diners') || ml.includes('jcb') ||
+    ml.includes('unionpay') || ml.includes('carte blanche') || ml.includes('maestro') ||
+    ml.includes('card') || ml.includes('credit') || ml.includes('debit') || ml.includes('prepaid');
+
   var isDafMethod = ml.includes('donors') || ml.includes('tdf') || ml.includes('ojc') ||
                     ml.includes('pledger') || ml.includes('matbia') || ml.startsWith('daf');
-  if (!isDafMethod) {
+
+  // General credit/debit card types processed via Cardknox/Sola/USAePay fall back to campaign's Credit Card rate.
+  // DAF cards are strictly excluded from this fallback and require explicit DAF fee rules.
+  if (isCardMethod && !isDafMethod) {
     if (schedule['Credit Card']) return schedule['Credit Card'];
     if (schedule['Cardknox']) return schedule['Cardknox'];
     if (schedule['USAePay']) return schedule['USAePay'];
