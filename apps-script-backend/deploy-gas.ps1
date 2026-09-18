@@ -176,28 +176,44 @@ Write-Host "`n[6/7] Creating new version..." -ForegroundColor Yellow
 $versionNumber = $null
 Push-Location $claspMasterDir
 try {
+    # 1. Query current highest version before creating a new one
+    $preVersionsOutput = & $InvokeClasp -Profile notzer_org -AutoRefresh versions 2>&1 | Out-String
+    $preMatches = [regex]::Matches($preVersionsOutput, '^\s*(\d+)\s+-', [System.Text.RegularExpressions.RegexOptions]::Multiline)
+    $priorVersion = 0
+    if ($preMatches.Count -gt 0) {
+        $priorVersion = [int]($preMatches | ForEach-Object { [int]$_.Groups[1].Value } | Measure-Object -Maximum).Maximum
+    }
+    Write-Host "  [INFO] Prior highest version: $priorVersion" -ForegroundColor Gray
+
+    # 2. Create the new version
     $timestamp = Get-Date -Format "yyyy-MM-dd_HHmm"
     $versionOutput = & $InvokeClasp -Profile notzer_org -AutoRefresh version "v-$timestamp" 2>&1 | Out-String
     Write-Host $versionOutput
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "  [WARN] Version creation failed. Push was successful." -ForegroundColor Yellow
+        Write-Host "  [FAIL] Version creation failed with exit code $LASTEXITCODE. Aborting deployment." -ForegroundColor Red
+        exit 1
+    }
+
+    if ($versionOutput -match 'Created version\s+(\d+)') {
+        $versionNumber = [int]$Matches[1]
     } else {
-        Write-Host "  [OK] Version created" -ForegroundColor Green
-        if ($versionOutput -match 'Created version\s+(\d+)') {
-            $versionNumber = [int]$Matches[1]
-            Write-Host "  [INFO] Version number: $versionNumber" -ForegroundColor Cyan
+        # Query versions list to confirm new version was created
+        $postVersionsOutput = & $InvokeClasp -Profile notzer_org -AutoRefresh versions 2>&1 | Out-String
+        $postMatches = [regex]::Matches($postVersionsOutput, '^\s*(\d+)\s+-', [System.Text.RegularExpressions.RegexOptions]::Multiline)
+        if ($postMatches.Count -gt 0) {
+            $latestVersion = [int]($postMatches | ForEach-Object { [int]$_.Groups[1].Value } | Measure-Object -Maximum).Maximum
+            if ($latestVersion -gt $priorVersion) {
+                $versionNumber = $latestVersion
+            }
         }
     }
 
-    if (-not $versionNumber) {
-        # Fallback: Query clasp versions to detect the latest version number
-        $versionsOutput = & $InvokeClasp -Profile notzer_org -AutoRefresh versions 2>&1 | Out-String
-        $versionMatches = [regex]::Matches($versionsOutput, '^\s*(\d+)\s+-', [System.Text.RegularExpressions.RegexOptions]::Multiline)
-        if ($versionMatches.Count -gt 0) {
-            $versionNumber = [int]($versionMatches | ForEach-Object { [int]$_.Groups[1].Value } | Measure-Object -Maximum).Maximum
-            Write-Host "  [INFO] Detected latest version number from versions list: $versionNumber" -ForegroundColor Cyan
-        }
+    if (-not $versionNumber -or $versionNumber -le $priorVersion) {
+        Write-Host "  [FAIL] Could not verify newly created version number (prior: $priorVersion, detected: $versionNumber). Aborting deployment to prevent deploying unverified code." -ForegroundColor Red
+        exit 1
     }
+
+    Write-Host "  [OK] Verified new version number: @$versionNumber (incremented from @$priorVersion)" -ForegroundColor Green
 } finally {
     Pop-Location
 }
@@ -207,21 +223,27 @@ Write-Host "`n[7/7] Updating production deployment ($NOTZER_PROD_DEPLOYMENT_ID).
 
 Push-Location $claspMasterDir
 try {
-    if ($versionNumber) {
-        Write-Host "  Updating deployment $NOTZER_PROD_DEPLOYMENT_ID to version $versionNumber..." -ForegroundColor White
-        & $InvokeClasp -Profile notzer_org -AutoRefresh deploy -i $NOTZER_PROD_DEPLOYMENT_ID -V $versionNumber -d "v$versionNumber - Fund Charge & DAF card resolution"
-    } else {
-        Write-Host "  Updating deployment $NOTZER_PROD_DEPLOYMENT_ID to latest version..." -ForegroundColor White
-        & $InvokeClasp -Profile notzer_org -AutoRefresh deploy -i $NOTZER_PROD_DEPLOYMENT_ID -d "Fund Charge & DAF card resolution"
-    }
+    Write-Host "  Updating deployment $NOTZER_PROD_DEPLOYMENT_ID to version $versionNumber..." -ForegroundColor White
+    $deployOutput = & $InvokeClasp -Profile notzer_org -AutoRefresh deploy -i $NOTZER_PROD_DEPLOYMENT_ID -V $versionNumber -d "v$versionNumber - Fund Charge & DAF card resolution" 2>&1 | Out-String
+    Write-Host $deployOutput
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "  [FAIL] Deployment update failed." -ForegroundColor Red
+        Write-Host "  [FAIL] Deployment update failed with exit code $LASTEXITCODE." -ForegroundColor Red
         exit 1
     }
-    Write-Host "  [OK] Deployment updated successfully" -ForegroundColor Green
 
-    Write-Host "`n  Verifying deployments..." -ForegroundColor Yellow
-    & $InvokeClasp -Profile notzer_org -AutoRefresh deployments
+    # Verify that production deployment points to the exact new version
+    Write-Host "`n  Verifying production deployment binding..." -ForegroundColor Yellow
+    $deploymentsOutput = & $InvokeClasp -Profile notzer_org -AutoRefresh deployments 2>&1 | Out-String
+    Write-Host $deploymentsOutput
+
+    $escapedDeployId = [regex]::Escape($NOTZER_PROD_DEPLOYMENT_ID)
+    $bindingPattern = "$escapedDeployId\s+@$versionNumber\b"
+    if ($deploymentsOutput -notmatch $bindingPattern) {
+        Write-Host "  [FAIL] Verification failed: Production deployment $NOTZER_PROD_DEPLOYMENT_ID is NOT pointing to version @$versionNumber!" -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host "  [OK] Verified: Production deployment $NOTZER_PROD_DEPLOYMENT_ID is active at @$versionNumber" -ForegroundColor Green
 } finally {
     Pop-Location
 }
