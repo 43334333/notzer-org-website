@@ -5300,15 +5300,26 @@ function processGeneralDonation(data) {
     // Pre-validate campaign sheet & Transactions schema fail-closed before processing charge
     var sheetId = getCampaignSheetId(campaignId);
     var ss = null;
-    if (sheetId) {
+    if (!sheetId) {
+      return { status: 'error', message: 'Campaign configuration not found.' };
+    }
+    try {
       ss = SpreadsheetApp.openById(sheetId);
       var txSheet = ss.getSheetByName('Transactions');
-      if (txSheet) {
+      if (!txSheet) {
+        txSheet = ss.insertSheet('Transactions');
+        txSheet.appendRow([
+          'Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID',
+          'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date'
+        ]);
+        txSheet.getRange('1:1').setFontWeight('bold');
+      } else {
         ensureTransactionFundChargeCol_(txSheet);
-        getTransactionColMap_(txSheet); // Fails closed before charge if headers missing or duplicate
       }
-    } else {
-      return { status: 'error', message: 'Campaign configuration not found.' };
+      getTransactionColMap_(txSheet); // Fails closed before charge if headers missing or duplicate
+    } catch (preValErr) {
+      Logger.log('Accounting pre-validation failed before charge: ' + preValErr.toString());
+      return { status: 'error', message: 'Campaign accounting pre-validation failed: ' + preValErr.message };
     }
 
     // Process payment with failover
