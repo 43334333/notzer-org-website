@@ -2,9 +2,14 @@
 # ============================================================
 # deploy-gas.ps1 — Audit & Deploy Code.gs to Google Apps Script
 # ============================================================
-# Usage: .\deploy-gas.ps1
+# Usage: .\deploy-gas.ps1 [-Force]
 # Prerequisites: Invoke-Clasp.ps1 configured with notzer_org profile
 # ============================================================
+
+[CmdletBinding()]
+param(
+    [switch]$Force
+)
 
 $ErrorActionPreference = "Stop"
 $backendDir = "c:\Users\spink\Dropbox\Apps\notzer.org\notzer-org-website\apps-script-backend"
@@ -152,7 +157,7 @@ Write-Host "`n[5/7] Pushing to Apps Script (profile: notzer_org)..." -Foreground
 Write-Host "  WARNING: This will overwrite the remote Code.gs" -ForegroundColor Yellow
 Write-Host "  Target: Notzer Chesed Master Backend ($NOTZER_MASTER_SCRIPT_ID)" -ForegroundColor Yellow
 
-$confirm = Read-Host "  Continue? (y/n)"
+$confirm = if ($Force) { 'y' } else { Read-Host "  Continue? (y/n)" }
 if ($confirm -ne 'y') {
     Write-Host "  [ABORT] Deployment cancelled." -ForegroundColor Yellow
     exit 0
