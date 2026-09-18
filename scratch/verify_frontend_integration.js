@@ -261,6 +261,27 @@ vm.runInContext("resetSessions()", vmContext);
 const zSession3 = vm.runInContext("getRouteSession('zelle')", vmContext);
 assert(zSession3.id !== zSession1.id, "After modal/panel close reset, subsequent attempt mints a fresh unique PK");
 
+// 9. Check all 5 files for fail-closed double-charge lockout on accounting_error
+console.log('\n--- Verifying Double-Charge Lockout on All 5 Donation Pages ---');
+allFiles.forEach(f => {
+    const fullPath = path.resolve(BASE_DIR, f);
+    const content = fs.readFileSync(fullPath, 'utf8');
+    assert(
+        content.includes("data.status === 'accounting_error'") &&
+        content.includes("data.refNum && data.status !== 'success'"),
+        `[${f}] Handles data.status === 'accounting_error' and unexpected refNum status`
+    );
+    assert(
+        content.includes("btn.textContent = 'Payment Processed (Contact Support)'") &&
+        content.includes("btn.disabled = true;"),
+        `[${f}] Permanently locks Donate button to prevent double-charging donor`
+    );
+    assert(
+        content.includes("Please DO NOT submit again to prevent duplicate charges"),
+        `[${f}] Displays explicit donor advisory against resubmission`
+    );
+});
+
 console.log(`\n====================================================`);
 console.log(`ALL TESTS PASSED: ${passedTests}/${totalTests} assertions GREEN!`);
 console.log('====================================================\n');

@@ -169,11 +169,27 @@ const sandbox = {
   Session: {
     getScriptTimeZone: () => 'America/New_York'
   },
-  PropertiesService: {
-    getScriptProperties: () => ({
-      getProperty: (k) => 'mock-master-sheet-id'
+  UrlFetchApp: {
+    fetch: () => ({
+      getContentText: () => JSON.stringify({ success: true }),
+      getResponseCode: () => 200
     })
   },
+  PropertiesService: {
+    getScriptProperties: () => ({
+      getProperty: (k) => {
+        if (k === 'TURNSTILE_SECRET') return 'mock-turnstile-secret';
+        return 'mock-master-sheet-id';
+      }
+    })
+  },
+  CacheService: {
+    getScriptCache: () => ({
+      get: () => null,
+      put: () => {}
+    })
+  },
+  verifyTurnstile: () => ({ success: true }),
   Math: Math,
   Date: Date,
   parseInt: parseInt,
@@ -188,6 +204,7 @@ const sandbox = {
 const code = fs.readFileSync('apps-script-backend/Code.gs', 'utf8');
 vm.createContext(sandbox);
 vm.runInContext(code, sandbox);
+sandbox.verifyTurnstile = () => ({ success: true });
 
 console.log('--- STARTING COMPREHENSIVE FUND CHARGE VERIFICATION SUITE ---');
 
@@ -263,6 +280,172 @@ it('Scenario 1d: logTransactionMaster throws fail-closed when sheet headers are 
   assert.throws(() => {
     sandbox.logTransactionMaster(ss, 'PL-1', 'CUST-1', 'Donor', 100, { xResult: 'A', xRefNum: 'REF-1' }, '1', 3.00);
   }, /Required header "net" missing/);
+});
+
+it('Scenario 1e: ensureCustomerSheet_ rejects corrupted Customers sheet with missing "Customer ID"', () => {
+  const ss = new MockSpreadsheet('test1e');
+  const sheet = ss.insertSheet('Customers');
+  sheet.appendRow(['First Name', 'Last Name', 'Email']); // Missing Customer ID
+
+  assert.throws(() => {
+    sandbox.ensureCustomerSheet_(ss);
+  }, /Required header "Customer ID" missing/);
+});
+
+it('Scenario 1f: ensurePledgeSheet_ rejects corrupted Pledges sheet with missing "Pledge ID"', () => {
+  const ss = new MockSpreadsheet('test1f');
+  const sheet = ss.insertSheet('Pledges');
+  sheet.appendRow(['Customer ID', 'Amount', 'Status']); // Missing Pledge ID
+
+  assert.throws(() => {
+    sandbox.ensurePledgeSheet_(ss);
+  }, /Required header "Pledge ID" missing/);
+});
+
+it('Scenario 1g: processGeneralDonation fails closed BEFORE card authorization when sheet pre-validation fails', () => {
+  let gatewayCalled = false;
+  sandbox.processWithFailover = () => {
+    gatewayCalled = true;
+    return { xResult: 'A', xRefNum: 'NEVER-CHARGED' };
+  };
+  sandbox.getCampaignSheetId = () => 'camp-preval-fail';
+  const ss = getMockSS('camp-preval-fail');
+  const custSheet = ss.insertSheet('Customers');
+  custSheet.appendRow(['Corrupt', 'Headers']); // Missing Customer ID
+
+  const res = sandbox.processGeneralDonation({
+    turnstileToken: 'mock-valid-turnstile',
+    cardToken: 'tok_test',
+    firstName: 'Chaim',
+    lastName: 'Cohen',
+    email: 'chaim@example.com',
+    amount: '100',
+    campaignId: 'kfw87'
+  });
+
+  console.log('1g res:', res);
+  assert.strictEqual(res.status, 'error');
+  assert(res.message.includes('Campaign accounting pre-validation failed'));
+  assert.strictEqual(gatewayCalled, false, 'Gateway MUST NOT be called when pre-validation fails!');
+});
+
+it('Scenario 1h: processGeneralDonation returns accounting_error with refNum if customer logging throws post-charge', () => {
+  sandbox.processWithFailover = () => ({ xResult: 'A', xRefNum: 'GW-APPROVED-CUSTFAIL', xCardType: 'Visa' });
+  sandbox.getCampaignSheetId = () => 'camp-post-custfail';
+  const ss = getMockSS('camp-post-custfail');
+  ss.insertSheet('Customers').appendRow(['Customer ID', 'First Name', 'Last Name', 'Email']);
+  ss.insertSheet('Pledges').appendRow(['Pledge ID', 'Customer ID', 'Amount', 'Status']);
+  const tx = ss.insertSheet('Transactions');
+  tx.appendRow(['Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID', 'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date']);
+
+  const originalLogCust = sandbox.logCustomerMaster;
+  sandbox.logCustomerMaster = () => { throw new Error('Simulated Customer disk error'); };
+
+  try {
+    const res = sandbox.processGeneralDonation({
+      turnstileToken: 'mock-valid-turnstile',
+      cardToken: 'tok_test',
+      firstName: 'Chaim',
+      lastName: 'Cohen',
+      email: 'chaim@example.com',
+      amount: '100',
+      campaignId: 'kfw87'
+    });
+
+    assert.strictEqual(res.status, 'accounting_error');
+    assert.strictEqual(res.refNum, 'GW-APPROVED-CUSTFAIL');
+    assert(res.message.includes('Customer: Simulated Customer disk error'));
+  } finally {
+    sandbox.logCustomerMaster = originalLogCust;
+  }
+});
+
+it('Scenario 1i: processGeneralDonation returns accounting_error with refNum if pledge logging throws post-charge', () => {
+  sandbox.processWithFailover = () => ({ xResult: 'A', xRefNum: 'GW-APPROVED-PLGFAIL', xCardType: 'Visa' });
+  sandbox.getCampaignSheetId = () => 'camp-post-plgfail';
+  const ss = getMockSS('camp-post-plgfail');
+  ss.insertSheet('Customers').appendRow(['Customer ID', 'First Name', 'Last Name', 'Email']);
+  ss.insertSheet('Pledges').appendRow(['Pledge ID', 'Customer ID', 'Amount', 'Status']);
+  const tx = ss.insertSheet('Transactions');
+  tx.appendRow(['Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID', 'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date']);
+
+  const originalLogPledge = sandbox.logPledgeMaster;
+  sandbox.logPledgeMaster = () => { throw new Error('Simulated Pledge write timeout'); };
+
+  try {
+    const res = sandbox.processGeneralDonation({
+      turnstileToken: 'mock-valid-turnstile',
+      cardToken: 'tok_test',
+      firstName: 'Chaim',
+      lastName: 'Cohen',
+      email: 'chaim@example.com',
+      amount: '100',
+      campaignId: 'kfw87'
+    });
+
+    assert.strictEqual(res.status, 'accounting_error');
+    assert.strictEqual(res.refNum, 'GW-APPROVED-PLGFAIL');
+    assert(res.message.includes('Pledge: Simulated Pledge write timeout'));
+  } finally {
+    sandbox.logPledgeMaster = originalLogPledge;
+  }
+});
+
+it('Scenario 1j: processGeneralDonation returns accounting_error with refNum if transaction logging throws post-charge', () => {
+  sandbox.processWithFailover = () => ({ xResult: 'A', xRefNum: 'GW-APPROVED-TXFAIL', xCardType: 'Visa' });
+  sandbox.getCampaignSheetId = () => 'camp-post-txfail';
+  const ss = getMockSS('camp-post-txfail');
+  ss.insertSheet('Customers').appendRow(['Customer ID', 'First Name', 'Last Name', 'Email']);
+  ss.insertSheet('Pledges').appendRow(['Pledge ID', 'Customer ID', 'Amount', 'Status']);
+  const tx = ss.insertSheet('Transactions');
+  tx.appendRow(['Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID', 'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date']);
+
+  const originalLogTx = sandbox.logTransactionMaster;
+  sandbox.logTransactionMaster = () => { throw new Error('Simulated Transaction quota exceeded'); };
+
+  try {
+    const res = sandbox.processGeneralDonation({
+      turnstileToken: 'mock-valid-turnstile',
+      cardToken: 'tok_test',
+      firstName: 'Chaim',
+      lastName: 'Cohen',
+      email: 'chaim@example.com',
+      amount: '100',
+      campaignId: 'kfw87'
+    });
+
+    assert.strictEqual(res.status, 'accounting_error');
+    assert.strictEqual(res.refNum, 'GW-APPROVED-TXFAIL');
+    assert(res.message.includes('Transaction: Simulated Transaction quota exceeded'));
+  } finally {
+    sandbox.logTransactionMaster = originalLogTx;
+  }
+});
+
+it('Scenario 1k: processGeneralDonation full happy path writes all 3 records and returns success', () => {
+  sandbox.processWithFailover = () => ({ xResult: 'A', xRefNum: 'GW-APPROVED-FULLOK', xCardType: 'Visa' });
+  sandbox.getCampaignSheetId = () => 'camp-post-fullok';
+  const ss = getMockSS('camp-post-fullok');
+  ss.insertSheet('Customers').appendRow(['Customer ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Street', 'City', 'State', 'Zip', 'Created Date', 'Source']);
+  ss.insertSheet('Pledges').appendRow(['Pledge ID', 'Customer ID', 'Created Date', 'Donor', 'Campaign', 'Amount', 'Status', 'Amount Paid', 'Balance', 'Display Name', 'Memo', 'Anonymous', 'Teams', 'Method', 'Schedule ID', 'Notes']);
+  const tx = ss.insertSheet('Transactions');
+  tx.appendRow(['Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID', 'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date']);
+
+  const res = sandbox.processGeneralDonation({
+    turnstileToken: 'mock-valid-turnstile',
+    cardToken: 'tok_test',
+    firstName: 'Moshe',
+    lastName: 'Levi',
+    email: 'moshe@example.com',
+    amount: '150',
+    campaignId: 'kfw87'
+  });
+
+  assert.strictEqual(res.status, 'success');
+  assert.strictEqual(res.refNum, 'GW-APPROVED-FULLOK');
+  assert(ss.getSheetByName('Customers').getLastRow() >= 2, 'Customer row must be written');
+  assert(ss.getSheetByName('Pledges').getLastRow() >= 2, 'Pledge row must be written');
+  assert(ss.getSheetByName('Transactions').getLastRow() >= 2, 'Transaction row must be written');
 });
 
 // SCENARIO 2: Legacy Row Reading & Non-Retroactivity
