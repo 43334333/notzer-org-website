@@ -448,6 +448,112 @@ it('Scenario 1k: processGeneralDonation full happy path writes all 3 records and
   assert(ss.getSheetByName('Transactions').getLastRow() >= 2, 'Transaction row must be written');
 });
 
+it('Scenario 1l: ensureFeeConfigSheet_ fails closed on missing "Method" header or empty rows', () => {
+  const ssBadHeader = new MockSpreadsheet('test1l-bad-header');
+  const sheetBad = ssBadHeader.insertSheet('Fee_Config');
+  sheetBad.appendRow(['WrongHeader', 'Rate', 'Flat Fee', 'Fund_Charge']);
+  sheetBad.appendRow(['Credit Card', 0.03, 0.30, 0.01]);
+  assert.throws(() => {
+    sandbox.ensureFeeConfigSheet_(ssBadHeader);
+  }, /Required header "Method" missing from Fee_Config sheet/);
+
+  const ssEmpty = new MockSpreadsheet('test1l-empty');
+  const sheetEmpty = ssEmpty.insertSheet('Fee_Config');
+  sheetEmpty.appendRow(['Method', 'Rate', 'Flat Fee', 'Fund_Charge']); // Only 1 row (header)
+  assert.throws(() => {
+    sandbox.ensureFeeConfigSheet_(ssEmpty);
+  }, /Fee_Config sheet has no configuration rows/);
+});
+
+it('Scenario 1m: processGeneralDonation fails closed BEFORE card authorization when Fee_Config read fails', () => {
+  let gatewayCalled = false;
+  sandbox.processWithFailover = () => {
+    gatewayCalled = true;
+    return { xResult: 'A', xRefNum: 'NEVER-CHARGED-FEEFAIL' };
+  };
+  sandbox.getCampaignSheetId = () => 'camp-preval-feefail';
+  const ss = getMockSS('camp-preval-feefail');
+  ss.insertSheet('Customers').appendRow(['Customer ID', 'First Name', 'Last Name', 'Email']);
+  ss.insertSheet('Pledges').appendRow(['Pledge ID', 'Customer ID', 'Amount', 'Status']);
+  // Corrupt Fee_Config missing Method header
+  const feeSheet = ss.insertSheet('Fee_Config');
+  feeSheet.appendRow(['CorruptHeader', 'Rate', 'Flat Fee']);
+  feeSheet.appendRow(['Credit Card', 0.03, 0.30]);
+
+  const res = sandbox.processGeneralDonation({
+    turnstileToken: 'mock-valid-turnstile',
+    cardToken: 'tok_test',
+    firstName: 'Chaim',
+    lastName: 'Cohen',
+    email: 'chaim@example.com',
+    amount: '100',
+    campaignId: 'kfw87'
+  });
+
+  assert.strictEqual(res.status, 'error');
+  assert(res.message.includes('Fee_Config'), 'Error message must cite Fee_Config pre-validation failure');
+  assert.strictEqual(gatewayCalled, false, 'Payment gateway MUST NOT be called when Fee_Config pre-validation fails');
+});
+
+it('Scenario 1n: calculateFee and calculateFundCharge throw fail-closed on Fee_Config read failure without caching fallback', () => {
+  const ssErr = new MockSpreadsheet('ss-feeread-err');
+  ssErr.getSheetByName = (name) => {
+    if (name === 'Fee_Config') throw new Error('Simulated Sheet IO read failure');
+    return null;
+  };
+
+  assert.throws(() => {
+    sandbox.calculateFee('DonorsFund', 100, ssErr);
+  }, /Failed to load fee schedule from Fee_Config: Simulated Sheet IO read failure/);
+
+  assert.throws(() => {
+    sandbox.calculateFundCharge('DonorsFund', 100, ssErr);
+  }, /Failed to load fee schedule from Fee_Config: Simulated Sheet IO read failure/);
+
+  assert.strictEqual(sandbox._feeScheduleCaches['ss-feeread-err'], undefined, 'Cache must NOT store a partial fallback on error');
+});
+
+it('Scenario 1o: processGeneralDonation returns accounting_error with refNum if Fee_Config read fails post-charge (prevents $0 fee recording)', () => {
+  sandbox.processWithFailover = () => ({ xResult: 'A', xRefNum: 'GW-APPROVED-FEEREADFAIL', xCardType: 'DonorsFund' });
+  sandbox.getCampaignSheetId = () => 'camp-post-feefail';
+  const ss = getMockSS('camp-post-feefail');
+  ss.insertSheet('Customers').appendRow(['Customer ID', 'First Name', 'Last Name', 'Email']);
+  ss.insertSheet('Pledges').appendRow(['Pledge ID', 'Customer ID', 'Amount', 'Status']);
+  const tx = ss.insertSheet('Transactions');
+  tx.appendRow(['Timestamp', 'Reference', 'Amount Charged', 'Fees', 'Fund Charge', 'Net', 'Donor Name', 'Pledge ID', 'Customer ID', 'Result', 'Method', 'Card Type', 'Payment #', 'Funded', 'Funded Date']);
+
+  // Pre-charge will call loadFeeSchedule_ which will succeed initially
+  const feeSheet = ss.insertSheet('Fee_Config');
+  feeSheet.appendRow(['Method', 'Rate', 'Flat Fee', 'Fund_Charge']);
+  feeSheet.appendRow(['Credit Card', 0.03, 0.30, 0.01]);
+  feeSheet.appendRow(['DAF - The Donors Fund', 0.00, 0.00, 0.01]);
+
+  // Inject a post-charge read failure by overriding calculateFee to simulate post-charge fee schedule read failure
+  const originalCalculateFee = sandbox.calculateFee;
+  sandbox.calculateFee = () => {
+    throw new Error('Simulated post-charge Fee_Config read failure');
+  };
+
+  try {
+    const res = sandbox.processGeneralDonation({
+      turnstileToken: 'mock-valid-turnstile',
+      cardToken: 'tok_test',
+      firstName: 'Aharon',
+      lastName: 'Klein',
+      email: 'aharon@example.com',
+      amount: '200',
+      campaignId: 'kfw87'
+    });
+
+    assert.strictEqual(res.status, 'accounting_error');
+    assert.strictEqual(res.refNum, 'GW-APPROVED-FEEREADFAIL');
+    assert(res.message.includes('Fee Calculation: Simulated post-charge Fee_Config read failure'));
+    assert.notStrictEqual(res.status, 'success', 'Transaction with failed fee schedule MUST NEVER report success');
+  } finally {
+    sandbox.calculateFee = originalCalculateFee;
+  }
+});
+
 // SCENARIO 2: Legacy Row Reading & Non-Retroactivity
 it('Scenario 2: getTransactionsMaster_ preserves historical Net and returns fundCharge: 0 on legacy 14-col sheet', () => {
   const ss = getMockSS('camp-legacy-sheet');
