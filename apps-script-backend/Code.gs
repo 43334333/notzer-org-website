@@ -5360,7 +5360,7 @@ function processGeneralDonation(data) {
       }
 
       // Calculate fees
-      var txFee = 0;
+      var txFee = null;
       try {
         txFee = calculateFee(result.xCardType || 'Credit Card', parseFloat(data.amount), ss);
       } catch (feeErr) {
@@ -5368,13 +5368,17 @@ function processGeneralDonation(data) {
         accountingErrors.push('Fee Calculation: ' + feeErr.message);
       }
 
-      // Log transaction
-      var donorName = (data.firstName || '') + ' ' + (data.lastName || '');
-      try {
-        logTransactionMaster(ss, pledgeId || '', customerId, donorName, parseFloat(data.amount), result, '1', txFee);
-      } catch (txErr) {
-        Logger.log('Accounting transaction logging error: ' + txErr.toString());
-        accountingErrors.push('Transaction: ' + txErr.message);
+      // Log transaction only if fee calculation succeeded to prevent recording incorrect zero fees
+      if (txFee !== null) {
+        var donorName = (data.firstName || '') + ' ' + (data.lastName || '');
+        try {
+          logTransactionMaster(ss, pledgeId || '', customerId, donorName, parseFloat(data.amount), result, '1', txFee);
+        } catch (txErr) {
+          Logger.log('Accounting transaction logging error: ' + txErr.toString());
+          accountingErrors.push('Transaction: ' + txErr.message);
+        }
+      } else {
+        accountingErrors.push('Transaction: Record withheld to prevent recording uncalculated zero fee');
       }
 
       if (accountingErrors.length > 0) {
@@ -8306,7 +8310,19 @@ function resolveFeeScheduleEntry_(method, schedule) {
   // 4. Standard Credit Card brands
   if (/^\d/.test(method) || ml.includes('visa') || ml.includes('mastercard') || ml.includes('card') ||
       ml.includes('amex') || ml.includes('american express') || ml.includes('discover') ||
-      ml.includes('diners') || ml.includes('jcb')) {
+      ml.includes('diners') || ml.includes('jcb') || ml.includes('credit')) {
+    if (schedule['Credit Card']) return schedule['Credit Card'];
+    if (schedule['Cardknox']) return schedule['Cardknox'];
+    if (schedule['USAePay']) return schedule['USAePay'];
+  }
+
+  // 5. Card gateway fallback for standard non-DAF card types processed via Cardknox/Sola/USAePay
+  // DAF cards (Pledger, OJC, DonorsFund, Matbia) must NOT fall back to standard credit card rates;
+  // they require explicit DAF fee rules. But general card types processed via Sola
+  // fall back to the campaign's standard Credit Card / Cardknox rate.
+  var isDafMethod = ml.includes('donors') || ml.includes('tdf') || ml.includes('ojc') ||
+                    ml.includes('pledger') || ml.includes('matbia') || ml.startsWith('daf');
+  if (!isDafMethod) {
     if (schedule['Credit Card']) return schedule['Credit Card'];
     if (schedule['Cardknox']) return schedule['Cardknox'];
     if (schedule['USAePay']) return schedule['USAePay'];
@@ -8333,10 +8349,10 @@ function calculateFundCharge(method, amount, ss) {
     schedule = { 'Credit Card': { rate: 0.029, flat: 0.30, fundCharge: 0.01 } };
   }
   var entry = resolveFeeScheduleEntry_(method, schedule);
-  var rate = 0.01;
-  if (entry && entry.fundCharge !== undefined && entry.fundCharge !== null) {
-    rate = entry.fundCharge;
+  if (!entry) {
+    throw new Error('No fee schedule entry configured for payment method: "' + method + '"');
   }
+  var rate = (entry.fundCharge !== undefined && entry.fundCharge !== null) ? entry.fundCharge : 0.01;
   return Math.round(amt * rate * 100) / 100;
 }
 
@@ -8350,10 +8366,10 @@ function calculateFee(method, amount, ss) {
     schedule = { 'Credit Card': { rate: 0.029, flat: 0.30 } };
   }
   var entry = resolveFeeScheduleEntry_(method, schedule);
-  if (entry) {
-    return Math.round((amt * entry.rate + entry.flat) * 100) / 100;
+  if (!entry) {
+    throw new Error('No fee schedule entry configured for payment method: "' + method + '"');
   }
-  return 0;
+  return Math.round((amt * entry.rate + entry.flat) * 100) / 100;
 }
 
 // Backward compatible wrapper
