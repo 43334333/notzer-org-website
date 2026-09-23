@@ -5513,6 +5513,16 @@ function getDonorsMaster_(campaignCode, teamFilter, providedKey) {
       var anonymous = col.anonymous !== undefined ? (String(row[col.anonymous] || '').trim() === 'Yes' || String(row[col.anonymous] || '').trim() === 'TRUE' || row[col.anonymous] === true) : false;
       var team = col.teams !== undefined ? String(row[col.teams] || '').trim() : '';
       var dateVal = col.createdDate !== undefined && row[col.createdDate] ? formatDateEdt_(row[col.createdDate]) : '';
+      var rawDate = col.createdDate !== undefined && row[col.createdDate] ? row[col.createdDate] : null;
+      var timestamp = '';
+      if (rawDate) {
+        try {
+          var d = (rawDate instanceof Date) ? rawDate : new Date(rawDate);
+          if (!isNaN(d.getTime())) {
+            timestamp = d.toISOString();
+          }
+        } catch (e) {}
+      }
 
       if (teamFilter && team.toLowerCase() !== teamFilter.toLowerCase()) {
         continue;
@@ -5520,15 +5530,29 @@ function getDonorsMaster_(campaignCode, teamFilter, providedKey) {
 
       totalRaised += amount;
       if (team) {
-        teamTotals[team] = (teamTotals[team] || 0) + amount;
+        var tList = team.split(',');
+        for (var t = 0; t < tList.length; t++) {
+          var tid = tList[t].trim();
+          if (!tid) continue;
+          if (!teamTotals[tid]) {
+            teamTotals[tid] = { amount: 0, count: 0 };
+          }
+          teamTotals[tid].amount += amount;
+          teamTotals[tid].count++;
+        }
       }
 
+      var resolvedName = anonymous ? 'Anonymous Supporter' : (displayName || donorName || 'Supporter');
+
       donors.push({
-        name: anonymous ? 'Anonymous Supporter' : (displayName || donorName || 'Supporter'),
+        name: resolvedName,
+        displayName: resolvedName,
         amount: amount,
         memo: memo,
         team: team,
+        teams: team,
         date: dateVal,
+        timestamp: timestamp || dateVal,
         anonymous: anonymous
       });
     }
