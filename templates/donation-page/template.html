@@ -1522,6 +1522,12 @@
         primaryGateway: '{{PRIMARY_GATEWAY}}',
         cardknox: { ifieldsKey: '{{CARDKNOX_IFIELDS_KEY}}' },
         usaepay: { publicKey: '{{USAEPAY_PUBLIC_KEY}}' },
+        fallback: {
+            gateway: '{{FALLBACK_GATEWAY}}',
+            threshold: {{FALLBACK_THRESHOLD}},
+            cardknox: { ifieldsKey: '{{FALLBACK_CK_IFIELDS_KEY}}' },
+            usaepay: { publicKey: '{{FALLBACK_UE_PUBLIC_KEY}}' }
+        },
         appsScriptUrl: '{{APPS_SCRIPT_URL}}',
         wallEnabled: {{WALL_ENABLED}},
         wallUrl: '/wall/{{CAMPAIGN_ID}}/',
@@ -1710,17 +1716,24 @@
         cardknoxReady: false,
         usaepayReady: false,
         paymentJs: null,
+        fallbackPaymentJs: null,
+        fallbackCardknoxReady: false,
+        usingFallback: false,
         config: null,
         _sdkLoadPromises: {},
 
         /**
-         * Initialize the primary gateway
+         * Initialize the primary gateway and pre-load fallback if configured
          */
         async init(config) {
             this.config = config;
             this.activeGateway = config.primaryGateway || 'cardknox';
             await this.loadGateway(this.activeGateway);
             this.updateGatewayIndicator();
+            // Pre-load fallback gateway SDK if configured
+            if (config.fallback && config.fallback.gateway && config.fallback.threshold > 0) {
+                await this.initFallbackGateway();
+            }
         },
 
         /**
@@ -1911,7 +1924,7 @@
          * Tokenize card data with the active gateway
          * @returns {Promise<{ token: string, cvvToken?: string, exp?: string, gateway: string }>}
          */
-        tokenize() {
+        tokenize(amount) {
             var self = this;
             return new Promise(function(resolve, reject) {
                 if (self.activeGateway === 'cardknox') {
@@ -1966,6 +1979,99 @@
                     reject(new Error('No active gateway configured'));
                 }
             });
+        },
+
+        /**
+         * Initialize the fallback gateway SDK for high-ticket routing
+         */
+        async initFallbackGateway() {
+            var fb = this.config.fallback;
+            if (!fb || !fb.gateway) return;
+            try {
+                if (fb.gateway === 'usaepay' && fb.usaepay && fb.usaepay.publicKey) {
+                    await this.loadScript('https://www.usaepay.com/js/v1/pay.js', 'usaepay-sdk');
+                    var PayJSClass = typeof PayJS !== 'undefined' ? PayJS : (typeof usaepay !== 'undefined' ? usaepay : null);
+                    if (PayJSClass) {
+                        this.fallbackPaymentJs = new PayJSClass(fb.usaepay.publicKey);
+                    }
+                } else if (fb.gateway === 'cardknox' && fb.cardknox && fb.cardknox.ifieldsKey) {
+                    await this.loadScript('https://cdn.cardknox.com/ifields/3.4.2602.2001/ifields.min.js', 'cardknox-sdk');
+                    // Cardknox fallback will be initialized on-demand when needed
+                }
+            } catch (err) {
+                console.error('Fallback gateway init error:', err);
+            }
+        },
+
+        /**
+         * Tokenize with the fallback gateway (high-ticket amounts)
+         * @returns {Promise<{ token: string, gateway: string }>}
+         */
+        tokenizeWithFallback() {
+            var self = this;
+            var fb = this.config.fallback;
+            return new Promise(function(resolve, reject) {
+                if (fb.gateway === 'usaepay' && self.fallbackPaymentJs) {
+                    // Show USAePay fields for fallback tokenization
+                    self.showGatewayFields('usaepay');
+                    self.fallbackPaymentJs.getToken(
+                        function(token) {
+                            resolve({
+                                token: token.token || token.payment_key || token,
+                                cardType: token.card_type || '',
+                                last4: token.card_last4 || '',
+                                gateway: 'usaepay'
+                            });
+                        },
+                        function(errors) {
+                            var msg = 'Payment processing error';
+                            if (errors && typeof errors === 'object') {
+                                if (Array.isArray(errors)) {
+                                    msg = errors.map(function(e) { return e.message || e; }).join(', ');
+                                } else if (errors.message) {
+                                    msg = errors.message;
+                                }
+                            }
+                            reject(new Error(msg));
+                        }
+                    );
+                } else if (fb.gateway === 'cardknox') {
+                    // For Cardknox fallback, reinitialize iFields with fallback key
+                    if (typeof setAccount === 'function' && fb.cardknox.ifieldsKey) {
+                        setAccount(fb.cardknox.ifieldsKey, 'NotzerChesed', '1.0.0');
+                        self.fallbackCardknoxReady = true;
+                    }
+                    self.showGatewayFields('cardknox');
+                    if (typeof getTokens !== 'function') {
+                        reject(new Error('Cardknox SDK not loaded'));
+                        return;
+                    }
+                    getTokens(
+                        function() {
+                            var cardToken = document.querySelector('[data-ifields-id="card-number-token"]').value;
+                            var cvvToken = document.querySelector('[data-ifields-id="cvv-token"]').value;
+                            var exp = document.getElementById('card-exp').value;
+                            resolve({ token: cardToken, cvvToken: cvvToken, exp: exp, gateway: 'cardknox' });
+                        },
+                        function(error) {
+                            reject(error || new Error('Failed to tokenize card with Cardknox fallback'));
+                        },
+                        30000
+                    );
+                } else {
+                    reject(new Error('Fallback gateway not initialized'));
+                }
+            });
+        },
+
+        /**
+         * Check if amount should use fallback gateway
+         * @param {number} amount - The charge amount
+         * @returns {boolean}
+         */
+        shouldUseFallback(amount) {
+            var fb = this.config.fallback;
+            return !!(fb && fb.gateway && fb.threshold > 0 && amount > fb.threshold);
         },
 
         /**
@@ -2389,8 +2495,14 @@
         var btn = document.getElementById('donate-btn');
 
         try {
-            // Step 1: Tokenize with active gateway
-            var tokenResult = await GatewayManager.tokenize();
+            // Step 1: Tokenize — use fallback gateway for high-ticket amounts
+            var tokenizeAmount = isDeferredStart ? perPayment : chargeAmount;
+            var tokenResult;
+            if (GatewayManager.shouldUseFallback(tokenizeAmount)) {
+                tokenResult = await GatewayManager.tokenizeWithFallback();
+            } else {
+                tokenResult = await GatewayManager.tokenize(tokenizeAmount);
+            }
 
             // Step 2: Build payload
             var payload = {

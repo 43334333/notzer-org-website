@@ -1081,6 +1081,14 @@ body::before {
                 <div class="field"><label>USAePay Public Key</label><input type="text" id="campUePublic" placeholder="Public key"></div>
                 <div class="field"><label>USAePay Source Key</label><input type="text" id="campUeSource" placeholder="Source key"></div>
                 <div class="field"><label>USAePay PIN</label><input type="password" id="campUePin" placeholder="USAePay PIN (optional)"></div>
+                <div class="col-label" style="margin-top:1rem;">Fallback Gateway (High-Ticket Routing)</div>
+                <div class="field"><label>Fallback Gateway</label><select id="campFallbackGw"><option value="">None (disabled)</option><option value="cardknox">Cardknox</option><option value="usaepay">USAePay</option></select></div>
+                <div class="field"><label>Amount Threshold ($)</label><input type="number" id="campFallbackThreshold" placeholder="e.g. 3600" min="0" step="1"></div>
+                <div class="field"><label>Fallback CK iFields Key</label><input type="text" id="campFbCkIfields" placeholder="Cardknox iFields key"></div>
+                <div class="field"><label>Fallback CK Server Key</label><input type="text" id="campFbCkServer" placeholder="Cardknox server key"></div>
+                <div class="field"><label>Fallback UE Public Key</label><input type="text" id="campFbUePublic" placeholder="USAePay public key"></div>
+                <div class="field"><label>Fallback UE Source Key</label><input type="text" id="campFbUeSource" placeholder="USAePay source key"></div>
+                <div class="field"><label>Fallback UE PIN</label><input type="password" id="campFbUePin" placeholder="Optional"></div>
                 <div class="field"><label>Campaign Manager Email</label><input type="email" id="campManagerEmail" placeholder="manager@example.com"></div>
             </div>
             <div class="form-col">
@@ -2335,6 +2343,13 @@ $('#saveCampaignBtn').addEventListener('click', async () => {
         usaepayPublicKey: $('#campUePublic').value.trim(),
         usaepaySourceKey: $('#campUeSource').value.trim(),
         usaepayPin: $('#campUePin') ? $('#campUePin').value.trim() : '',
+        fallbackGateway: $('#campFallbackGw') ? $('#campFallbackGw').value : '',
+        fallbackThreshold: parseFloat($('#campFallbackThreshold').value) || 0,
+        fallbackCkIfieldsKey: $('#campFbCkIfields') ? $('#campFbCkIfields').value.trim() : '',
+        fallbackCkServerKey: $('#campFbCkServer') ? $('#campFbCkServer').value.trim() : '',
+        fallbackUePublicKey: $('#campFbUePublic') ? $('#campFbUePublic').value.trim() : '',
+        fallbackUeSourceKey: $('#campFbUeSource') ? $('#campFbUeSource').value.trim() : '',
+        fallbackUePin: $('#campFbUePin') ? $('#campFbUePin').value.trim() : '',
         managerEmail: $('#campManagerEmail') ? $('#campManagerEmail').value.trim() : '',
         goalAmount: parseFloat($('#campGoal').value) || 0,
         startDate: $('#campStart').value,
@@ -2556,6 +2571,13 @@ function editCampaign(id) {
     $('#campUePublic').value = c.usaepayPublicKey || '';
     $('#campUeSource').value = c.usaepaySourceKey || '';
     if ($('#campUePin')) $('#campUePin').value = c.usaepayPin || '';
+    if ($('#campFallbackGw')) $('#campFallbackGw').value = c.fallbackGateway || '';
+    if ($('#campFallbackThreshold')) $('#campFallbackThreshold').value = c.fallbackThreshold || '';
+    if ($('#campFbCkIfields')) $('#campFbCkIfields').value = c.fallbackCkIfieldsKey || '';
+    if ($('#campFbCkServer')) $('#campFbCkServer').value = c.fallbackCkServerKey || '';
+    if ($('#campFbUePublic')) $('#campFbUePublic').value = c.fallbackUePublicKey || '';
+    if ($('#campFbUeSource')) $('#campFbUeSource').value = c.fallbackUeSourceKey || '';
+    if ($('#campFbUePin')) $('#campFbUePin').value = c.fallbackUePin || '';
     if ($('#campManagerEmail')) $('#campManagerEmail').value = c.managerEmail || '';
     $('#campGoal').value = c.goalAmount || '';
     $('#campStart').value = c.startDate ? c.startDate.split('T')[0] : '';
@@ -2570,12 +2592,13 @@ function editCampaign(id) {
 }
 
 function clearCampaignForm() {
-    ['campEditId','campName','campSlug','campSheetId','campAppsScriptUrl','campCkIfields','campCkServer','campUePublic','campUeSource','campUePin','campManagerEmail','campGoal','campStart','campEnd','campPageUrl','campAdminUrl','campWallUrl','campWallKey'].forEach(id => {
+    ['campEditId','campName','campSlug','campSheetId','campAppsScriptUrl','campCkIfields','campCkServer','campUePublic','campUeSource','campUePin','campFallbackThreshold','campFbCkIfields','campFbCkServer','campFbUePublic','campFbUeSource','campFbUePin','campManagerEmail','campGoal','campStart','campEnd','campPageUrl','campAdminUrl','campWallUrl','campWallKey'].forEach(id => {
         const el = $(`#${id}`);
         if (el) el.value = '';
     });
     if ($('#campStatus')) $('#campStatus').value = 'Active';
     $('#campGateway').value = 'cardknox';
+    if ($('#campFallbackGw')) $('#campFallbackGw').value = '';
     $('#campWallEnabled').checked = true;
     if ($('#campIsPublic')) $('#campIsPublic').checked = true;
 }
@@ -3238,6 +3261,10 @@ function getBuilderConfig() {
         primaryGateway: $('#bGateway').value || 'cardknox',
         cardknoxIfieldsKey: $('#bCkIfields').value.trim(),
         usaepayPublicKey: $('#bUePublic').value.trim(),
+        fallbackGateway: $('#campFallbackGw') ? $('#campFallbackGw').value : '',
+        fallbackThreshold: parseFloat($('#campFallbackThreshold').value) || 0,
+        fallbackCkIfieldsKey: $('#campFbCkIfields') ? $('#campFbCkIfields').value.trim() : '',
+        fallbackUePublicKey: $('#campFbUePublic') ? $('#campFbUePublic').value.trim() : '',
         turnstileSiteKey: $('#bTurnstileKey').value.trim() || '0x4AAAAAADjo7NvJjpCgWLcN',
         managerEmail: $('#bManagerEmail') ? $('#bManagerEmail').value.trim() : '',
         appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzngv-LEqoOercDK5MfRtB8BpEFhH3sdnq16lyxzq2LN_8W0lUQpa-oUZB4CfGYE28y3g/exec',
@@ -3545,6 +3572,10 @@ function applyTemplateTokens(template, config) {
         '{{CARDKNOX_IFIELDS_KEY}}':  config.cardknoxIfieldsKey || '',
         '{{USAEPAY_PUBLIC_KEY}}':    config.usaepayPublicKey || '',
         '{{PRIMARY_GATEWAY}}':       config.primaryGateway || 'cardknox',
+        '{{FALLBACK_GATEWAY}}':      config.fallbackGateway || '',
+        '{{FALLBACK_THRESHOLD}}':    String(parseFloat(config.fallbackThreshold) || 0),
+        '{{FALLBACK_CK_IFIELDS_KEY}}': config.fallbackCkIfieldsKey || '',
+        '{{FALLBACK_UE_PUBLIC_KEY}}': config.fallbackUePublicKey || '',
         '{{TURNSTILE_SITE_KEY}}':    config.turnstileSiteKey || '0x4AAAAAADjo7NvJjpCgWLcN',
         '{{ZELLE_EMAIL}}':           config.zelleEmail || 'donate@notzer.org',
         '{{DAF_CONFIRM_EMAIL}}':     config.dafConfirmEmail || 'daf@notzer.org',

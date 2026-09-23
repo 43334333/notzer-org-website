@@ -1517,10 +1517,10 @@ function getCampaigns(user) {
     }
 
     var lastRow = sheet.getLastRow();
-    if (sheet.getLastColumn() < 29) {
+    if (sheet.getLastColumn() < 36) {
       ensureMasterSheetHeaders_(sheet);
     }
-    var numCols = Math.max(29, sheet.getLastColumn());
+    var numCols = Math.max(36, sheet.getLastColumn());
     var data = sheet.getRange(2, 1, lastRow - 1, numCols).getValues(); // cols A-AC+
 
     var campaigns = [];
@@ -1603,6 +1603,13 @@ function getCampaigns(user) {
         isPublic: isPub,
         wallKey: String(row[21] || '').trim(),
         managerEmail: String(row[27] || '').trim(),
+        fallbackGateway: String(row[29] || '').trim(),
+        fallbackThreshold: parseFloat(row[30]) || 0,
+        fallbackCkIfieldsKey: String(row[31] || '').trim(),
+        fallbackCkServerKey: String(row[32] || '').trim(),
+        fallbackUePublicKey: String(row[33] || '').trim(),
+        fallbackUeSourceKey: String(row[34] || '').trim(),
+        fallbackUePin: String(row[35] || '').trim(),
         pageConfig: (function() {
           try {
             var raw = String(row[28] || '').trim();
@@ -1624,7 +1631,7 @@ function getCampaigns(user) {
 // MASTER PLATFORM SHEET MAINTENANCE
 // ============================================================
 /**
- * Ensures all 29 standard headers are present and bold in Master Sheet 'Campaigns' tab.
+ * Ensures all 36 standard headers are present and bold in Master Sheet 'Campaigns' tab.
  * Columns:
  * 1: Campaign ID, 2: Campaign Name, 3: Status, 4: Campaign Sheet ID, 5: Apps Script URL,
  * 6: Primary Gateway, 7: Cardknox iFields Key, 8: Cardknox Server Key,
@@ -1633,7 +1640,9 @@ function getCampaigns(user) {
  * 17: Wall Enabled, 18: Created Date, 19: Last Modified, 20: USAePay PIN,
  * 21: Is Public, 22: Wall Access Key,
  * 23: TDF Enabled, 24: TDF Account Number, 25: TDF Api Key, 26: TDF Validation Token, 27: TDF Environment,
- * 28: Manager Email, 29: Page Config
+ * 28: Manager Email, 29: Page Config,
+ * 30: Fallback Gateway, 31: Fallback Threshold, 32: Fallback CK iFields Key,
+ * 33: Fallback CK Server Key, 34: Fallback UE Public Key, 35: Fallback UE Source Key, 36: Fallback UE PIN
  * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
  */
 function ensureMasterSheetHeaders_(sheet) {
@@ -1646,7 +1655,10 @@ function ensureMasterSheetHeaders_(sheet) {
     'Wall Enabled', 'Created Date', 'Last Modified', 'USAePay PIN',
     'Is Public', 'Wall Access Key',
     'TDF Enabled', 'TDF Account Number', 'TDF Api Key', 'TDF Validation Token', 'TDF Environment',
-    'Manager Email', 'Page Config'
+    'Manager Email', 'Page Config',
+    'Fallback Gateway', 'Fallback Threshold',
+    'Fallback CK iFields Key', 'Fallback CK Server Key',
+    'Fallback UE Public Key', 'Fallback UE Source Key', 'Fallback UE PIN'
   ];
   sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
   sheet.getRange(1, 1, 1, expectedHeaders.length).setFontWeight('bold');
@@ -2019,7 +2031,14 @@ function createCampaign(data) {
       '',                                                            // Z: TDF Validation Token
       '',                                                            // AA: TDF Environment
       String(data.managerEmail || '').trim(),                        // AB: Manager Email
-      data.pageConfig ? (typeof data.pageConfig === 'string' ? data.pageConfig : JSON.stringify(data.pageConfig)) : '' // AC: Page Config
+      data.pageConfig ? (typeof data.pageConfig === 'string' ? data.pageConfig : JSON.stringify(data.pageConfig)) : '', // AC: Page Config
+      String(data.fallbackGateway || '').trim(),                     // AD: Fallback Gateway
+      parseFloat(data.fallbackThreshold) || 0,                       // AE: Fallback Threshold
+      String(data.fallbackCkIfieldsKey || '').trim(),                // AF: Fallback CK iFields Key
+      String(data.fallbackCkServerKey || '').trim(),                 // AG: Fallback CK Server Key
+      String(data.fallbackUePublicKey || '').trim(),                 // AH: Fallback UE Public Key
+      String(data.fallbackUeSourceKey || '').trim(),                 // AI: Fallback UE Source Key
+      String(data.fallbackUePin || '').trim()                        // AJ: Fallback UE PIN
     ]);
 
     return { status: 'success', campaignId: idSlug, message: 'Campaign created successfully.' };
@@ -2124,6 +2143,15 @@ function updateCampaign(id, data) {
     }
 
     setField(22, data.wallKey !== undefined ? data.wallKey : data.wallAccessKey, currentRow[21], true);
+
+    // Fallback Gateway fields (cols AD–AJ = 30–36)
+    setField(30, data.fallbackGateway, currentRow[29], true);
+    if (data.fallbackThreshold !== undefined) sheet.getRange(targetRow, 31).setValue(parseFloat(data.fallbackThreshold) || 0);
+    setField(32, data.fallbackCkIfieldsKey, currentRow[31], forceEmpty);
+    setField(33, data.fallbackCkServerKey, currentRow[32], forceEmpty);
+    setField(34, data.fallbackUePublicKey, currentRow[33], forceEmpty);
+    setField(35, data.fallbackUeSourceKey, currentRow[34], forceEmpty);
+    setField(36, data.fallbackUePin, currentRow[35], forceEmpty);
 
     // Manager Email (col AB = 28) — always clearable
     setField(28, data.managerEmail, currentRow[27], true);
@@ -6078,7 +6106,40 @@ function logLinkClickMaster_(data) {
 function processWithFailover(data, campaignId) {
   var gatewayConfig = getGatewayConfig(campaignId);
   var requestedGateway = data.gateway || gatewayConfig.primaryGateway || 'cardknox';
+  var amount = parseFloat(data.amount) || 0;
+  var fb = gatewayConfig.fallback || {};
 
+  // ── Amount-based fallback routing ──
+  // If a fallback gateway is configured with a threshold, and the amount exceeds it,
+  // and the client already tokenized with the fallback gateway type, route to fallback keys.
+  if (fb.gateway && fb.threshold > 0 && amount > fb.threshold
+      && requestedGateway === fb.gateway) {
+    var fbResult;
+    if (fb.gateway === 'usaepay' && fb.usaepay && fb.usaepay.sourceKey) {
+      fbResult = processUSAePay(data, { sourceKey: fb.usaepay.sourceKey, pin: fb.usaepay.pin || '' });
+    } else if (fb.gateway === 'cardknox' && fb.cardknox && fb.cardknox.serverKey) {
+      fbResult = processCardknox(data, { serverKey: fb.cardknox.serverKey, ifieldsKey: fb.cardknox.ifieldsKey || '' });
+    }
+    if (fbResult) {
+      if (fbResult.xResult === 'A') {
+        fbResult.gateway = fb.gateway;
+        fbResult.fallbackUsed = true;
+        return fbResult;
+      }
+      if (isCardDecline(fbResult)) {
+        return { status: 'declined', message: fbResult.xError || 'Card declined', xRefNum: fbResult.xRefNum || '' };
+      }
+      // System error on fallback — no further retry
+      return {
+        status: 'gateway_error',
+        canRetry: false,
+        failedGateway: fb.gateway + ' (fallback)',
+        message: fbResult.xError || 'Fallback payment processor unavailable'
+      };
+    }
+  }
+
+  // ── Normal primary gateway flow ──
   var result;
   if (requestedGateway === 'cardknox') {
     result = processCardknox(data, gatewayConfig.cardknox);
@@ -6278,6 +6339,11 @@ function getGatewayConfig(campaignId) {
         if (!campaignPin) {
           campaignPin = PropertiesService.getScriptProperties().getProperty('DEFAULT_USAEPAY_PIN') || '';
         }
+        // Per-campaign fallback PIN: col AJ (index 35); fall back to org default
+        var fallbackPin = String(campaignRow[35] || '').trim();
+        if (!fallbackPin) {
+          fallbackPin = PropertiesService.getScriptProperties().getProperty('DEFAULT_USAEPAY_PIN') || '';
+        }
         return {
           primaryGateway: primaryGw,
           cardknox: {
@@ -6288,6 +6354,19 @@ function getGatewayConfig(campaignId) {
             publicKey: String(campaignRow[8] || '').trim(),    // I
             sourceKey: String(campaignRow[9] || '').trim(),    // J
             pin: campaignPin                                   // T (or default)
+          },
+          fallback: {
+            gateway: String(campaignRow[29] || '').trim(),      // AD
+            threshold: parseFloat(campaignRow[30]) || 0,        // AE
+            cardknox: {
+              ifieldsKey: String(campaignRow[31] || '').trim(), // AF
+              serverKey: String(campaignRow[32] || '').trim()   // AG
+            },
+            usaepay: {
+              publicKey: String(campaignRow[33] || '').trim(),  // AH
+              sourceKey: String(campaignRow[34] || '').trim(),  // AI
+              pin: fallbackPin                                  // AJ (or default)
+            }
           }
         };
       }
@@ -6317,7 +6396,11 @@ function getCampaignGatewayConfigPublic_(campaignId) {
       campaignId: campaignId || 'general',
       primaryGateway: config.primaryGateway,
       cardknoxIfieldsKey: config.cardknox.ifieldsKey || '',
-      usaepayPublicKey: config.usaepay.publicKey || ''
+      usaepayPublicKey: config.usaepay.publicKey || '',
+      fallbackGateway: (config.fallback && config.fallback.gateway) || '',
+      fallbackThreshold: (config.fallback && config.fallback.threshold) || 0,
+      fallbackCardknoxIfieldsKey: (config.fallback && config.fallback.cardknox && config.fallback.cardknox.ifieldsKey) || '',
+      fallbackUsaepayPublicKey: (config.fallback && config.fallback.usaepay && config.fallback.usaepay.publicKey) || ''
     };
   } catch (err) {
     Logger.log('getCampaignGatewayConfigPublic_ error: ' + err.toString());
@@ -6328,7 +6411,11 @@ function getCampaignGatewayConfigPublic_(campaignId) {
       campaignId: campaignId || 'general',
       primaryGateway: defaults.primaryGateway,
       cardknoxIfieldsKey: defaults.cardknox.ifieldsKey || '',
-      usaepayPublicKey: defaults.usaepay.publicKey || ''
+      usaepayPublicKey: defaults.usaepay.publicKey || '',
+      fallbackGateway: '',
+      fallbackThreshold: 0,
+      fallbackCardknoxIfieldsKey: '',
+      fallbackUsaepayPublicKey: ''
     };
   }
 }
@@ -6350,6 +6437,12 @@ function getDefaultGatewayConfig() {
       publicKey: '',
       sourceKey: props.getProperty('DEFAULT_USAEPAY_SOURCE_KEY') || '',
       pin: props.getProperty('DEFAULT_USAEPAY_PIN') || ''
+    },
+    fallback: {
+      gateway: '',
+      threshold: 0,
+      cardknox: { ifieldsKey: '', serverKey: '' },
+      usaepay: { publicKey: '', sourceKey: '', pin: '' }
     }
   };
 }

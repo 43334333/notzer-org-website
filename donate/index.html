@@ -1391,6 +1391,8 @@
         cardknoxReady: false,
         usaepayReady: false,
         paymentJs: null,
+        fallbackPaymentJs: null,
+        usingFallback: false,
         config: null,
 
         async init(config) {
@@ -1589,6 +1591,92 @@ addIfieldKeyPressCallback(function(data) {
             });
         },
 
+        /**
+         * Initialize the fallback gateway SDK for high-ticket routing
+         */
+        async initFallbackGateway() {
+            var fb = this.config.fallback;
+            if (!fb || !fb.gateway) return;
+            try {
+                if (fb.gateway === 'usaepay' && fb.usaepay && fb.usaepay.publicKey) {
+                    await this.loadScript('https://www.usaepay.com/js/v1/pay.js');
+                    var PayJSClass = typeof PayJS !== 'undefined' ? PayJS : (typeof usaepay !== 'undefined' ? usaepay : null);
+                    if (PayJSClass) {
+                        this.fallbackPaymentJs = new PayJSClass(fb.usaepay.publicKey);
+                    }
+                } else if (fb.gateway === 'cardknox' && fb.cardknox && fb.cardknox.ifieldsKey) {
+                    await this.loadScript('https://cdn.cardknox.com/ifields/3.4.2602.2001/ifields.min.js');
+                }
+            } catch (err) {
+                console.error('Fallback gateway init error:', err);
+            }
+        },
+
+        /**
+         * Tokenize with the fallback gateway (high-ticket amounts)
+         */
+        tokenizeWithFallback() {
+            var self = this;
+            var fb = this.config.fallback;
+            return new Promise(function(resolve, reject) {
+                if (fb.gateway === 'usaepay' && self.fallbackPaymentJs) {
+                    self.showGatewayFields('usaepay');
+                    self.fallbackPaymentJs.getToken(
+                        function(token) {
+                            resolve({
+                                token: token.token || token.payment_key || token,
+                                cardType: token.card_type || '',
+                                last4: token.card_last4 || '',
+                                gateway: 'usaepay'
+                            });
+                        },
+                        function(errors) {
+                            var msg = 'Payment processing error';
+                            if (errors && typeof errors === 'object') {
+                                if (Array.isArray(errors)) {
+                                    msg = errors.map(function(e) { return e.message || e; }).join(', ');
+                                } else if (errors.message) {
+                                    msg = errors.message;
+                                }
+                            }
+                            reject(new Error(msg));
+                        }
+                    );
+                } else if (fb.gateway === 'cardknox') {
+                    if (typeof setAccount === 'function' && fb.cardknox.ifieldsKey) {
+                        setAccount(fb.cardknox.ifieldsKey, 'NotzerChesed', '1.0.0');
+                    }
+                    self.showGatewayFields('cardknox');
+                    if (typeof getTokens !== 'function') {
+                        reject(new Error('Cardknox SDK not loaded'));
+                        return;
+                    }
+                    getTokens(
+                        function() {
+                            resolve({
+                                token: document.querySelector('[data-ifields-id="card-number-token"]').value,
+                                cvvToken: document.querySelector('[data-ifields-id="cvv-token"]').value,
+                                exp: document.getElementById('card-exp').value,
+                                gateway: 'cardknox'
+                            });
+                        },
+                        function(error) { reject(error); },
+                        30000
+                    );
+                } else {
+                    reject(new Error('Fallback gateway not initialized'));
+                }
+            });
+        },
+
+        /**
+         * Check if amount should use fallback gateway
+         */
+        shouldUseFallback(amount) {
+            var fb = this.config.fallback;
+            return !!(fb && fb.gateway && fb.threshold > 0 && amount > fb.threshold);
+        },
+
         async switchToFallback() {
             var fallback = this.activeGateway === 'cardknox' ? 'usaepay' : 'cardknox';
             this.activeGateway = fallback;
@@ -1622,8 +1710,14 @@ addIfieldKeyPressCallback(function(data) {
             this.cardknoxReady = false;
             this.usaepayReady = false;
             this.paymentJs = null;
+            this.fallbackPaymentJs = null;
+            this.usingFallback = false;
             await this.loadGateway(this.activeGateway);
             this.updateIndicator();
+            // Pre-load fallback gateway if configured
+            if (config.fallback && config.fallback.gateway && config.fallback.threshold > 0) {
+                await this.initFallbackGateway();
+            }
         }
     };
 
@@ -2079,8 +2173,13 @@ addIfieldKeyPressCallback(function(data) {
         hideStatus();
 
         try {
-            // Step 1: Tokenize with the active gateway
-            var tokenData = await GatewayManager.tokenize();
+            // Step 1: Tokenize — use fallback gateway for high-ticket amounts
+            var tokenData;
+            if (GatewayManager.shouldUseFallback(chargeAmount)) {
+                tokenData = await GatewayManager.tokenizeWithFallback();
+            } else {
+                tokenData = await GatewayManager.tokenize();
+            }
 
             // Step 2: Build payload
             var selectedCampaign = activeCampaigns.find(function(c) { return c.id === selectedCampaignId; });
@@ -2249,7 +2348,13 @@ addIfieldKeyPressCallback(function(data) {
                     await GatewayManager.reinitialize({
                         primaryGateway: config.primaryGateway || DONATE_CONFIG.defaultPrimaryGateway,
                         cardknox: { ifieldsKey: config.cardknoxIfieldsKey || DONATE_CONFIG.defaultCardknoxIfieldsKey },
-                        usaepay: { publicKey: config.usaepayPublicKey || DONATE_CONFIG.defaultUsaepayPublicKey }
+                        usaepay: { publicKey: config.usaepayPublicKey || DONATE_CONFIG.defaultUsaepayPublicKey },
+                        fallback: (config.fallbackGateway && config.fallbackThreshold > 0) ? {
+                            gateway: config.fallbackGateway,
+                            threshold: config.fallbackThreshold,
+                            cardknox: { ifieldsKey: config.fallbackCardknoxIfieldsKey || '' },
+                            usaepay: { publicKey: config.fallbackUsaepayPublicKey || '' }
+                        } : null
                     });
                 } else {
                     // Fallback to defaults
