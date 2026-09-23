@@ -1073,8 +1073,9 @@ function setTeamFilter(teamId) {
 function getFilteredDonors() {
     if (!currentTeamFilter) return currentDonors;
     return currentDonors.filter(d => {
-        if (!d.teams) return false;
-        const teamList = d.teams.split(',').map(t => t.trim().toLowerCase());
+        const teamStr = d.teams || d.team || '';
+        if (!teamStr) return false;
+        const teamList = teamStr.split(',').map(t => t.trim().toLowerCase());
         return teamList.includes(currentTeamFilter.toLowerCase());
     });
 }
@@ -1198,8 +1199,8 @@ function sortAndRender() {
         sorted.sort((a, b) => (b.amount || 0) - (a.amount || 0));
     } else {
         sorted.sort((a, b) => {
-            const dateA = new Date(a.timestamp || 0);
-            const dateB = new Date(b.timestamp || 0);
+            const dateA = new Date(a.timestamp || a.date || 0);
+            const dateB = new Date(b.timestamp || b.date || 0);
             return dateB - dateA;
         });
     }
@@ -1243,7 +1244,7 @@ function renderDonors(donors) {
         }
 
         const isAnonymous = donor.anonymous;
-        const displayName = isAnonymous ? 'בעילום שם' : (donor.displayName || 'Anonymous');
+        const displayName = isAnonymous ? 'בעילום שם' : (donor.displayName || donor.name || 'Anonymous');
 
         let html = '';
         html += `<div class="donor-name${isAnonymous ? ' anonymous' : ''}">${escapeHTML(displayName)}</div>`;
@@ -1253,10 +1254,11 @@ function renderDonors(donors) {
             html += `<div class="donor-memo">"${escapeHTML(donor.memo)}"</div>`;
         }
 
-        html += `<div class="donor-date">${formatDate(donor.timestamp)}</div>`;
+        html += `<div class="donor-date">${formatDate(donor.timestamp || donor.date)}</div>`;
 
-        if (donor.teams && donor.teams.trim()) {
-            const teamIds = donor.teams.split(',').map(t => t.trim()).filter(Boolean);
+        const teamStr = donor.teams || donor.team || '';
+        if (teamStr && teamStr.trim()) {
+            const teamIds = teamStr.split(',').map(t => t.trim()).filter(Boolean);
             if (teamIds.length > 0) {
                 html += '<div class="donor-teams">';
                 teamIds.forEach(tid => {
@@ -1292,11 +1294,16 @@ function renderTeamCards() {
     }
 
     const teamEntries = Object.entries(currentTeamTotals)
-        .sort((a, b) => b[1].amount - a[1].amount);
+        .sort((a, b) => {
+            const amtA = (typeof a[1] === 'object' && a[1] !== null && a[1].amount !== undefined) ? a[1].amount : (Number(a[1]) || 0);
+            const amtB = (typeof b[1] === 'object' && b[1] !== null && b[1].amount !== undefined) ? b[1].amount : (Number(b[1]) || 0);
+            return amtB - amtA;
+        });
 
     const fragment = document.createDocumentFragment();
 
-    teamEntries.forEach(([teamId, data], index) => {
+    teamEntries.forEach(([teamId, rawData], index) => {
+        const data = (typeof rawData === 'object' && rawData !== null) ? rawData : { amount: Number(rawData) || 0, count: 0 };
         const card = document.createElement('div');
         card.className = 'team-card';
         card.style.animationDelay = `${Math.min(index * 80, 600)}ms`;
