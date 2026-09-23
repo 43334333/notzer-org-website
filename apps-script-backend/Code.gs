@@ -106,6 +106,10 @@ function doGet(e) {
       return jsonResponse(provisionAllCampaignUsers_());
     }
 
+    if ((action === 'syncFeeConfigToCampaigns' || action === 'syncFeeConfig') && params.adminKey === '5786') {
+      return jsonResponse(syncMasterFeeConfigToCampaigns_());
+    }
+
     // ── PUBLIC endpoints (no auth) ──
     if (action === 'getDafSubmissionStatus') {
       return jsonResponse(getDafSubmissionStatus(params));
@@ -307,7 +311,7 @@ function doGet(e) {
         var schedule = loadFeeSchedule_(feeSS);
         var methods = [];
         for (var mk in schedule) {
-          methods.push({ method: mk, rate: schedule[mk].rate, flat: schedule[mk].flat });
+          methods.push({ method: mk, rate: schedule[mk].rate, flat: schedule[mk].flat, fundCharge: schedule[mk].fundCharge !== undefined ? schedule[mk].fundCharge : 0.01 });
         }
         return jsonResponse({ status: 'success', campaignId: feeConfigCampaignId, methods: methods });
       } catch (feeErr) {
@@ -484,6 +488,12 @@ function doPost(e) {
         return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
       }
       return jsonResponse(updateMasterFeeDefaults_(data.defaults));
+    }
+    if (action === 'syncFeeConfigToCampaigns' || action === 'syncFeeConfig') {
+      if (!checkPermission(user, 'super_admin') && !checkPermission(user, 'admin')) {
+        return jsonResponse({ status: 'error', message: 'Insufficient permissions.' });
+      }
+      return jsonResponse(syncMasterFeeConfigToCampaigns_());
     }
     if (action === 'saveTemplate') {
       if (!checkPermission(user, 'super_admin')) {
@@ -1770,6 +1780,10 @@ function fixMasterSheetHeadersAndGoal_(params) {
     ensureDefaultFeeConfigSheet_(ss);
     resultDetails.feeDefaultsEnsured = true;
 
+    // 5. Sync master fee config Fund_Charge to all campaign sheets
+    var feeSyncResult = syncMasterFeeConfigToCampaigns_(ss);
+    resultDetails.feeSyncResult = feeSyncResult;
+
     return {
       status: 'success',
       message: 'Master sheet headers ensured, fee defaults initialized, and goal synchronized for ' + targetId + '.',
@@ -1947,10 +1961,167 @@ function updateMasterFeeDefaults_(defaults) {
     sheet.getRange('B2:B100').setNumberFormat('0.00%');
     sheet.getRange('C2:C100').setNumberFormat('$#,##0.00');
     sheet.getRange('D2:D100').setNumberFormat('0.00%');
-    return { status: 'success', message: 'Master fee defaults updated successfully (' + rows.length + ' methods).' };
+    // Propagate fund charge updates to all campaign Fee_Config sheets
+    var syncResult = syncMasterFeeConfigToCampaigns_(ss, defaults);
+    return {
+      status: 'success',
+      message: 'Master fee defaults updated successfully (' + rows.length + ' methods).',
+      sync: syncResult
+    };
   } catch (err) {
     Logger.log('updateMasterFeeDefaults_ error: ' + err.toString());
     return { status: 'error', message: 'Failed to update fee defaults: ' + err.toString() };
+  }
+}
+
+
+/**
+ * Updates Fund_Charge column in a campaign's Fee_Config sheet from master defaults.
+ * Preserves per-campaign Rate and Flat Fee values.
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} feeSheet
+ * @param {Object} masterMap - { 'Credit Card': 0.01, 'Check': 0.01, ... }
+ * @returns {Object} { updated: number, added: number }
+ */
+function updateFeeSheetFundCharges_(feeSheet, masterMap) {
+  if (!feeSheet) return { updated: 0, added: 0 };
+
+  // Ensure column D header exists
+  if (feeSheet.getLastColumn() < 4) {
+    feeSheet.getRange(1, 4).setValue('Fund_Charge');
+    feeSheet.getRange(1, 4).setFontWeight('bold');
+    feeSheet.setColumnWidth(4, 100);
+  }
+
+  var lastRow = feeSheet.getLastRow();
+  var updated = 0;
+  var existingMethods = {};
+
+  if (lastRow >= 2) {
+    var data = feeSheet.getRange(2, 1, lastRow - 1, 4).getValues();
+    for (var i = 0; i < data.length; i++) {
+      var method = String(data[i][0] || '').trim();
+      if (!method) continue;
+      existingMethods[method] = true;
+      var currentFc = data[i][3];
+      var needsUpdate = (currentFc === '' || currentFc === null || currentFc === undefined || (typeof currentFc === 'string' && currentFc.trim() === '') || isNaN(currentFc));
+      if (masterMap[method] !== undefined) {
+        if (needsUpdate || parseFloat(currentFc) !== masterMap[method]) {
+          feeSheet.getRange(i + 2, 4).setValue(masterMap[method]);
+          updated++;
+        }
+      } else if (needsUpdate) {
+        // Method exists in campaign but not in master — backfill empty Fund_Charge with 0.01
+        feeSheet.getRange(i + 2, 4).setValue(0.01);
+        updated++;
+      }
+    }
+  }
+
+  // Append any master methods not in campaign sheet
+  var added = 0;
+  var masterMethods = Object.keys(masterMap);
+  for (var j = 0; j < masterMethods.length; j++) {
+    var mm = masterMethods[j];
+    if (!existingMethods[mm]) {
+      feeSheet.appendRow([mm, 0, 0, masterMap[mm]]);
+      added++;
+    }
+  }
+
+  // Format column D
+  var newLastRow = feeSheet.getLastRow();
+  if (newLastRow >= 2) {
+    feeSheet.getRange(2, 4, newLastRow - 1, 1).setNumberFormat('0.00%');
+  }
+
+  return { updated: updated, added: added };
+}
+
+/**
+ * Syncs master fee config Fund_Charge values to all campaign Fee_Config sheets.
+ * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} [masterSS]
+ * @param {Array<Object>} [defaults] - Optional pre-parsed defaults array [{ method, fundCharge }] or [[method, rate, flat, fc]]
+ * @returns {Object} { status, synced, campaigns: [...] }
+ */
+function syncMasterFeeConfigToCampaigns_(masterSS, defaults) {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    if (!masterSS) {
+      var masterSheetId = props.getProperty('MASTER_SHEET_ID');
+      if (!masterSheetId) return { status: 'error', message: 'MASTER_SHEET_ID not configured.' };
+      masterSS = SpreadsheetApp.openById(masterSheetId);
+    }
+
+    // Build master method -> fundCharge map
+    var masterMap = {};
+    if (defaults && defaults.length > 0) {
+      for (var d = 0; d < defaults.length; d++) {
+        var item = defaults[d];
+        var m = String(item.method || item[0] || '').trim();
+        var rawFc = item.fundCharge !== undefined ? item.fundCharge : item[3];
+        var fc = (rawFc !== undefined && rawFc !== null && String(rawFc).trim() !== '' && !isNaN(rawFc)) ? parseFloat(rawFc) : 0.01;
+        if (m) masterMap[m] = fc;
+      }
+    } else {
+      var masterDefaults = getMasterFeeDefaults_(masterSS);
+      for (var d = 0; d < masterDefaults.length; d++) {
+        var m = String(masterDefaults[d][0] || '').trim();
+        if (m) masterMap[m] = masterDefaults[d][3] !== undefined ? parseFloat(masterDefaults[d][3]) : 0.01;
+      }
+    }
+
+    // Get campaigns from master Campaigns tab
+    var campSheet = masterSS.getSheetByName('Campaigns');
+    if (!campSheet || campSheet.getLastRow() < 2) {
+      return { status: 'success', synced: 0, campaigns: [], message: 'No campaigns found in master sheet.' };
+    }
+
+    var campData = campSheet.getRange(2, 1, campSheet.getLastRow() - 1, Math.min(campSheet.getLastColumn(), 4)).getValues();
+    var results = [];
+    var synced = 0;
+
+    for (var c = 0; c < campData.length; c++) {
+      var campId = String(campData[c][0] || '').trim();
+      var sheetId = String(campData[c][3] || '').trim();
+      if (!campId || !sheetId) continue;
+
+      try {
+        var campaignSS = SpreadsheetApp.openById(sheetId);
+        var feeSheet = campaignSS.getSheetByName('Fee_Config');
+        if (!feeSheet) {
+          // Create Fee_Config with master defaults
+          feeSheet = campaignSS.insertSheet('Fee_Config');
+          feeSheet.getRange('A1:D1').setValues([['Method', 'Rate', 'Flat Fee', 'Fund_Charge']]);
+          var seedDefaults = getMasterFeeDefaults_(masterSS);
+          if (seedDefaults.length > 0) {
+            feeSheet.getRange(2, 1, seedDefaults.length, 4).setValues(seedDefaults);
+          }
+          feeSheet.getRange('A1:D1').setFontWeight('bold');
+          feeSheet.setColumnWidth(1, 200);
+          feeSheet.setColumnWidth(2, 80);
+          feeSheet.setColumnWidth(3, 80);
+          feeSheet.setColumnWidth(4, 100);
+          feeSheet.getRange('B2:B100').setNumberFormat('0.00%');
+          feeSheet.getRange('C2:C100').setNumberFormat('$#,##0.00');
+          feeSheet.getRange('D2:D100').setNumberFormat('0.00%');
+          results.push({ campaignId: campId, status: 'created', methods: seedDefaults.length });
+        } else {
+          var syncResult = updateFeeSheetFundCharges_(feeSheet, masterMap);
+          results.push({ campaignId: campId, status: 'synced', updated: syncResult.updated, added: syncResult.added });
+        }
+
+        // Invalidate fee schedule cache for this campaign
+        delete _feeScheduleCaches[sheetId];
+        synced++;
+      } catch (campErr) {
+        results.push({ campaignId: campId, status: 'error', message: campErr.toString() });
+      }
+    }
+
+    return { status: 'success', synced: synced, campaigns: results };
+  } catch (err) {
+    Logger.log('syncMasterFeeConfigToCampaigns_ error: ' + err.toString());
+    return { status: 'error', message: 'Fee config sync failed: ' + err.toString() };
   }
 }
 
@@ -8759,7 +8930,7 @@ function getFeeConfigMaster_(campaignId, providedKey) {
     var schedule = loadFeeSchedule_(feeSS);
     var methods = [];
     for (var mk in schedule) {
-      methods.push({ method: mk, rate: schedule[mk].rate, flat: schedule[mk].flat });
+      methods.push({ method: mk, rate: schedule[mk].rate, flat: schedule[mk].flat, fundCharge: schedule[mk].fundCharge !== undefined ? schedule[mk].fundCharge : 0.01 });
     }
     return { status: 'success', campaignId: campCode, methods: methods };
   } catch (feeErr) {

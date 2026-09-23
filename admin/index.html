@@ -1789,7 +1789,7 @@ body::before {
         <div class="modal-body" style="padding:20px;">
             <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:14px;">
                 These defaults are saved in the <strong>Fee_Config_Defaults</strong> tab of the Master Platform Google Sheet.
-                Any updates saved here or edited directly in the sheet will automatically populate the <code>Fee_Config</code> schedule for all newly provisioned campaign sheets.
+                Saving updates here automatically syncs <strong>Fund Charge</strong> rates to all active campaign sheets.
             </p>
             <div class="table-wrapper" style="max-height:380px;overflow-y:auto;margin-bottom:14px;">
                 <table class="data-table" id="feeDefaultsTable">
@@ -1807,13 +1807,16 @@ body::before {
                     </tbody>
                 </table>
             </div>
-            <button type="button" class="btn btn-secondary btn-sm" id="addFeeDefaultRowBtn">+ Add Payment Method</button>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button type="button" class="btn btn-secondary btn-sm" id="addFeeDefaultRowBtn">+ Add Payment Method</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="syncFeeDefaultsToCampaignsBtn" style="margin-left:auto;">🔄 Sync Fund Charges to All Campaigns</button>
+            </div>
         </div>
         <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;">
             <span id="feeDefaultsSaveStatus" style="font-size:0.82rem;color:var(--text-muted);"></span>
             <div style="display:flex;gap:8px;">
                 <button class="btn btn-secondary" id="closeFeeDefaultsFooterBtn">Cancel</button>
-                <button class="btn btn-primary" id="saveFeeDefaultsBtn">💾 Save Defaults to Master Sheet</button>
+                <button class="btn btn-primary" id="saveFeeDefaultsBtn">💾 Save & Sync to All Campaigns</button>
             </div>
         </div>
     </div>
@@ -3001,6 +3004,7 @@ function initPageBuilder() {
     if ($('#closeFeeDefaultsFooterBtn')) $('#closeFeeDefaultsFooterBtn').addEventListener('click', closeFeeDefaultsManager);
     if ($('#addFeeDefaultRowBtn')) $('#addFeeDefaultRowBtn').addEventListener('click', addFeeDefaultRow);
     if ($('#saveFeeDefaultsBtn')) $('#saveFeeDefaultsBtn').addEventListener('click', saveFeeDefaults);
+    if ($('#syncFeeDefaultsToCampaignsBtn')) $('#syncFeeDefaultsToCampaignsBtn').addEventListener('click', syncFeeDefaultsToCampaigns);
 }
 
 function openPageBuilder(initialData = null, jumpToStep2 = false) {
@@ -3801,10 +3805,11 @@ async function saveFeeDefaults() {
     try {
         const res = await authPost('updateFeeConfigDefaults', { defaults: defaults });
         if (res && res.status === 'success') {
-            showToast('Master fee defaults saved successfully!', 'success');
-            statusSpan.textContent = '✓ Saved to Fee_Config_Defaults tab';
+            const syncCount = res.sync && res.sync.synced ? res.sync.synced : 0;
+            showToast(`Master fee defaults saved & synced to ${syncCount} campaign(s)!`, 'success');
+            statusSpan.textContent = `✓ Saved & synced to ${syncCount} campaign sheet(s)`;
             statusSpan.style.color = 'var(--success)';
-            setTimeout(() => { if (statusSpan) statusSpan.textContent = ''; }, 4000);
+            setTimeout(() => { if (statusSpan) statusSpan.textContent = ''; }, 5000);
         } else {
             showToast(res?.message || 'Failed to save fee defaults', 'error');
             statusSpan.textContent = res?.message || 'Save failed';
@@ -3816,7 +3821,32 @@ async function saveFeeDefaults() {
         statusSpan.style.color = 'var(--error)';
     } finally {
         saveBtn.disabled = false;
-        saveBtn.textContent = '💾 Save Defaults to Master Sheet';
+        saveBtn.textContent = '💾 Save & Sync to All Campaigns';
+    }
+}
+
+async function syncFeeDefaultsToCampaigns() {
+    const btn = $('#syncFeeDefaultsToCampaignsBtn');
+    const statusSpan = $('#feeDefaultsSaveStatus');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Syncing...'; }
+    if (statusSpan) { statusSpan.textContent = 'Syncing fund charges to all campaign sheets...'; statusSpan.style.color = 'var(--text-muted)'; }
+
+    try {
+        const res = await authPost('syncFeeConfigToCampaigns', {});
+        if (res && res.status === 'success') {
+            const syncCount = res.synced || 0;
+            showToast(`Fund charges synced to ${syncCount} campaign sheet(s)!`, 'success');
+            if (statusSpan) { statusSpan.textContent = `✓ Synced to ${syncCount} campaign(s)`; statusSpan.style.color = 'var(--success)'; }
+            setTimeout(() => { if (statusSpan) statusSpan.textContent = ''; }, 5000);
+        } else {
+            showToast(res?.message || 'Sync failed', 'error');
+            if (statusSpan) { statusSpan.textContent = res?.message || 'Sync failed'; statusSpan.style.color = 'var(--error)'; }
+        }
+    } catch (err) {
+        showToast('Sync error: ' + err.message, 'error');
+        if (statusSpan) { statusSpan.textContent = 'Error: ' + err.message; statusSpan.style.color = 'var(--error)'; }
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '🔄 Sync Fund Charges to All Campaigns'; }
     }
 }
 
