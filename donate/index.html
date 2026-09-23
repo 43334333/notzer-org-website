@@ -1281,6 +1281,7 @@
                                         <div class="form-group" style="margin-bottom: 10px;">
                                             <label for="recurring-frequency">Frequency</label>
                                             <select class="recurring-select" id="recurring-frequency" style="display: block;">
+                                                <option value="daily">Daily</option>
                                                 <option value="weekly">Weekly</option>
                                                 <option value="biweekly">Every 2 Weeks</option>
                                                 <option value="monthly" selected>Monthly</option>
@@ -1305,6 +1306,7 @@
                                         <div class="form-group" style="margin-bottom: 10px;">
                                             <label for="installment-frequency">Installment Frequency</label>
                                             <select class="recurring-select" id="installment-frequency" style="display: block;">
+                                                <option value="daily">Daily</option>
                                                 <option value="weekly">Weekly</option>
                                                 <option value="biweekly">Every 2 Weeks</option>
                                                 <option value="monthly" selected>Monthly</option>
@@ -1323,7 +1325,7 @@
                             <input type="text" name="website" id="honeypot" tabindex="-1" autocomplete="off">
                         </div>
 
-                        <div class="cf-turnstile" id="turnstile-container" data-sitekey="{{TURNSTILE_SITE_KEY}}" data-callback="onTurnstileSuccess" data-theme="dark"></div>
+                        <div class="cf-turnstile" id="turnstile-container" data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN" data-callback="onTurnstileSuccess" data-theme="dark"></div>
 
                         <button type="submit" class="donate-btn" id="donate-btn" disabled>Donate Now</button>
 
@@ -1363,11 +1365,11 @@
     // CONFIGURATION
     // ============================================================
     const DONATE_CONFIG = {
-        masterScriptUrl: '{{MASTER_APPS_SCRIPT_URL}}',
-        defaultPrimaryGateway: '{{DEFAULT_PRIMARY_GATEWAY}}',
-        defaultCardknoxIfieldsKey: '{{DEFAULT_CARDKNOX_IFIELDS_KEY}}',
-        defaultUsaepayPublicKey: '{{DEFAULT_USAEPAY_PUBLIC_KEY}}',
-        turnstileSiteKey: '{{TURNSTILE_SITE_KEY}}',
+        masterScriptUrl: 'https://script.google.com/macros/s/AKfycbzngv-LEqoOercDK5MfRtB8BpEFhH3sdnq16lyxzq2LN_8W0lUQpa-oUZB4CfGYE28y3g/exec',
+        defaultPrimaryGateway: 'cardknox',
+        defaultCardknoxIfieldsKey: 'ifields_gizbernotzerchesed1088151670bf4b6c925',
+        defaultUsaepayPublicKey: '',
+        turnstileSiteKey: '0x4AAAAAADjo7NvJjpCgWLcN',
         orgName: 'Notzer Chesed',
         orgEin: '11-3049033',
     };
@@ -1947,7 +1949,7 @@ addIfieldKeyPressCallback(function(data) {
         var freq = recurringFrequency ? recurringFrequency.value : '';
         var recSummary = document.getElementById('recurring-summary');
         var instSummary = document.getElementById('installment-summary');
-        var freqLabels = { weekly: 'weekly', biweekly: 'bi-weekly', monthly: 'monthly', quarterly: 'quarterly', annually: 'annual' };
+        var freqLabels = { daily: 'daily', weekly: 'weekly', biweekly: 'bi-weekly', monthly: 'monthly', quarterly: 'quarterly', annually: 'annual' };
 
         if (recSummary) recSummary.style.display = 'none';
         if (instSummary) instSummary.style.display = 'none';

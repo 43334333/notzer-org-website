@@ -1200,6 +1200,7 @@
                                     <div class="form-group" style="margin-bottom: 10px;">
                                         <label for="recurring-frequency">Frequency</label>
                                         <select class="recurring-select" id="recurring-frequency" style="display: block;">
+                                            <option value="daily">Daily</option>
                                             <option value="weekly">Weekly</option>
                                             <option value="biweekly">Every 2 Weeks</option>
                                             <option value="monthly" selected>Monthly</option>
@@ -1233,6 +1234,7 @@
                                     <div class="form-group" style="margin-bottom: 10px;">
                                         <label for="installment-frequency">Installment Frequency</label>
                                         <select class="recurring-select" id="installment-frequency" style="display: block;">
+                                            <option value="daily">Daily</option>
                                             <option value="weekly">Weekly</option>
                                             <option value="biweekly">Every 2 Weeks</option>
                                             <option value="monthly" selected>Monthly</option>
@@ -1253,11 +1255,7 @@
                                 </div>
                             </div>
 
-                            
-                        </div>
-                    </div>
 
-                    <!-- Full-width bottom section -->
 
                     <!-- Honeypot -->
                     <div style="position: absolute; left: -9999px;" aria-hidden="true">
@@ -1368,6 +1366,8 @@
                                     </div>
                                 </div>
                             </div>
+                                        </div>
+                    </div>
                 </form>
             </div>
         </div>
@@ -2117,7 +2117,7 @@
         var instSummary = document.getElementById('installment-summary');
         var previewRecBtn = document.getElementById('preview-schedule-btn');
         var previewInstBtn = document.getElementById('preview-installment-schedule-btn');
-        var freqLabels = { weekly: 'weekly', biweekly: 'bi-weekly', monthly: 'monthly', quarterly: 'quarterly', annually: 'annual' };
+        var freqLabels = { daily: 'daily', weekly: 'weekly', biweekly: 'bi-weekly', monthly: 'monthly', quarterly: 'quarterly', annually: 'annual' };
 
         if (recSummary) recSummary.style.display = 'none';
         if (instSummary) instSummary.style.display = 'none';
@@ -3381,7 +3381,7 @@
         var isInst = document.getElementById('installment-check').checked;
         var startDateVal = document.getElementById('recurring-start-date').value;
         var initialAmt = parseFloat(document.getElementById('initial-amount').value) || 0;
-        var freqLabels = { weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly', quarterly: 'Quarterly', annually: 'Annual' };
+        var freqLabels = { daily: 'Daily', weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly', quarterly: 'Quarterly', annually: 'Annual' };
 
         if (!amt || !freq) return;
 
@@ -3413,7 +3413,7 @@
         }
 
         // Frequency intervals
-        var freqMap = { weekly:{d:7,m:0,y:0}, biweekly:{d:14,m:0,y:0}, monthly:{d:0,m:1,y:0}, quarterly:{d:0,m:3,y:0}, annually:{d:0,m:0,y:1} };
+        var freqMap = { daily:{d:1,m:0,y:0}, weekly:{d:7,m:0,y:0}, biweekly:{d:14,m:0,y:0}, monthly:{d:0,m:1,y:0}, quarterly:{d:0,m:3,y:0}, annually:{d:0,m:0,y:1} };
         var interval = freqMap[freq] || freqMap.monthly;
 
         // Build summary

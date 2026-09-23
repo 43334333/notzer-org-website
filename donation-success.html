@@ -386,7 +386,7 @@
             var totalPayments = parseInt(params.get('payments')) || 0;
             var perPayment = parseFloat(params.get('perPayment')) || 0;
             var startDate = params.get('startDate');
-            var labels = { weekly: 'Weekly', biweekly: 'Every 2 Weeks', monthly: 'Monthly', quarterly: 'Quarterly', annually: 'Annually' };
+            var labels = { daily: 'Daily', weekly: 'Weekly', biweekly: 'Every 2 Weeks', monthly: 'Monthly', quarterly: 'Quarterly', annually: 'Annually' };
 
             if (recurring) {
                 var freqLabel = labels[recurring] || recurring;
@@ -424,7 +424,7 @@
             // Build schedule table if recurring/installment with payments
             if (recurring && (totalPayments >= 2 || startDate)) {
                 var tbody = document.getElementById('schedule-tbody');
-                var freqMap = { weekly:{d:7,m:0,y:0}, biweekly:{d:14,m:0,y:0}, monthly:{d:0,m:1,y:0}, quarterly:{d:0,m:3,y:0}, annually:{d:0,m:0,y:1} };
+                var freqMap = { daily:{d:1,m:0,y:0}, weekly:{d:7,m:0,y:0}, biweekly:{d:14,m:0,y:0}, monthly:{d:0,m:1,y:0}, quarterly:{d:0,m:3,y:0}, annually:{d:0,m:0,y:1} };
                 var interval = freqMap[recurring] || freqMap.monthly;
                 var numToShow = totalPayments >= 2 ? totalPayments : 12;
                 var payAmt = perPayment > 0 ? perPayment : parseFloat(amount) || 0;
