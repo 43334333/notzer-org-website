@@ -1950,11 +1950,12 @@
                         30000
                     );
                 } else if (self.activeGateway === 'usaepay') {
-                    if (!self.paymentJs) {
+                    var pjs = self.usingFallback ? self.fallbackPaymentJs : self.paymentJs;
+                    if (!pjs) {
                         reject(new Error('USAePay SDK not loaded'));
                         return;
                     }
-                    self.paymentJs.getToken(
+                    pjs.getToken(
                         function(token) {
                             resolve({
                                 token: token.token || token.payment_key || token,
@@ -1993,6 +1994,12 @@
                     var PayJSClass = typeof PayJS !== 'undefined' ? PayJS : (typeof usaepay !== 'undefined' ? usaepay : null);
                     if (PayJSClass) {
                         this.fallbackPaymentJs = new PayJSClass(fb.usaepay.publicKey);
+                        // Pre-render the USAePay hosted field so card data can be entered
+                        var style = this.getFieldStyleString();
+                        this.fallbackPaymentJs.createPaymentCardEntry({
+                            target: '#usaepay-card-number',
+                            style: style
+                        });
                     }
                 } else if (fb.gateway === 'cardknox' && fb.cardknox && fb.cardknox.ifieldsKey) {
                     await this.loadScript('https://cdn.cardknox.com/ifields/3.4.2602.2001/ifields.min.js', 'cardknox-sdk');
@@ -2075,6 +2082,28 @@
         },
 
         /**
+         * Switch visible gateway fields based on amount vs threshold.
+         * Call this when the user changes the donation amount.
+         * @param {number} amount - The donation amount
+         */
+        switchGatewayForAmount(amount) {
+            var fb = this.config.fallback;
+            if (!fb || !fb.gateway || !fb.threshold) return;
+            var needsFallback = amount > fb.threshold;
+            if (needsFallback && !this.usingFallback) {
+                this.usingFallback = true;
+                this.activeGateway = fb.gateway;
+                this.showGatewayFields(fb.gateway);
+                this.updateGatewayIndicator();
+            } else if (!needsFallback && this.usingFallback) {
+                this.usingFallback = false;
+                this.activeGateway = this.config.primaryGateway || 'cardknox';
+                this.showGatewayFields(this.activeGateway);
+                this.updateGatewayIndicator();
+            }
+        },
+
+        /**
          * Switch to the fallback gateway (called on primary failure)
          */
         async switchToFallback() {
@@ -2143,6 +2172,7 @@
                         customInput.value = this.dataset.amount;
                     }
                     selectedAmount = parseFloat(this.dataset.amount);
+                    GatewayManager.switchGatewayForAmount(selectedAmount);
                 }
                 if (typeof updateInstallmentSummary === 'function') {
                     updateInstallmentSummary();
@@ -2154,6 +2184,7 @@
             customInput.addEventListener('input', function() {
                 var val = parseFloat(this.value);
                 selectedAmount = (!isNaN(val) && val > 0) ? val : null;
+                if (selectedAmount) { GatewayManager.switchGatewayForAmount(selectedAmount); }
                 var matched = false;
                 amountBtns.forEach(function(b) {
                     if (b.dataset.amount !== 'custom' && parseFloat(b.dataset.amount) === selectedAmount) {
@@ -2495,13 +2526,9 @@
         var btn = document.getElementById('donate-btn');
 
         try {
-            // Step 1: Tokenize — use fallback gateway for high-ticket amounts
-            var tokenizeAmount = isDeferredStart ? perPayment : chargeAmount;
-            var tokenResult;
-            if (GatewayManager.shouldUseFallback(tokenizeAmount)) {
-                tokenResult = await GatewayManager.tokenizeWithFallback();
-            } else {
-                tokenResult = await GatewayManager.tokenize(tokenizeAmount);
+            // Step 1: Tokenize with the active gateway
+            // (switchGatewayForAmount already set the correct gateway based on amount)
+            var tokenResult = await GatewayManager.tokenize();
             }
 
             // Step 2: Build payload
