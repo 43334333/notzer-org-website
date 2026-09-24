@@ -539,6 +539,12 @@
             background: rgba(108,99,255,0.06);
         }
 
+        .paytype-btn {
+            cursor: pointer; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05);
+            color: #ddd; border-radius: 8px; transition: all 0.2s; font-weight: 500;
+        }
+        .paytype-btn:hover { border-color: rgba(77,171,247,0.5); background: rgba(77,171,247,0.1); }
+        .paytype-btn.active { border-color: #4dabf7; background: rgba(77,171,247,0.15); color: #fff; }
         .amount-btn.active {
             background: linear-gradient(135deg, var(--accent), var(--accent-light));
             color: #fff;
@@ -1214,10 +1220,10 @@
                             <div id="high-ticket-payment-type" style="display:none; margin-bottom:14px; padding:12px 14px; background:rgba(77,171,247,0.08); border:1px solid rgba(77,171,247,0.25); border-radius:8px;">
                                 <label style="margin-bottom:6px; font-size:0.9rem; color:#aaa;">Payment Method <span class="req">*</span></label>
                                 <div style="display:flex; gap:8px;">
-                                    <button type="button" class="amount-btn" id="pay-type-cc" data-paytype="cc" style="flex:1; padding:10px; font-size:0.9rem;" onclick="GatewayManager.selectPaymentType('cc')">💳 Credit / Debit Card</button>
-                                    <button type="button" class="amount-btn" id="pay-type-daf" data-paytype="daf" style="flex:1; padding:10px; font-size:0.9rem;" onclick="GatewayManager.selectPaymentType('daf')">🏦 DAF / Giving Card</button>
+                                    <button type="button" class="paytype-btn" id="pay-type-cc" data-paytype="cc" style="flex:1; padding:10px; font-size:0.9rem;" onclick="GatewayManager.selectPaymentType('cc')">💳 Credit / Debit Card</button>
+                                    <button type="button" class="paytype-btn" id="pay-type-daf" data-paytype="daf" style="flex:1; padding:10px; font-size:0.9rem;" onclick="GatewayManager.selectPaymentType('daf')">🏦 DAF / Giving Card</button>
                                 </div>
-                                <div id="high-ticket-hint" style="font-size:0.78rem; color:#888; margin-top:6px;">Amounts over $3,600 require selecting a payment method.</div>
+                                <div id="high-ticket-hint" style="font-size:0.78rem; color:#888; margin-top:6px;">Please Select Card Type</div>
                             </div>
 
                                 <!-- Gateway indicator -->
@@ -1712,7 +1718,7 @@ addIfieldKeyPressCallback(function(data) {
                 selector.style.display = 'none';
                 this._selectedPayType = null;
                 // Deactivate selector buttons
-                var btns = selector.querySelectorAll('.amount-btn');
+                var btns = selector.querySelectorAll('.paytype-btn');
                 btns.forEach(function(b) { b.classList.remove('active'); });
                 if (this.usingFallback) {
                     this.usingFallback = false;
