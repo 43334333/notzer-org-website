@@ -1885,11 +1885,10 @@
             try {
                 this.paymentJs = new PayJSClass(this.config.usaepay.publicKey);
 
+                this.paymentCard = this.paymentJs.createPaymentCardEntry();
                 var style = this.getFieldStyleString();
-                this.paymentJs.createPaymentCardEntry({
-                    target: '#usaepay-card-number',
-                    style: style
-                });
+                this.paymentCard.generateHTML({ styles: { base: this.getFieldStyle() } });
+                this.paymentCard.addHTML('usaepay-card-number');
             } catch (err) {
                 console.error('USAePay init error:', err);
                 document.getElementById('usaepay-error').textContent = 'Payment fields failed to load. Please try again.';
@@ -1959,27 +1958,23 @@
                         reject(new Error('USAePay SDK not loaded'));
                         return;
                     }
-                    pjs.getToken(
-                        function(token) {
+                    self.paymentCard.getPaymentKey().then(function(response) {
+                        if (response.error) {
+                            reject(new Error(response.error));
+                        } else {
                             resolve({
-                                token: token.token || token.payment_key || token,
-                                cardType: token.card_type || '',
-                                last4: token.card_last4 || '',
+                                token: response.key || response.payment_key || response,
+                                cardType: response.card_type || '',
+                                last4: response.card_last4 || '',
                                 gateway: 'usaepay'
                             });
-                        },
-                        function(errors) {
-                            var msg = 'Payment processing error';
-                            if (errors && typeof errors === 'object') {
-                                if (Array.isArray(errors)) {
-                                    msg = errors.map(function(e) { return e.message || e; }).join(', ');
-                                } else if (errors.message) {
-                                    msg = errors.message;
-                                }
-                            }
-                            reject(new Error(msg));
                         }
-                    );
+                    }).catch(function(error) {
+                        var msg = 'Payment processing error';
+                        if (error && error.message) msg = error.message;
+                        else if (typeof error === 'string') msg = error;
+                        reject(new Error(msg));
+                    });
                 } else {
                     reject(new Error('No active gateway configured'));
                 }
@@ -2143,12 +2138,12 @@
                     // Defer to next animation frame so container has dimensions
                     requestAnimationFrame(function() {
                         var style = self.getFieldStyleString();
-                        self.fallbackPaymentJs.createPaymentCardEntry({
-                            target: '#usaepay-card-number',
-                            style: style
-                        });
-                        // Point paymentJs to fallback so normal tokenize() works
+                        self.fallbackPaymentCard = self.fallbackPaymentJs.createPaymentCardEntry();
+                        self.fallbackPaymentCard.generateHTML({ styles: { base: self.getFieldStyle() } });
+                        self.fallbackPaymentCard.addHTML('usaepay-card-number');
+                        // Point paymentJs/paymentCard to fallback so normal tokenize() works
                         self.paymentJs = self.fallbackPaymentJs;
+                        self.paymentCard = self.fallbackPaymentCard;
                     });
                 } else if (this.fallbackPaymentJs) {
                     // Already rendered, just ensure paymentJs points to fallback
