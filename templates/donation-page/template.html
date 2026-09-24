@@ -2690,6 +2690,8 @@
         } catch (err) {
             if (err && err.message && err.message.includes('Failed to tokenize')) {
                 showStatus('error', 'Could not process card information. Please check your card details.');
+            } else if (err && err.message && err.message.toLowerCase() !== 'fetch failed') {
+                showStatus('error', err.message);
             } else {
                 showStatus('error', 'A network error occurred. Please try again.');
             }
