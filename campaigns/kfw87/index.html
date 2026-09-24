@@ -2592,6 +2592,7 @@
 
             // Step 2: Build payload
             var payload = {
+                action: 'processPayment',
                 amount: isDeferredStart ? perPayment : chargeAmount,
                 firstName: firstName,
                 lastName: lastName,
