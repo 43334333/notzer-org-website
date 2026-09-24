@@ -975,7 +975,7 @@
                 <!-- Goal progress (shown if goalAmount is set) -->
                 <div class="goal-section" id="goal-section">
                     <div class="goal-bar-container">
-                        <div class="goal-bar-fill" id="goal-bar-fill" style="width: 0%;"></div>
+                        <div class="goal-bar-fill" id="goal-bar-fill" style="width: 100%;"></div>
                     </div>
                     <p class="goal-text" id="goal-text">Loading goal progress…</p>
                 </div>
@@ -3509,7 +3509,7 @@
                     allTeams = data.teams;
                 }
             })
-            .catch(function() {});
+            .catch(function(err) { console.error('Stats fetch error:', err); });
 
         // Filter dropdown on input
         search.addEventListener('input', function() {
@@ -3586,6 +3586,7 @@
         fetch(CAMPAIGN_CONFIG.appsScriptUrl + '?action=getStats&campaignId=' + encodeURIComponent(CAMPAIGN_CONFIG.campaignId))
             .then(function(r) { return r.json(); })
             .then(function(data) {
+                console.log('Campaign stats response:', data);
                 if (!data) return;
 
                 // Dynamically sync wall card visibility with backend setting
