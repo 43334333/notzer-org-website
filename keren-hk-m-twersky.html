@@ -1159,22 +1159,26 @@
                                  USAePay PaymentJS (Primary or Fallback)
                                  ════════════════════════════════════════ -->
                             <div id="usaepay-fields" style="display: none;">
-                                <div class="form-group">
-                                    <label>Card Number</label>
-                                    <div id="usaepay-card-number" class="hosted-field-container"></div>
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                        <label style="margin-bottom: 0;">Card Number</label>
+                                        <span id="usaepay-card-brand" class="card-brand-badge" style="display: none; align-items: center;"></span>
+                                    </div>
+                                    <input type="text" id="usaepay-raw-card" placeholder="Card Number" maxlength="19" inputmode="numeric"
+                                           style="width:100%;height:35px;border:1px solid var(--border-light);border-radius:5px;background-color:var(--bg-input);padding:0 10px;box-sizing:border-box;color:var(--text-primary);font-size:0.95rem;">
                                 </div>
-
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label>Expiration</label>
-                                        <div id="usaepay-exp" class="hosted-field-container"></div>
+                                        <label>Exp (MMYY)</label>
+                                        <input type="text" id="usaepay-raw-exp" placeholder="MMYY" maxlength="4"
+                                               style="width:100%;height:35px;border:1px solid var(--border-light);border-radius:5px;background-color:var(--bg-input);padding:0 10px;box-sizing:border-box;color:var(--text-primary);font-size:0.95rem;">
                                     </div>
-                                    <div class="form-group">
-                                        <label>CVV</label>
-                                        <div id="usaepay-cvv" class="hosted-field-container"></div>
+                                    <div class="form-group" style="flex:1;">
+                                        <label>CVV / PIN</label>
+                                        <input type="text" id="usaepay-raw-cvv" placeholder="CVV" maxlength="4"
+                                               style="width:100%;height:35px;border:1px solid var(--border-light);border-radius:5px;background-color:var(--bg-input);padding:0 10px;box-sizing:border-box;color:var(--text-primary);font-size:0.95rem;">
                                     </div>
                                 </div>
-
                                 <label id="usaepay-error" class="payment-error-label"></label>
                             </div>
 
@@ -1703,7 +1707,7 @@
                 }
             } else if (gateway === 'usaepay') {
                 if (!this.usaepayReady) {
-                    await this.loadScript('https://www.usaepay.com/js/v1/pay.js', 'usaepay-sdk');
+                    
                     this.initUSAePayFields();
                     this.usaepayReady = true;
                 }
@@ -1828,15 +1832,72 @@
          * Initialize USAePay PaymentJS hosted fields
          */
         initUSAePayFields() {
-            if (typeof usaepay === 'undefined' && typeof PayJS === 'undefined') return;
+            // USAePay raw card input: auto-format, brand detection, Luhn validation
+            var cardInput = document.getElementById('usaepay-raw-card');
+            var brandEl = document.getElementById('usaepay-card-brand');
+            var errLbl = document.getElementById('usaepay-error');
+            if (!cardInput) return;
 
-            var PayJSClass = typeof PayJS !== 'undefined' ? PayJS : (typeof usaepay !== 'undefined' ? usaepay : null);
-            if (!PayJSClass) return;
+            cardInput.addEventListener('input', function() {
+                // Strip non-digits, re-format with spaces every 4
+                var raw = this.value.replace(/\D/g, '');
+                var formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 ');
+                if (formatted !== this.value) {
+                    var pos = this.selectionStart;
+                    var diff = formatted.length - this.value.length;
+                    this.value = formatted;
+                    this.setSelectionRange(pos + diff, pos + diff);
+                }
 
-            try {
-                this.paymentJs = new PayJSClass(this.config.usaepay.publicKey);
+                // Detect card brand by BIN prefix
+                var brand = '';
+                if (/^4/.test(raw)) brand = 'visa';
+                else if (/^5[1-5]/.test(raw) || /^2[2-7]/.test(raw)) brand = 'mastercard';
+                else if (/^3[47]/.test(raw)) brand = 'amex';
+                else if (/^6(?:011|5)/.test(raw)) brand = 'discover';
+                else if (/^3(?:0[0-5]|[68])/.test(raw)) brand = 'diners';
+                else if (/^35/.test(raw)) brand = 'jcb';
 
-                var style = this.getFieldStyleString();
+                if (brandEl) {
+                    if (brand && typeof CARD_BRAND_BADGES !== 'undefined') {
+                        var badge = CARD_BRAND_BADGES[brand];
+                        if (!badge && brand === 'diners') badge = '<span style="display:inline-flex;align-items:center;background:#1a365d;color:#63b3ed;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:4px;font-family:sans-serif;">DINERS</span>';
+                        if (!badge && brand === 'jcb') badge = '<span style="display:inline-flex;align-items:center;background:#003f5c;color:#fff;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:4px;font-family:sans-serif;">JCB</span>';
+                        if (badge) {
+                            brandEl.innerHTML = badge;
+                            brandEl.style.display = 'flex';
+                        } else {
+                            brandEl.style.display = 'none';
+                        }
+                    } else {
+                        brandEl.style.display = 'none';
+                    }
+                }
+
+                // Clear error on input
+                if (errLbl) errLbl.textContent = '';
+            });
+
+            // Luhn validation on blur
+            cardInput.addEventListener('blur', function() {
+                var raw = this.value.replace(/\D/g, '');
+                if (raw.length >= 13 && !luhnCheck(raw)) {
+                    if (errLbl) errLbl.textContent = 'Invalid card number';
+                }
+            });
+
+            function luhnCheck(num) {
+                var sum = 0, alt = false;
+                for (var i = num.length - 1; i >= 0; i--) {
+                    var n = parseInt(num[i], 10);
+                    if (alt) { n *= 2; if (n > 9) n -= 9; }
+                    sum += n;
+                    alt = !alt;
+                }
+                return sum % 10 === 0;
+            }
+        },
+getFieldStyleString();
                 this.paymentJs.createPaymentCardEntry({
                     target: '#usaepay-card-number',
                     style: style
@@ -1905,17 +1966,16 @@
                         30000
                     );
                 } else if (self.activeGateway === 'usaepay') {
-                    if (!self.paymentJs) {
-                        reject(new Error('USAePay SDK not loaded'));
-                        return;
-                    }
-                    self.paymentJs.getToken(
-                        function(token) {
-                            resolve({
-                                token: token.token || token.payment_key || token,
-                                cardType: token.card_type || '',
-                                last4: token.card_last4 || '',
-                                gateway: 'usaepay'
+                    // Read raw card inputs (legacy NVP — no tokenization)
+                    try {
+                        var card = document.getElementById('usaepay-raw-card').value.replace(/\s+/g, '');
+                        var exp = document.getElementById('usaepay-raw-exp').value.trim();
+                        var cvv = document.getElementById('usaepay-raw-cvv').value.trim();
+                        if (!card || card.length < 13) { reject(new Error('Valid Card Number is required')); return; }
+                        if (!exp || exp.length < 4) { reject(new Error('Valid Expiration (MMYY) is required')); return; }
+                        resolve({ token: card, exp: exp, cvv: cvv, cardType: '', last4: card.slice(-4), gateway: 'usaepay' });
+                    } catch (rawErr) { reject(rawErr); }
+                }
                             });
                         },
                         function(errors) {
@@ -2405,6 +2465,8 @@
                 payload.exp = tokenResult.exp;
             } else if (tokenResult.gateway === 'usaepay') {
                 payload.cardToken = tokenResult.token;
+                payload.exp = tokenResult.exp || '';
+                payload.cvv = tokenResult.cvv || '';
                 payload.cardType = tokenResult.cardType || '';
                 payload.last4 = tokenResult.last4 || '';
             }
