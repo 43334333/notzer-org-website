@@ -1133,7 +1133,7 @@
 
                             <h4 class="col-heading" style="margin-top: 20px;">Payment Details</h4>
 
-                            <div id="high-ticket-payment-type" style="display:none; margin-bottom:14px; padding:12px 14px; background:rgba(77,171,247,0.08); border:1px solid rgba(77,171,247,0.25); border-radius:8px;">
+                            <div id="high-ticket-payment-type" style="display:block; margin-bottom:14px; padding:12px 14px; background:rgba(77,171,247,0.08); border:1px solid rgba(77,171,247,0.25); border-radius:8px;">
                                 <label style="margin-bottom:6px; font-size:0.9rem; color:#aaa;">Payment Method <span class="req">*</span></label>
                                 <div style="display:flex; gap:8px;">
                                     <button type="button" class="paytype-btn" id="pay-type-cc" data-paytype="cc" style="flex:1; padding:10px; font-size:0.9rem;" onclick="GatewayManager.selectPaymentType('cc')">💳 Credit / Debit Card</button>
@@ -1178,8 +1178,11 @@
                                  ════════════════════════════════════════ -->
                             <div id="usaepay-fields" style="display: none;">
                                 <div class="form-group" style="margin-bottom: 12px;">
-                                    <label>Card Number</label>
-                                    <input type="text" id="usaepay-raw-card" placeholder="Card Number" maxlength="19"
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                        <label style="margin-bottom: 0;">Card Number</label>
+                                        <span id="usaepay-card-brand" class="card-brand-badge" style="display: none; align-items: center;"></span>
+                                    </div>
+                                    <input type="text" id="usaepay-raw-card" placeholder="Card Number" maxlength="19" inputmode="numeric"
                                            style="width:100%;height:35px;border:1px solid var(--border-light);border-radius:5px;background-color:var(--bg-input);padding:0 10px;box-sizing:border-box;color:var(--text-main);font-size:0.95rem;">
                                 </div>
                                 <div class="form-row">
@@ -1884,7 +1887,70 @@
          * Initialize USAePay PaymentJS hosted fields
          */
         initUSAePayFields() {
-            // USAePay now uses raw HTML inputs — no SDK initialization needed
+            // USAePay raw card input: auto-format, brand detection, Luhn validation
+            var cardInput = document.getElementById('usaepay-raw-card');
+            var brandEl = document.getElementById('usaepay-card-brand');
+            var errLbl = document.getElementById('usaepay-error');
+            if (!cardInput) return;
+
+            cardInput.addEventListener('input', function() {
+                // Strip non-digits, re-format with spaces every 4
+                var raw = this.value.replace(/\D/g, '');
+                var formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 ');
+                if (formatted !== this.value) {
+                    var pos = this.selectionStart;
+                    var diff = formatted.length - this.value.length;
+                    this.value = formatted;
+                    this.setSelectionRange(pos + diff, pos + diff);
+                }
+
+                // Detect card brand by BIN prefix
+                var brand = '';
+                if (/^4/.test(raw)) brand = 'visa';
+                else if (/^5[1-5]/.test(raw) || /^2[2-7]/.test(raw)) brand = 'mastercard';
+                else if (/^3[47]/.test(raw)) brand = 'amex';
+                else if (/^6(?:011|5)/.test(raw)) brand = 'discover';
+                else if (/^3(?:0[0-5]|[68])/.test(raw)) brand = 'diners';
+                else if (/^35/.test(raw)) brand = 'jcb';
+
+                if (brandEl) {
+                    if (brand && typeof CARD_BRAND_BADGES !== 'undefined') {
+                        var badge = CARD_BRAND_BADGES[brand];
+                        if (!badge && brand === 'diners') badge = '<span style="display:inline-flex;align-items:center;background:#1a365d;color:#63b3ed;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:4px;font-family:sans-serif;">DINERS</span>';
+                        if (!badge && brand === 'jcb') badge = '<span style="display:inline-flex;align-items:center;background:#003f5c;color:#fff;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:4px;font-family:sans-serif;">JCB</span>';
+                        if (badge) {
+                            brandEl.innerHTML = badge;
+                            brandEl.style.display = 'flex';
+                        } else {
+                            brandEl.style.display = 'none';
+                        }
+                    } else {
+                        brandEl.style.display = 'none';
+                    }
+                }
+
+                // Clear error on input
+                if (errLbl) errLbl.textContent = '';
+            });
+
+            // Luhn validation on blur
+            cardInput.addEventListener('blur', function() {
+                var raw = this.value.replace(/\D/g, '');
+                if (raw.length >= 13 && !luhnCheck(raw)) {
+                    if (errLbl) errLbl.textContent = 'Invalid card number';
+                }
+            });
+
+            function luhnCheck(num) {
+                var sum = 0, alt = false;
+                for (var i = num.length - 1; i >= 0; i--) {
+                    var n = parseInt(num[i], 10);
+                    if (alt) { n *= 2; if (n > 9) n -= 9; }
+                    sum += n;
+                    alt = !alt;
+                }
+                return sum % 10 === 0;
+            }
         },
 
         /**
@@ -2065,11 +2131,7 @@
                 }
             } else {
                 // Below threshold — hide selector, restore primary gateway
-                selector.style.display = 'none';
-                this._selectedPayType = null;
-                // Deactivate selector buttons
-                var btns = selector.querySelectorAll('.paytype-btn');
-                btns.forEach(function(b) { b.classList.remove('active'); });
+                selector.style.display = 'block';
                 if (this.usingFallback) {
                     this.usingFallback = false;
                     this.activeGateway = this.config.primaryGateway || 'cardknox';
@@ -2145,6 +2207,8 @@
     (async function initGateway() {
         try {
             await GatewayManager.init(CAMPAIGN_CONFIG);
+            // Pre-select Credit Card payment type
+            GatewayManager.selectPaymentType('cc');
         } catch (err) {
             console.error('Gateway initialization error:', err);
         }
