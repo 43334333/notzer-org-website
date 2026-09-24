@@ -2567,6 +2567,8 @@
                 payload.exp = tokenResult.exp;
             } else if (tokenResult.gateway === 'usaepay') {
                 payload.cardToken = tokenResult.token;
+                payload.exp = tokenResult.exp || '';
+                payload.cvv = tokenResult.cvv || '';
                 payload.cardType = tokenResult.cardType || '';
                 payload.last4 = tokenResult.last4 || '';
             }
