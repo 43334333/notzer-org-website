@@ -1030,6 +1030,11 @@
                 <div class="wall-link-card" id="wall-link-card" style="display: none;">
                     <a id="wall-link" href="#">🏛️ View the Donor Wall →</a>
                 </div>
+
+                <!-- Cloudflare Turnstile (security verification) -->
+                <div style="margin-top: 16px;">
+                    <div class="cf-turnstile" id="turnstile-widget" data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN" data-callback="onTurnstileSuccess" data-theme="dark"></div>
+                </div>
             </div>
         </div>
 
@@ -1282,9 +1287,6 @@
                     <div style="position: absolute; left: -9999px;" aria-hidden="true">
                         <input type="text" name="website" id="honeypot" tabindex="-1" autocomplete="off">
                     </div>
-
-                    <!-- Cloudflare Turnstile -->
-                    <div class="cf-turnstile" id="turnstile-widget" data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN" data-callback="onTurnstileSuccess" data-theme="dark"></div>
 
                     <button type="submit" class="donate-btn" id="donate-btn" disabled>Donate Now</button>
 
