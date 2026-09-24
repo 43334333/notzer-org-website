@@ -2659,22 +2659,20 @@
                 return;
             } else if (data.status === 'gateway_error' && data.canRetry && !isRetry) {
                 // Step 5: Gateway error → try failover
-                showStatus('info', 'Trying alternate payment processor...');
-                btn.textContent = 'Retrying...';
+                console.warn('Gateway error on primary:', data.message);
+                showStatus('error', (data.message || 'Payment processor error.') + ' Switching to alternate processor. Please re-enter your card details.');
+                
+                btn.textContent = 'Donate Now';
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                if (typeof turnstile !== 'undefined') turnstile.reset();
 
                 try {
                     await GatewayManager.switchToFallback();
-
-                    // Brief pause for user feedback
-                    await new Promise(function(resolve) { setTimeout(resolve, 1000); });
-
-                    // Re-tokenize and re-submit with fallback gateway
-                    await processPayment(chargeAmount, totalAmount, firstName, lastName, email, isRecurring, frequency, totalPayments, isInstallment, true, startDateVal, initialPaymentAmt, isDeferredStart);
-                    return;
                 } catch (fallbackErr) {
-                    showStatus('error', 'Both payment processors are unavailable. Please try again later.');
                     console.error('Fallback error:', fallbackErr);
                 }
+                return;
             } else if (data.status === 'declined') {
                 // Step 6: Card declined → show declined modal
                 showDeclinedModal(data.message || 'Your card was declined. Please check your card details and try again.');
