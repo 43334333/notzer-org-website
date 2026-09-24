@@ -1127,6 +1127,15 @@
 
                             <h4 class="col-heading" style="margin-top: 20px;">Payment Details</h4>
 
+                            <div id="high-ticket-payment-type" style="display:none; margin-bottom:14px; padding:12px 14px; background:rgba(77,171,247,0.08); border:1px solid rgba(77,171,247,0.25); border-radius:8px;">
+                                <label style="margin-bottom:6px; font-size:0.9rem; color:#aaa;">Payment Method <span class="req">*</span></label>
+                                <div style="display:flex; gap:8px;">
+                                    <button type="button" class="amount-btn" id="pay-type-cc" data-paytype="cc" style="flex:1; padding:10px; font-size:0.9rem;" onclick="GatewayManager.selectPaymentType('cc')">💳 Credit / Debit Card</button>
+                                    <button type="button" class="amount-btn" id="pay-type-daf" data-paytype="daf" style="flex:1; padding:10px; font-size:0.9rem;" onclick="GatewayManager.selectPaymentType('daf')">🏦 DAF / Giving Card</button>
+                                </div>
+                                <div id="high-ticket-hint" style="font-size:0.78rem; color:#888; margin-top:6px;">Amounts over $3,600 require selecting a payment method.</div>
+                            </div>
+
                             <!-- ════════════════════════════════════════
                                  Cardknox iFields (Primary or Fallback)
                                  ════════════════════════════════════════ -->
@@ -1992,12 +2001,7 @@
                     var PayJSClass = typeof PayJS !== 'undefined' ? PayJS : (typeof usaepay !== 'undefined' ? usaepay : null);
                     if (PayJSClass) {
                         this.fallbackPaymentJs = new PayJSClass(fb.usaepay.publicKey);
-                        // Pre-render the USAePay hosted field so card data can be entered
-                        var style = this.getFieldStyleString();
-                        this.fallbackPaymentJs.createPaymentCardEntry({
-                            target: '#usaepay-card-number',
-                            style: style
-                        });
+
                     }
                 } else if (fb.gateway === 'cardknox' && fb.cardknox && fb.cardknox.ifieldsKey) {
                     await this.loadScript('https://cdn.cardknox.com/ifields/3.4.2602.2001/ifields.min.js', 'cardknox-sdk');
@@ -2078,21 +2082,71 @@
             return !!(fb && fb.gateway && fb.threshold > 0 && amount > fb.threshold);
         },
 
-        /**
-         * Switch visible gateway fields based on amount vs threshold.
-         * Call this when the user changes the donation amount.
+                /**
+         * Handle amount change for high-ticket routing.
+         * Shows payment type selector when amount > threshold.
          * @param {number} amount - The donation amount
          */
         switchGatewayForAmount(amount) {
             var fb = this.config.fallback;
             if (!fb || !fb.gateway || !fb.threshold) return;
-            var needsFallback = amount > fb.threshold;
-            if (needsFallback && !this.usingFallback) {
+            var selector = document.getElementById('high-ticket-payment-type');
+            if (!selector) return;
+            if (amount > fb.threshold) {
+                // Show payment type selector
+                selector.style.display = 'block';
+                // If user already selected a type, keep it; otherwise hide card fields
+                if (!this._selectedPayType) {
+                    // Hide both field sets until user picks
+                    document.getElementById('cardknox-fields').style.display = 'none';
+                    document.getElementById('usaepay-fields').style.display = 'none';
+                }
+            } else {
+                // Below threshold — hide selector, restore primary gateway
+                selector.style.display = 'none';
+                this._selectedPayType = null;
+                // Deactivate selector buttons
+                var btns = selector.querySelectorAll('.amount-btn');
+                btns.forEach(function(b) { b.classList.remove('active'); });
+                if (this.usingFallback) {
+                    this.usingFallback = false;
+                    this.activeGateway = this.config.primaryGateway || 'cardknox';
+                    this.showGatewayFields(this.activeGateway);
+                    this.updateGatewayIndicator();
+                }
+            }
+        },
+
+        /**
+         * Called when user selects Credit Card or DAF from the high-ticket selector.
+         * @param {string} payType - 'cc' or 'daf'
+         */
+        selectPaymentType(payType) {
+            this._selectedPayType = payType;
+            var fb = this.config.fallback;
+            // Toggle button active states
+            var ccBtn = document.getElementById('pay-type-cc');
+            var dafBtn = document.getElementById('pay-type-daf');
+            if (ccBtn) ccBtn.classList.toggle('active', payType === 'cc');
+            if (dafBtn) dafBtn.classList.toggle('active', payType === 'daf');
+
+            if (payType === 'cc' && fb && fb.gateway) {
+                // Credit card over threshold → use fallback gateway (USAePay)
                 this.usingFallback = true;
                 this.activeGateway = fb.gateway;
                 this.showGatewayFields(fb.gateway);
                 this.updateGatewayIndicator();
-            } else if (!needsFallback && this.usingFallback) {
+                // Render USAePay hosted field on-demand (fixes iframe sizing)
+                if (fb.gateway === 'usaepay' && this.fallbackPaymentJs && !this._fallbackFieldRendered) {
+                    this._fallbackFieldRendered = true;
+                    var style = this.getFieldStyleString();
+                    this.fallbackPaymentJs.createPaymentCardEntry({
+                        target: '#usaepay-card-number',
+                        style: style
+                    });
+                }
+            } else {
+                // DAF card → always use primary gateway (Cardknox/Sola)
                 this.usingFallback = false;
                 this.activeGateway = this.config.primaryGateway || 'cardknox';
                 this.showGatewayFields(this.activeGateway);
@@ -2446,6 +2500,13 @@
         // Validate required fields
         if (!firstName || !lastName || !email) {
             showStatus('error', 'Please fill in all required fields.');
+            return;
+        }
+
+        // Validate high-ticket payment type selection
+        var htSelector = document.getElementById('high-ticket-payment-type');
+        if (htSelector && htSelector.style.display !== 'none' && !GatewayManager._selectedPayType) {
+            showStatus('error', 'Please select a payment method (Credit Card or DAF) for amounts over $3,600.');
             return;
         }
 
