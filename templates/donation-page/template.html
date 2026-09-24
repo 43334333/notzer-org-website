@@ -117,24 +117,8 @@
         }
 
         /* Goal progress bar */
-        .goal-section { margin-top: 25px; }
-        .goal-bar-container {
-            background: rgba(255,255,255,0.08);
-            border-radius: 20px;
-            height: 24px;
-            overflow: hidden;
-            max-width: 500px;
-            margin: 10px auto;
-            position: relative;
-        }
-        .goal-bar-fill {
-            height: 100%;
-            border-radius: 20px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-            transition: width 1s ease;
-            min-width: 0;
-        }
-        .goal-text { font-size: 0.9rem; color: var(--text-muted); margin-top: 8px; }
+        .goal-section { margin: 0; padding: 0; }
+        .goal-text { font-size: 0.78rem; color: var(--text-muted); margin: 6px 0 0; text-align: center; }
 
         /* ============================================================
            CAMPAIGN MAIN TWO-COLUMN LAYOUT (Desktop)
@@ -202,35 +186,34 @@
             text-align: center;
         }
 
-        /* Goal Progress Bar */
+        /* Goal Progress Bar — header divider style */
         .goal-section {
-            margin: 14px 0 18px;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 10px;
+            margin: 0;
+            padding: 0;
         }
         .goal-bar-container {
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            height: 18px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 0;
+            height: 6px;
             overflow: hidden;
             max-width: 100%;
-            margin: 8px auto 4px;
+            margin: 0;
             position: relative;
         }
         .goal-bar-fill {
             height: 100%;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-            transition: width 1s ease;
+            border-radius: 0;
+            background: linear-gradient(90deg, #4dabf7, #38d9a9);
+            transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
             min-width: 0;
+            box-shadow: 0 0 8px rgba(77, 171, 247, 0.4);
         }
         .goal-text {
-            font-size: 0.88rem;
+            font-size: 0.78rem;
             color: var(--text-muted);
-            margin: 4px 0 0;
+            margin: 6px 0 0;
             text-align: center;
+            letter-spacing: 0.3px;
         }
 
         /* Story Narrative */
@@ -989,7 +972,7 @@
                 </div>
 
                 <!-- Goal progress (shown if goalAmount is set) -->
-                <div class="goal-section" id="goal-section" style="display: none;">
+                <div class="goal-section" id="goal-section">
                     <div class="goal-bar-container">
                         <div class="goal-bar-fill" id="goal-bar-fill" style="width: 0%;"></div>
                     </div>
@@ -1031,10 +1014,6 @@
                     <a id="wall-link" href="#">🏛️ View the Donor Wall →</a>
                 </div>
 
-                <!-- Cloudflare Turnstile (security verification) -->
-                <div style="margin-top: 16px;">
-                    <div class="cf-turnstile" id="turnstile-widget" data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN" data-callback="onTurnstileSuccess" data-theme="dark"></div>
-                </div>
             </div>
         </div>
 
@@ -1120,6 +1099,11 @@
                                     <input type="text" id="team-search" autocomplete="off" placeholder="Type to find your team..." style="border:none; background:transparent; color:#EFEFEF; font-family:inherit; font-size:0.9rem; outline:none; flex:1; min-width:80px;">
                                 </div>
                                 <div id="teamDropdown" style="position:absolute; top:100%; left:0; right:0; background:#1e1e1e; border:1px solid rgba(255,255,255,0.12); border-radius:8px; max-height:140px; overflow-y:auto; z-index:50; margin-top:4px; display:none;"></div>
+                            </div>
+
+                            <!-- Cloudflare Turnstile -->
+                            <div style="margin-top: 12px;">
+                                <div class="cf-turnstile" id="turnstile-widget" data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN" data-callback="onTurnstileSuccess" data-theme="dark"></div>
                             </div>
                         </div>
 
@@ -1640,7 +1624,7 @@
 
         // Goal section
         if (CAMPAIGN_CONFIG.goalAmount && CAMPAIGN_CONFIG.goalAmount > 0) {
-            document.getElementById('goal-section').style.display = 'block';
+            // Goal section is always visible as a progress divider
             // Goal progress will be updated when stats are fetched
         }
 
