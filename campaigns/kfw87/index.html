@@ -1879,7 +1879,7 @@
         initUSAePayFields() {
             if (typeof usaepay === 'undefined' && typeof PayJS === 'undefined') return;
 
-            var PayJSClass = typeof PayJS !== 'undefined' ? PayJS : (typeof usaepay !== 'undefined' ? usaepay : null);
+            var PayJSClass = typeof usaepay !== 'undefined' && usaepay.Client ? usaepay.Client : null;
             if (!PayJSClass) return;
 
             try {
@@ -1990,7 +1990,7 @@
             try {
                 if (fb.gateway === 'usaepay' && fb.usaepay && fb.usaepay.publicKey) {
                     await this.loadScript('https://www.usaepay.com/js/v1/pay.js', 'usaepay-sdk');
-                    var PayJSClass = typeof PayJS !== 'undefined' ? PayJS : (typeof usaepay !== 'undefined' ? usaepay : null);
+                    var PayJSClass = typeof usaepay !== 'undefined' && usaepay.Client ? usaepay.Client : null;
                     if (PayJSClass) {
                         this.fallbackPaymentJs = new PayJSClass(fb.usaepay.publicKey);
 

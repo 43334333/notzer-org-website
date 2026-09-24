@@ -1605,7 +1605,7 @@ addIfieldKeyPressCallback(function(data) {
             try {
                 if (fb.gateway === 'usaepay' && fb.usaepay && fb.usaepay.publicKey) {
                     await this.loadScript('https://www.usaepay.com/js/v1/pay.js');
-                    var PayJSClass = typeof PayJS !== 'undefined' ? PayJS : (typeof usaepay !== 'undefined' ? usaepay : null);
+                    var PayJSClass = typeof usaepay !== 'undefined' && usaepay.Client ? usaepay.Client : null;
                     if (PayJSClass) {
                         this.fallbackPaymentJs = new PayJSClass(fb.usaepay.publicKey);
 
