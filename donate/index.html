@@ -1395,276 +1395,192 @@
     const GatewayManager = {
         activeGateway: null,
         cardknoxReady: false,
-        usaepayReady: false,
-        paymentJs: null,
-        fallbackPaymentJs: null,
+        usaepayReady: true,
         usingFallback: false,
         config: null,
+        _sdkLoadPromises: {},
 
         async init(config) {
             this.config = config;
-            const gateway = config.primaryGateway || 'cardknox';
-            this.activeGateway = gateway;
-            await this.loadGateway(gateway);
-            this.updateIndicator();
+            this.activeGateway = config.primaryGateway || 'cardknox';
+            await this.loadGateway(this.activeGateway);
+            this.updateGatewayIndicator();
+            if (config.fallback && config.fallback.gateway && config.fallback.threshold > 0) {
+                await this.initFallbackGateway();
+            }
         },
 
         async loadGateway(gateway) {
             if (gateway === 'cardknox') {
-                await this.initCardknox();
+                if (!this.cardknoxReady) {
+                    await this.loadScript('https://cdn.cardknox.com/ifields/3.4.2602.2001/ifields.min.js', 'cardknox-sdk');
+                    this.initCardknoxFields();
+                    this.cardknoxReady = true;
+                }
             } else if (gateway === 'usaepay') {
-                await this.initUSAePay();
+                this.usaepayReady = true;
             }
             this.showGatewayFields(gateway);
         },
 
-        async initCardknox() {
-            // ifields.min.js is loaded via <script> tag above
-            if (typeof setAccount === 'function') {
-                setAccount(this.config.cardknox.ifieldsKey, 'NotzerChesed', '1.0.0');
-                this.styleCardknoxFields();
-                this.cardknoxReady = true;
+        loadScript(src, id) {
+            if (this._sdkLoadPromises[id]) return this._sdkLoadPromises[id];
+            this._sdkLoadPromises[id] = new Promise(function(resolve, reject) {
+                if (document.getElementById(id)) { resolve(); return; }
+                var script = document.createElement('script');
+                script.id = id; script.src = src; script.onload = resolve;
+                script.onerror = function() { reject(new Error('Failed to load ' + src)); };
+                document.head.appendChild(script);
+            });
+            return this._sdkLoadPromises[id];
+        },
+
+        showGatewayFields(gateway) {
+            var ckFields = document.getElementById('cardknox-fields');
+            var ueFields = document.getElementById('usaepay-fields');
+            var expInput = document.getElementById('card-exp');
+            var dafContainer = document.getElementById('daf-options-container');
+            var dafWarn = document.getElementById('daf-card-warning');
+
+            if (gateway === 'cardknox') {
+                ckFields.style.display = 'block';
+                ueFields.style.display = 'none';
+                if (expInput) expInput.required = true;
+                if (dafContainer) dafContainer.style.display = 'none';
+                if (dafWarn) dafWarn.style.display = 'none';
             } else {
-                console.warn('Cardknox iFields SDK not loaded');
+                ckFields.style.display = 'none';
+                ueFields.style.display = 'block';
+                if (expInput) expInput.required = false;
+                if (dafContainer) dafContainer.style.display = 'block';
             }
         },
 
-        styleCardknoxFields() {
-            var fieldStyle = {
-                'background-color': 'rgba(255,255,255,0.04)',
-                'border': 'none',
-                'color': '#f0f0f5',
-                'font-size': '0.9rem',
-                'padding': '8px 12px',
-                'width': '100%',
-                'box-sizing': 'border-box',
-                'font-family': "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                'outline': 'none'
-            };
-            if (typeof setIfieldStyle === 'function') {
-                setIfieldStyle('card-number', fieldStyle);
-                setIfieldStyle('cvv', fieldStyle);
-            }
-            if (typeof enableAutoFormatting === 'function') {
-                enableAutoFormatting(' ');
-            }
-
-            // Validation color callbacks
-            var validStyle = Object.assign({}, fieldStyle, { 'color': '#8b83ff' });
-            var invalidStyle = Object.assign({}, fieldStyle, { 'color': '#ff5252' });
-
-            if (typeof addIfieldKeyPressCallback === 'function') {
-                
-    // Verified Cardknox iFields data.issuer badges (no card-prefix sniffing)
-    var CARD_BRAND_BADGES = {
-        'visa': '<span style="display:inline-flex;align-items:center;background:#1a1f71;color:#fff;font-weight:bold;font-size:11px;padding:2px 7px;border-radius:4px;letter-spacing:0.5px;font-family:sans-serif;">VISA</span>',
-        'mastercard': '<span style="display:inline-flex;align-items:center;background:#222;padding:2px 6px;border-radius:4px;gap:2px;"><svg width="22" height="14" viewBox="0 0 28 18"><circle cx="9" cy="9" r="8" fill="#eb001b"/><circle cx="19" cy="9" r="8" fill="#f79e1b" fill-opacity="0.85"/></svg><span style="font-size:10px;font-weight:600;color:#fff;font-family:sans-serif;">MC</span></span>',
-        'amex': '<span style="display:inline-flex;align-items:center;background:#006fcf;color:#fff;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:4px;letter-spacing:0.5px;font-family:sans-serif;">AMEX</span>',
-        'discover': '<span style="display:inline-flex;align-items:center;background:#ff6000;color:#fff;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:4px;letter-spacing:0.5px;font-family:sans-serif;">DISCOVER</span>',
-        'donors': '<span style="display:inline-flex;align-items:center;background:#0a2540;color:#635bff;font-weight:bold;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #635bff;font-family:sans-serif;">🏦 THE DONORS FUND</span>',
-        'ojc': '<span style="display:inline-flex;align-items:center;background:#003366;color:#64b5f6;font-weight:bold;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #64b5f6;font-family:sans-serif;">🏛️ OJC FUND</span>',
-        'pledger': '<span style="display:inline-flex;align-items:center;background:#0f382c;color:#4ade80;font-weight:bold;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #4ade80;font-family:sans-serif;">💎 PLEDGER</span>',
-        'matbia': '<span style="display:inline-flex;align-items:center;background:#2d3748;color:#f6ad55;font-weight:bold;font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #f6ad55;font-family:sans-serif;">🪙 MATBIA</span>'
-    };
-
-addIfieldKeyPressCallback(function(data) {
-                // Card / DAF Brand Badge detection via verified data.issuer
+        initCardknoxFields() {
+            if (typeof setAccount !== 'function') return;
+            setAccount(this.config.cardknox.ifieldsKey, 'NotzerChesed', '1.0.0');
+            var fieldStyle = this.getFieldStyle();
+            setIfieldStyle('card-number', fieldStyle);
+            setIfieldStyle('cvv', fieldStyle);
+            enableAutoFormatting(' ');
+            addIfieldKeyPressCallback(function(data) {
                 var brandBadgeEl = document.getElementById('card-brand-icon');
                 if (brandBadgeEl) {
                     var issuer = (data.issuer || '').toLowerCase().trim();
                     if (issuer && typeof CARD_BRAND_BADGES !== 'undefined' && CARD_BRAND_BADGES[issuer]) {
                         brandBadgeEl.innerHTML = CARD_BRAND_BADGES[issuer];
-                        brandBadgeEl.style.display = 'inline-flex';
+                        brandBadgeEl.style.display = 'flex';
                     } else {
-                        brandBadgeEl.innerHTML = '';
                         brandBadgeEl.style.display = 'none';
                     }
                 }
-
-                    var isCardknox = (typeof GatewayManager !== 'undefined' && GatewayManager.activeGateway === 'cardknox');
-                    if (data.cardNumberFormattedLength > 0) {
-                        var isCardValid = data.cardNumberIsValid || (isCardknox && (data.cardNumberFormattedLength >= 19 || (data.cardNumberLength && data.cardNumberLength >= 16)));
-                        setIfieldStyle('card-number', isCardValid ? validStyle : invalidStyle);
-                    } else {
-                        setIfieldStyle('card-number', fieldStyle);
-                    }
-                    if (data.lastIfieldChanged === 'cvv') {
-                        if (data.cvvLength > 0) {
-                            setIfieldStyle('cvv', data.cvvIsValid ? validStyle : invalidStyle);
-                        } else {
-                            setIfieldStyle('cvv', fieldStyle);
-                        }
-                    }
-                    // DAF card detection: only show warning for USAePay (Sola handles DAF natively)
-                    var dafWarn = document.getElementById('daf-card-warning');
-                    if (dafWarn) {
-                        if (isCardknox) {
-                            dafWarn.style.display = 'none';
-                        } else {
-                            var isFullLength = (data.cardNumberFormattedLength >= 19) || (data.cardNumberLength && data.cardNumberLength >= 16);
-                            dafWarn.style.display = (isFullLength && !data.cardNumberIsValid) ? 'block' : 'none';
-                        }
-                    }
-                });
-            }
+                var dafWarn = document.getElementById('daf-card-warning');
+                if (dafWarn) {
+                    var isDAF = data.issuer && ['donors fund', 'ojc', 'pledger', 'matbia'].some(function(brand) {
+                        return data.issuer.toLowerCase().includes(brand);
+                    });
+                    dafWarn.style.display = isDAF ? 'block' : 'none';
+                }
+            });
+            addIfieldCallback('error', function(data) {
+                var errLbl = document.getElementById('card-data-error');
+                if (errLbl) errLbl.textContent = data.error || '';
+            });
         },
 
-        async initUSAePay() {
-            if (!this.usaepayReady) {
-                await this.loadScript('https://www.usaepay.com/js/v1/pay.js');
-            }
-            if (typeof PayJS !== 'undefined') {
-                this.paymentJs = new PayJS(this.config.usaepay.publicKey);
-                var fieldStyle = {
-                    'background-color': 'rgba(255,255,255,0.04)',
-                    'border': 'none',
-                    'color': '#f0f0f5',
-                    'font-size': '0.9rem',
-                    'padding': '8px 12px',
-                    'width': '100%',
-                    'box-sizing': 'border-box',
-                    'font-family': "'Inter', sans-serif",
-                    'outline': 'none'
-                };
-                this.paymentCard = this.paymentJs.createPaymentCardEntry();
-                this.paymentCard.generateHTML({ base: fieldStyle });
-                this.paymentCard.addHTML('usaepay-card-number');
-                this.usaepayReady = true;
-            }
+        getFieldStyle() {
+            var isMobile = window.innerWidth <= 480;
+            return {
+                'font-family': 'Inter, system-ui, sans-serif',
+                'font-size': isMobile ? '16px' : '14px',
+                'color': '#2c3e50',
+                'letter-spacing': '0.5px'
+            };
         },
 
-        showGatewayFields(gateway) {
-            document.getElementById('cardknox-fields').style.display =
-                gateway === 'cardknox' ? 'block' : 'none';
-            document.getElementById('usaepay-fields').style.display =
-                gateway === 'usaepay' ? 'block' : 'none';
-            var dafWarn = document.getElementById('daf-card-warning');
-            if (dafWarn && gateway === 'cardknox') {
-                dafWarn.style.display = 'none';
+        _tokenizeUSAePayRaw() {
+            var card = document.getElementById('usaepay-raw-card').value.replace(/\s+/g, '');
+            var exp = document.getElementById('usaepay-raw-exp').value.trim();
+            var cvv = document.getElementById('usaepay-raw-cvv').value.trim();
+            if (!card || card.length < 13) {
+                var errLbl = document.getElementById('usaepay-error');
+                if (errLbl) errLbl.textContent = 'Valid Card Number is required';
+                return Promise.reject(new Error('Valid Card Number is required'));
             }
-        },
-
-        updateIndicator() {
-            var label = document.getElementById('gateway-label');
-            if (label) {
-                label.textContent = 'Secure payment' + (this.activeGateway ? ' via ' + this.activeGateway.charAt(0).toUpperCase() + this.activeGateway.slice(1) : '');
+            if (!exp || exp.length < 4) {
+                var errLbl = document.getElementById('usaepay-error');
+                if (errLbl) errLbl.textContent = 'Valid Expiration (MMYY) is required';
+                return Promise.reject(new Error('Valid Expiration is required'));
             }
+            return Promise.resolve({
+                status: 'success',
+                gateway: 'usaepay',
+                token: card,
+                exp: exp,
+                cvv: cvv,
+                cardType: '',
+                last4: card.slice(-4)
+            });
         },
 
         tokenize() {
             var self = this;
+            if (this.usingFallback) {
+                return this.tokenizeWithFallback();
+            }
             return new Promise(function(resolve, reject) {
                 if (self.activeGateway === 'cardknox') {
-                    if (typeof getTokens !== 'function') {
-                        reject('Cardknox iFields not initialized');
-                        return;
-                    }
+                    if (typeof getTokens !== 'function') { reject(new Error('Cardknox SDK not loaded')); return; }
                     getTokens(
                         function() {
-                            resolve({
-                                token: document.querySelector('[data-ifields-id="card-number-token"]').value,
-                                cvvToken: document.querySelector('[data-ifields-id="cvv-token"]').value,
-                                exp: document.getElementById('card-exp').value,
-                                gateway: 'cardknox'
-                            });
+                            var cardToken = document.querySelector('[data-ifields-id="card-number-token"]').value;
+                            var cvvToken = document.querySelector('[data-ifields-id="cvv-token"]').value;
+                            var exp = document.getElementById('card-exp').value;
+                            resolve({ token: cardToken, cvvToken: cvvToken, exp: exp, gateway: 'cardknox' });
                         },
-                        function(error) { reject(error); },
+                        function(error) { reject(error || new Error('Failed to tokenize card with Cardknox')); },
                         30000
                     );
                 } else if (self.activeGateway === 'usaepay') {
-                    var pjs = self.paymentJs;
-                    if (!pjs) {
-                        reject('USAePay PaymentJS not initialized');
-                        return;
-                    }
-                    self.paymentCard.getPaymentKey().then(function(response) {
-                        if (response.error) { reject(new Error(response.error)); return; }
-                        resolve({
-                            token: response.key || response.payment_key || response,
-                            cardType: response.card_type || '',
-                            last4: response.card_last4 || '',
-                            gateway: 'usaepay'
-                        });
-                    }).catch(function(err) {
-                        reject(new Error(err));
-                    });
+                    self._tokenizeUSAePayRaw().then(resolve).catch(reject);
                 } else {
-                    reject('No gateway configured');
+                    reject(new Error('No active gateway configured'));
                 }
             });
         },
 
-        /**
-         * Initialize the fallback gateway SDK for high-ticket routing
-         */
         async initFallbackGateway() {
             var fb = this.config.fallback;
             if (!fb || !fb.gateway) return;
             try {
-                if (fb.gateway === 'usaepay' && fb.usaepay && fb.usaepay.publicKey) {
-                    await this.loadScript('https://www.usaepay.com/js/v1/pay.js');
-                    var PayJSClass = typeof usaepay !== 'undefined' && usaepay.Client ? usaepay.Client : null;
-                    if (PayJSClass) {
-                        this.fallbackPaymentJs = new PayJSClass(fb.usaepay.publicKey);
-
-                    }
-                } else if (fb.gateway === 'cardknox' && fb.cardknox && fb.cardknox.ifieldsKey) {
-                    await this.loadScript('https://cdn.cardknox.com/ifields/3.4.2602.2001/ifields.min.js');
+                if (fb.gateway === 'cardknox' && fb.cardknox && fb.cardknox.ifieldsKey) {
+                    await this.loadScript('https://cdn.cardknox.com/ifields/3.4.2602.2001/ifields.min.js', 'cardknox-sdk');
                 }
             } catch (err) {
                 console.error('Fallback gateway init error:', err);
             }
         },
 
-        /**
-         * Tokenize with the fallback gateway (high-ticket amounts)
-         */
         tokenizeWithFallback() {
             var self = this;
             var fb = this.config.fallback;
             return new Promise(function(resolve, reject) {
-                if (fb.gateway === 'usaepay' && self.fallbackPaymentJs) {
-                    self.showGatewayFields('usaepay');
-                    self.fallbackPaymentJs.getToken(
-                        function(token) {
-                            resolve({
-                                token: token.token || token.payment_key || token,
-                                cardType: token.card_type || '',
-                                last4: token.card_last4 || '',
-                                gateway: 'usaepay'
-                            });
-                        },
-                        function(errors) {
-                            var msg = 'Payment processing error';
-                            if (errors && typeof errors === 'object') {
-                                if (Array.isArray(errors)) {
-                                    msg = errors.map(function(e) { return e.message || e; }).join(', ');
-                                } else if (errors.message) {
-                                    msg = errors.message;
-                                }
-                            }
-                            reject(new Error(msg));
-                        }
-                    );
+                if (fb.gateway === 'usaepay') {
+                    self._tokenizeUSAePayRaw().then(resolve).catch(reject);
                 } else if (fb.gateway === 'cardknox') {
                     if (typeof setAccount === 'function' && fb.cardknox.ifieldsKey) {
                         setAccount(fb.cardknox.ifieldsKey, 'NotzerChesed', '1.0.0');
                     }
                     self.showGatewayFields('cardknox');
-                    if (typeof getTokens !== 'function') {
-                        reject(new Error('Cardknox SDK not loaded'));
-                        return;
-                    }
+                    if (typeof getTokens !== 'function') { reject(new Error('Cardknox SDK not loaded')); return; }
                     getTokens(
                         function() {
-                            resolve({
-                                token: document.querySelector('[data-ifields-id="card-number-token"]').value,
-                                cvvToken: document.querySelector('[data-ifields-id="cvv-token"]').value,
-                                exp: document.getElementById('card-exp').value,
-                                gateway: 'cardknox'
-                            });
+                            var cardToken = document.querySelector('[data-ifields-id="card-number-token"]').value;
+                            var cvvToken = document.querySelector('[data-ifields-id="cvv-token"]').value;
+                            var exp = document.getElementById('card-exp').value;
+                            resolve({ token: cardToken, cvvToken: cvvToken, exp: exp, gateway: 'cardknox' });
                         },
-                        function(error) { reject(error); },
+                        function(error) { reject(error || new Error('Failed to tokenize card with Cardknox fallback')); },
                         30000
                     );
                 } else {
@@ -1673,38 +1589,25 @@ addIfieldKeyPressCallback(function(data) {
             });
         },
 
-        /**
-         * Check if amount should use fallback gateway
-         */
         shouldUseFallback(amount) {
             var fb = this.config.fallback;
             return !!(fb && fb.gateway && fb.threshold > 0 && amount > fb.threshold);
         },
 
-                /**
-         * Handle amount change for high-ticket routing.
-         * Shows payment type selector when amount > threshold.
-         * @param {number} amount - The donation amount
-         */
         switchGatewayForAmount(amount) {
             var fb = this.config.fallback;
             if (!fb || !fb.gateway || !fb.threshold) return;
             var selector = document.getElementById('high-ticket-payment-type');
             if (!selector) return;
             if (amount > fb.threshold) {
-                // Show payment type selector
                 selector.style.display = 'block';
-                // If user already selected a type, keep it; otherwise hide card fields
                 if (!this._selectedPayType) {
-                    // Hide both field sets until user picks
                     document.getElementById('cardknox-fields').style.display = 'none';
                     document.getElementById('usaepay-fields').style.display = 'none';
                 }
             } else {
-                // Below threshold — hide selector, restore primary gateway
                 selector.style.display = 'none';
                 this._selectedPayType = null;
-                // Deactivate selector buttons
                 var btns = selector.querySelectorAll('.paytype-btn');
                 btns.forEach(function(b) { b.classList.remove('active'); });
                 if (this.usingFallback) {
@@ -1716,97 +1619,43 @@ addIfieldKeyPressCallback(function(data) {
             }
         },
 
-                /**
-         * Called when user selects Credit Card or DAF from the high-ticket selector.
-         * @param {string} payType - 'cc' or 'daf'
-         */
         selectPaymentType(payType) {
             this._selectedPayType = payType;
-            var self = this;
             var fb = this.config.fallback;
-            // Toggle button active states
             var ccBtn = document.getElementById('pay-type-cc');
             var dafBtn = document.getElementById('pay-type-daf');
             if (ccBtn) ccBtn.classList.toggle('active', payType === 'cc');
             if (dafBtn) dafBtn.classList.toggle('active', payType === 'daf');
 
             if (payType === 'cc' && fb && fb.gateway) {
-                // Credit card over threshold → use fallback gateway (USAePay)
                 this.usingFallback = true;
                 this.activeGateway = fb.gateway;
                 this.showGatewayFields(fb.gateway);
                 this.updateGatewayIndicator();
-                // Render USAePay hosted field on-demand, deferred to allow browser reflow
-                if (fb.gateway === 'usaepay' && this.fallbackPaymentJs && !this._fallbackFieldRendered) {
-                    this._fallbackFieldRendered = true;
-                    // Clear any stale content
-                    var target = document.getElementById('usaepay-card-number');
-                    if (target) target.innerHTML = '';
-                    // Defer to next animation frame so container has dimensions
-                    requestAnimationFrame(function() {
-                        var style = self.getFieldStyleString();
-                        self.fallbackPaymentCard = self.fallbackPaymentJs.createPaymentCardEntry();
-                        self.fallbackPaymentCard.generateHTML({ base: self.getFieldStyle() });
-                        self.fallbackPaymentCard.addHTML('usaepay-card-number');
-                        // Point paymentJs/paymentCard to fallback so normal tokenize() works
-                        self.paymentJs = self.fallbackPaymentJs;
-                        self.paymentCard = self.fallbackPaymentCard;
-                    });
-                } else if (this.fallbackPaymentJs) {
-                    // Already rendered, just ensure paymentJs points to fallback
-                    this.paymentJs = this.fallbackPaymentJs;
-                }
             } else {
-                // DAF card → always use primary gateway (Cardknox/Sola)
                 this.usingFallback = false;
                 this.activeGateway = this.config.primaryGateway || 'cardknox';
                 this.showGatewayFields(this.activeGateway);
                 this.updateGatewayIndicator();
-                // Restore paymentJs if it was overwritten
-                this.paymentJs = null;
             }
         },
-
+        
         async switchToFallback() {
             var fallback = this.activeGateway === 'cardknox' ? 'usaepay' : 'cardknox';
             this.activeGateway = fallback;
-            // Update config keys for fallback
-            if (fallback === 'usaepay' && this.config.usaepay) {
-                await this.initUSAePay();
-            } else if (fallback === 'cardknox' && this.config.cardknox) {
-                await this.initCardknox();
-            }
-            this.showGatewayFields(fallback);
-            this.updateIndicator();
+            await this.loadGateway(fallback);
+            this.updateGatewayIndicator();
         },
 
-        loadScript(src) {
-            return new Promise(function(resolve, reject) {
-                // Don't load if already present
-                var existing = document.querySelector('script[src="' + src + '"]');
-                if (existing) { resolve(); return; }
-
-                var s = document.createElement('script');
-                s.src = src;
-                s.onload = resolve;
-                s.onerror = reject;
-                document.head.appendChild(s);
-            });
+        getFallbackGateway() {
+            return this.activeGateway === 'cardknox' ? 'usaepay' : 'cardknox';
         },
 
-        async reinitialize(config) {
-            this.config = config;
-            this.activeGateway = config.primaryGateway || 'cardknox';
-            this.cardknoxReady = false;
-            this.usaepayReady = false;
-            this.paymentJs = null;
-            this.fallbackPaymentJs = null;
-            this.usingFallback = false;
-            await this.loadGateway(this.activeGateway);
-            this.updateIndicator();
-            // Pre-load fallback gateway if configured
-            if (config.fallback && config.fallback.gateway && config.fallback.threshold > 0) {
-                await this.initFallbackGateway();
+        updateGatewayIndicator() {
+            var badge = document.getElementById('gateway-badge');
+            if (badge) {
+                var label = this.activeGateway === 'cardknox' ? '🔒 Secure Payment (Cardknox)' : '🔒 Secure Payment (USAePay)';
+                badge.textContent = label;
             }
         }
     };
