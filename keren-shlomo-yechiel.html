@@ -575,7 +575,7 @@
         // CONFIGURATION
         // ============================================================
         const IFIELDS_KEY = 'ifields_gizbernotzerchesed23f3811c448846cdbe8';
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpxIaoeZewC6uMC8wrbXqytzq3FfTQXg2Yx10PGy6BJEMOM9hTg1HDUg3-C-4TkUhnnQ/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzngv-LEqoOercDK5MfRtB8BpEFhH3sdnq16lyxzq2LN_8W0lUQpa-oUZB4CfGYE28y3g/exec';
         const CAMPAIGN_NAME = 'Keren Shlomo Yechiel';
 
         // ============================================================
@@ -1322,7 +1322,7 @@ addIfieldKeyPressCallback(function(data) {
             if (inPageZErr) { inPageZErr.style.display = 'none'; inPageZErr.textContent = ''; }
             if (zelleInfo) zelleInfo.style.display = 'block';
             if (zelleBtn) zelleBtn.classList.add('open');
-            logLinkClickMaster('Zelle', amt, fn, ln, em, session.id).catch(function(err) {
+            logLinkClick('Zelle', amt, fn, ln, em, session.id).catch(function(err) {
                 if (inPageZErr) {
                     inPageZErr.textContent = 'Note: could not record click reference with server (' + (err.message || err) + '). Please ensure memo is included in Zelle.';
                     inPageZErr.style.display = 'block';
@@ -1423,7 +1423,7 @@ addIfieldKeyPressCallback(function(data) {
         activeClickSessions.paypal = null;
     }
 
-    function logLinkClickMaster(linkName, amount, firstName, lastName, email, clickId) {
+    function logLinkClick(linkName, amount, firstName, lastName, email, clickId) {
         if (!APPS_SCRIPT_URL) return Promise.reject(new Error('No Apps Script URL configured'));
 
         return fetch(APPS_SCRIPT_URL, {
@@ -1507,7 +1507,7 @@ addIfieldKeyPressCallback(function(data) {
                 var modalZErr = document.getElementById('modal-zelle-error');
                 if (modalZErr) { modalZErr.style.display = 'none'; modalZErr.textContent = ''; }
 
-                logLinkClickMaster('Zelle', amt, fn, ln, em, session.id).catch(function(err) {
+                logLinkClick('Zelle', amt, fn, ln, em, session.id).catch(function(err) {
                     if (modalZErr) {
                         modalZErr.textContent = 'Note: could not record click reference with server (' + (err.message || err) + '). Please ensure memo is pasted in Zelle.';
                         modalZErr.style.display = 'block';
@@ -1580,7 +1580,7 @@ addIfieldKeyPressCallback(function(data) {
                     }
                 });
 
-                logLinkClickMaster('PayPal', amt, fn, ln, em, session.id).catch(function(err) {
+                logLinkClick('PayPal', amt, fn, ln, em, session.id).catch(function(err) {
                     if (modalPPErr) {
                         modalPPErr.textContent = 'Note: could not record click reference with server (' + (err.message || err) + '). Please ensure memo is pasted in PayPal.';
                         modalPPErr.style.display = 'block';
@@ -1589,7 +1589,7 @@ addIfieldKeyPressCallback(function(data) {
 
             } else if (pendingDafLink) {
                 var dafPk = mintClickPk('ksy', 'DAF');
-                logLinkClickMaster(pendingDafName, amt, fn, ln, em, dafPk).catch(function(err) {
+                logLinkClick(pendingDafName, amt, fn, ln, em, dafPk).catch(function(err) {
                     console.warn('Failed to log DAF link click:', err);
                 });
                 window.open(pendingDafLink, '_blank');
@@ -1957,7 +1957,7 @@ addIfieldKeyPressCallback(function(data) {
             if (!wrapper || !search || !dropdown) return;
 
             // Load teams
-            fetch(APPS_SCRIPT_URL + '?action=getTeams')
+            fetch(APPS_SCRIPT_URL + '?action=getTeams&campaign=ksy')
                 .then(r => r.json())
                 .then(data => {
                     if (data.status === 'success' && data.teams) {
