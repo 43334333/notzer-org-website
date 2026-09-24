@@ -186,27 +186,28 @@
             text-align: center;
         }
 
-        /* Goal Progress Bar — header divider style */
+        /* Goal Progress Bar — full-width colored divider */
         .goal-section {
             margin: 0;
             padding: 0;
         }
         .goal-bar-container {
-            background: rgba(255, 255, 255, 0.06);
+            background: linear-gradient(90deg, #4dabf7, #38d9a9);
             border-radius: 0;
-            height: 6px;
+            height: 5px;
             overflow: hidden;
             max-width: 100%;
             margin: 0;
             position: relative;
+            box-shadow: 0 0 10px rgba(77, 171, 247, 0.3);
         }
         .goal-bar-fill {
+            position: absolute;
+            top: 0;
+            right: 0;
             height: 100%;
-            border-radius: 0;
-            background: linear-gradient(90deg, #4dabf7, #38d9a9);
+            background: rgba(30, 30, 30, 0.7);
             transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
-            min-width: 0;
-            box-shadow: 0 0 8px rgba(77, 171, 247, 0.4);
         }
         .goal-text {
             font-size: 0.78rem;
@@ -1100,6 +1101,13 @@
                                 </div>
                                 <div id="teamDropdown" style="position:absolute; top:100%; left:0; right:0; background:#1e1e1e; border:1px solid rgba(255,255,255,0.12); border-radius:8px; max-height:140px; overflow-y:auto; z-index:50; margin-top:4px; display:none;"></div>
                             </div>
+
+                            <!-- Cloudflare Turnstile -->
+                            <div class="cf-turnstile" id="turnstile-widget"
+                                 data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN"
+                                 data-callback="onTurnstileSuccess"
+                                 data-theme="dark"
+                                 data-appearance="interaction-only"></div>
                         </div>
 
                         <!-- RIGHT COLUMN: Amount & Payment -->
@@ -1266,9 +1274,6 @@
                     <div style="position: absolute; left: -9999px;" aria-hidden="true">
                         <input type="text" name="website" id="honeypot" tabindex="-1" autocomplete="off">
                     </div>
-
-                    <!-- Cloudflare Turnstile -->
-                    <div class="cf-turnstile" id="turnstile-widget" data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN" data-callback="onTurnstileSuccess" data-theme="dark"></div>
 
                     <button type="submit" class="donate-btn" id="donate-btn" disabled>Donate Now</button>
 
@@ -3588,10 +3593,8 @@
                     var raised = parseFloat(data.totalRaised) || 0;
                     var goal = CAMPAIGN_CONFIG.goalAmount;
                     var pct = Math.min(Math.round((raised / goal) * 100), 100);
-                    var barEl = document.getElementById('goal-bar-fill');
-                    barEl.style.width = Math.max(pct, 1) + '%';
-                    if (pct === 0) barEl.style.opacity = '0.3';
-                    else barEl.style.opacity = '1';
+                    // Bar is fully colored; overlay covers the unfilled portion from the right
+                    document.getElementById('goal-bar-fill').style.width = (100 - pct) + '%';
                     document.getElementById('goal-text').textContent =
                         '$' + raised.toLocaleString('en-US', {minimumFractionDigits: 0}) +
                         ' raised of $' + goal.toLocaleString('en-US', {minimumFractionDigits: 0}) +
