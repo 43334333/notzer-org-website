@@ -36,7 +36,7 @@ Write-Host '[2/4] Running security and client secret isolation scan...' -Foregro
 $suspiciousPatterns = @('cardknoxServerKey', 'usaepaySourceKey', 'usaepayPin', 'tdfValidationToken', 'tdfApiKey', 'tdfToken', 'fallbackCkServerKey', 'fallbackUeSourceKey', 'fallbackUePin')
 
 $leakFound = $false
-$filesToCheck = Get-ChildItem -Path $repoRoot -Recurse -Include *.html, *.js | Where-Object { $_.FullName -notmatch 'apps-script-backend' }
+$filesToCheck = Get-ChildItem -Path $repoRoot -Recurse -Include *.html, *.js, *.gs
 foreach ($file in $filesToCheck) {
     foreach ($pattern in $suspiciousPatterns) {
         $found = Select-String -Path $file.FullName -Pattern "$pattern\s*[:=]\s*['`"][a-zA-Z0-9_\-]{12,}"
