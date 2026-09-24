@@ -1106,8 +1106,7 @@
                             <div class="cf-turnstile" id="turnstile-widget"
                                  data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN"
                                  data-callback="onTurnstileSuccess"
-                                 data-theme="dark"
-                                 data-appearance="interaction-only"></div>
+                                 data-theme="dark"></div>
                         </div>
 
                         <!-- RIGHT COLUMN: Amount & Payment -->
@@ -2144,13 +2143,21 @@
             if (ccBtn) ccBtn.classList.toggle('active', payType === 'cc');
             if (dafBtn) dafBtn.classList.toggle('active', payType === 'daf');
 
-            if (payType === 'cc' && fb && fb.gateway) {
+            var currentAmount = parseFloat(document.getElementById('custom-amount').value) || 0;
+            if (!currentAmount && typeof selectedAmount !== 'undefined') currentAmount = selectedAmount || 0;
+            if (payType === 'cc' && fb && fb.gateway && fb.threshold > 0 && currentAmount > fb.threshold) {
                 // Credit card over threshold → use fallback gateway (USAePay)
                 this.usingFallback = true;
                 this.activeGateway = fb.gateway;
                 this.showGatewayFields(fb.gateway);
                 this.updateGatewayIndicator();
                 // USAePay fallback uses raw HTML inputs — no on-demand rendering needed
+            } else if (payType === 'cc') {
+                // CC below threshold → use primary gateway
+                this.usingFallback = false;
+                this.activeGateway = this.config.primaryGateway || 'cardknox';
+                this.showGatewayFields(this.activeGateway);
+                this.updateGatewayIndicator();
             } else {
                 // DAF card → always use primary gateway (Cardknox/Sola)
                 this.usingFallback = false;
