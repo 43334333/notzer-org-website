@@ -1963,7 +1963,7 @@
                         30000
                     );
                 } else if (self.activeGateway === 'usaepay') {
-                    var pjs = self.usingFallback ? self.fallbackPaymentJs : self.paymentJs;
+                    var pjs = self.paymentJs;
                     if (!pjs) {
                         reject(new Error('USAePay SDK not loaded'));
                         return;
@@ -2123,12 +2123,13 @@
             }
         },
 
-        /**
+                /**
          * Called when user selects Credit Card or DAF from the high-ticket selector.
          * @param {string} payType - 'cc' or 'daf'
          */
         selectPaymentType(payType) {
             this._selectedPayType = payType;
+            var self = this;
             var fb = this.config.fallback;
             // Toggle button active states
             var ccBtn = document.getElementById('pay-type-cc');
@@ -2142,14 +2143,25 @@
                 this.activeGateway = fb.gateway;
                 this.showGatewayFields(fb.gateway);
                 this.updateGatewayIndicator();
-                // Render USAePay hosted field on-demand (fixes iframe sizing)
+                // Render USAePay hosted field on-demand, deferred to allow browser reflow
                 if (fb.gateway === 'usaepay' && this.fallbackPaymentJs && !this._fallbackFieldRendered) {
                     this._fallbackFieldRendered = true;
-                    var style = this.getFieldStyleString();
-                    this.fallbackPaymentJs.createPaymentCardEntry({
-                        target: '#usaepay-card-number',
-                        style: style
+                    // Clear any stale content
+                    var target = document.getElementById('usaepay-card-number');
+                    if (target) target.innerHTML = '';
+                    // Defer to next animation frame so container has dimensions
+                    requestAnimationFrame(function() {
+                        var style = self.getFieldStyleString();
+                        self.fallbackPaymentJs.createPaymentCardEntry({
+                            target: '#usaepay-card-number',
+                            style: style
+                        });
+                        // Point paymentJs to fallback so normal tokenize() works
+                        self.paymentJs = self.fallbackPaymentJs;
                     });
+                } else if (this.fallbackPaymentJs) {
+                    // Already rendered, just ensure paymentJs points to fallback
+                    this.paymentJs = this.fallbackPaymentJs;
                 }
             } else {
                 // DAF card → always use primary gateway (Cardknox/Sola)
@@ -2157,6 +2169,8 @@
                 this.activeGateway = this.config.primaryGateway || 'cardknox';
                 this.showGatewayFields(this.activeGateway);
                 this.updateGatewayIndicator();
+                // Restore paymentJs if it was overwritten
+                this.paymentJs = null;
             }
         },
 
