@@ -1174,16 +1174,23 @@
                             </div>
 
                             <!-- ════════════════════════════════════════
-                                 USAePay PaymentJS (Primary or Fallback)
+                                 USAePay Raw Inputs (Legacy NVP)
                                  ════════════════════════════════════════ -->
                             <div id="usaepay-fields" style="display: none;">
-                                <div class="form-group">
-                                    <label>Card Details</label>
-                                    <div id="usaepay-card-number" class="hosted-field-container"></div>
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label>Card Number</label>
+                                    <input type="text" id="usaepay-raw-card" class="form-control" placeholder="Card Number" maxlength="19" style="width: 100%; height: 35px; border: 1px solid var(--border-light); border-radius: 5px; background-color: var(--bg-input); padding: 0 10px; box-sizing: border-box; color: var(--text-main);">
                                 </div>
-
-                                
-
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Exp (MMYY)</label>
+                                        <input type="text" id="usaepay-raw-exp" class="form-control" placeholder="MMYY" maxlength="4" style="width: 100%; height: 35px; border: 1px solid var(--border-light); border-radius: 5px; background-color: var(--bg-input); padding: 0 10px; box-sizing: border-box; color: var(--text-main);">
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label>CVV / PIN</label>
+                                        <input type="text" id="usaepay-raw-cvv" class="form-control" placeholder="CVV" maxlength="4" style="width: 100%; height: 35px; border: 1px solid var(--border-light); border-radius: 5px; background-color: var(--bg-input); padding: 0 10px; box-sizing: border-box; color: var(--text-main);">
+                                    </div>
+                                </div>
                                 <label id="usaepay-error" class="payment-error-label"></label>
                             </div>
 
