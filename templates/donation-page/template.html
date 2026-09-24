@@ -976,7 +976,7 @@
                     <div class="goal-bar-container">
                         <div class="goal-bar-fill" id="goal-bar-fill" style="width: 0%;"></div>
                     </div>
-                    <p class="goal-text" id="goal-text"></p>
+                    <p class="goal-text" id="goal-text">Loading goal progress…</p>
                 </div>
 
                 <!-- Campaign story (customize per campaign) -->
@@ -1099,11 +1099,6 @@
                                     <input type="text" id="team-search" autocomplete="off" placeholder="Type to find your team..." style="border:none; background:transparent; color:#EFEFEF; font-family:inherit; font-size:0.9rem; outline:none; flex:1; min-width:80px;">
                                 </div>
                                 <div id="teamDropdown" style="position:absolute; top:100%; left:0; right:0; background:#1e1e1e; border:1px solid rgba(255,255,255,0.12); border-radius:8px; max-height:140px; overflow-y:auto; z-index:50; margin-top:4px; display:none;"></div>
-                            </div>
-
-                            <!-- Cloudflare Turnstile -->
-                            <div style="margin-top: 12px;">
-                                <div class="cf-turnstile" id="turnstile-widget" data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN" data-callback="onTurnstileSuccess" data-theme="dark"></div>
                             </div>
                         </div>
 
@@ -1273,6 +1268,9 @@
                     <div style="position: absolute; left: -9999px;" aria-hidden="true">
                         <input type="text" name="website" id="honeypot" tabindex="-1" autocomplete="off">
                     </div>
+
+                    <!-- Cloudflare Turnstile -->
+                    <div class="cf-turnstile" id="turnstile-widget" data-sitekey="0x4AAAAAADjo7NvJjpCgWLcN" data-callback="onTurnstileSuccess" data-theme="dark"></div>
 
                     <button type="submit" class="donate-btn" id="donate-btn" disabled>Donate Now</button>
 
@@ -3570,17 +3568,18 @@
                     }
                 }
 
-                if (data.totalRaised !== undefined && CAMPAIGN_CONFIG.goalAmount && CAMPAIGN_CONFIG.goalAmount > 0) {
+                if (CAMPAIGN_CONFIG.goalAmount && CAMPAIGN_CONFIG.goalAmount > 0) {
                     var raised = parseFloat(data.totalRaised) || 0;
                     var goal = CAMPAIGN_CONFIG.goalAmount;
                     var pct = Math.min(Math.round((raised / goal) * 100), 100);
-
-                    document.getElementById('goal-bar-fill').style.width = pct + '%';
+                    var barEl = document.getElementById('goal-bar-fill');
+                    barEl.style.width = Math.max(pct, 1) + '%';
+                    if (pct === 0) barEl.style.opacity = '0.3';
+                    else barEl.style.opacity = '1';
                     document.getElementById('goal-text').textContent =
                         '$' + raised.toLocaleString('en-US', {minimumFractionDigits: 0}) +
                         ' raised of $' + goal.toLocaleString('en-US', {minimumFractionDigits: 0}) +
                         ' goal (' + pct + '%)';
-                    document.getElementById('goal-section').style.display = 'block';
                 }
             })
             .catch(function() {});
