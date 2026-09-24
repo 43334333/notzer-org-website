@@ -3486,7 +3486,7 @@
         if (!wrapper || !search || !dropdown) return;
 
         // Load teams from backend
-        fetch(CAMPAIGN_CONFIG.appsScriptUrl + '?action=getTeams&campaign=' + encodeURIComponent(CAMPAIGN_CONFIG.campaignId))
+        fetch(CAMPAIGN_CONFIG.appsScriptUrl + '?action=getTeams&campaign=' + encodeURIComponent(CAMPAIGN_CONFIG.id))
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.status === 'success' && data.teams) {
@@ -3567,7 +3567,7 @@
     // CAMPAIGN STATS & GOAL PROGRESS (fetched from backend)
     // ════════════════════════════════════════════════════════════════
     (function loadCampaignStats() {
-        fetch(CAMPAIGN_CONFIG.appsScriptUrl + '?action=getStats&campaignId=' + encodeURIComponent(CAMPAIGN_CONFIG.campaignId))
+        fetch(CAMPAIGN_CONFIG.appsScriptUrl + '?action=getStats&campaignId=' + encodeURIComponent(CAMPAIGN_CONFIG.id))
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 console.log('Campaign stats response:', data);
