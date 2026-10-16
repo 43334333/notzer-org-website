@@ -819,6 +819,123 @@
             color: #ff6b6b;
             border: 1px solid rgba(255, 82, 82, 0.2);
         }
+        .status-badge.void {
+            background: rgba(255, 255, 255, 0.08);
+            color: #aaa;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .status-badge.refunded {
+            background: rgba(255, 169, 77, 0.15);
+            color: #ffa94d;
+            border: 1px solid rgba(255, 169, 77, 0.3);
+        }
+
+        /* ── Custom Multi-Select Dropdowns ─────────────── */
+        .custom-multiselect {
+            position: relative;
+            display: inline-block;
+        }
+        .multiselect-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.45rem 0.8rem;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #ccc;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            min-width: 140px;
+            max-width: 220px;
+            white-space: nowrap;
+        }
+        .multiselect-toggle:hover,
+        .custom-multiselect.open .multiselect-toggle {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(77, 171, 247, 0.4);
+            color: #fff;
+        }
+        .ms-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: left;
+            flex: 1;
+        }
+        .ms-arrow {
+            font-size: 0.75rem;
+            color: #888;
+            transition: transform 0.2s;
+        }
+        .custom-multiselect.open .ms-arrow {
+            transform: rotate(180deg);
+        }
+        .multiselect-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            min-width: 200px;
+            max-width: 280px;
+            background: #1e222b;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            padding: 0.5rem 0;
+        }
+        .custom-multiselect.open .multiselect-menu {
+            display: block;
+        }
+        .ms-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.25rem 0.75rem 0.45rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.75rem;
+        }
+        .ms-link {
+            color: #4dabf7;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .ms-link:hover {
+            text-decoration: underline;
+        }
+        .ms-sep {
+            color: #555;
+            margin: 0 4px;
+        }
+        .ms-options-list {
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 0.35rem 0;
+        }
+        .ms-option-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.82rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: background 0.15s;
+            user-select: none;
+        }
+        .ms-option-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+        .ms-option-item input[type="checkbox"] {
+            margin: 0;
+            accent-color: #4dabf7;
+            cursor: pointer;
+        }
 
         /* Table Action Buttons */
         .tbl-action-btn {
@@ -1326,25 +1443,58 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.75rem;">
                 <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; flex:1;">
                     <input type="text" id="txnSearchInput" placeholder="Search donor, ref, pledge ID…" class="form-input" style="min-width:200px; max-width:280px; padding:0.45rem 0.8rem; font-size:0.85rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff;">
-                    <select id="txnMethodFilter" style="padding:0.45rem 0.8rem; font-size:0.85rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#ccc;">
-                        <option value="">All Methods</option>
-                        <option value="card">Credit Card</option>
-                        <option value="cardknox">Cardknox</option>
-                        <option value="usaepay">USAePay</option>
-                        <option value="check">Check</option>
-                        <option value="cash">Cash</option>
-                        <option value="zelle">Zelle</option>
-                        <option value="daf">DAF</option>
-                        <option value="tdf">TDF</option>
-                    </select>
-                    <select id="txnResultFilter" style="padding:0.45rem 0.8rem; font-size:0.85rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#ccc;">
-                        <option value="">All Results</option>
-                        <option value="a">Approved (A)</option>
-                        <option value="d">Declined (D)</option>
-                        <option value="manual">Manual</option>
-                    </select>
+
+                    <!-- Result / Status Multi-Select -->
+                    <div class="custom-multiselect" id="msResultContainer">
+                        <button type="button" class="multiselect-toggle" id="msResultBtn" onclick="toggleMsMenu('msResultContainer')" aria-haspopup="true" aria-expanded="false">
+                            <span class="ms-label" id="msResultLabel">All Results</span>
+                            <span class="ms-arrow">▾</span>
+                        </button>
+                        <div class="multiselect-menu" id="msResultDropdown">
+                            <div class="ms-actions">
+                                <a href="javascript:void(0)" class="ms-link" onclick="selectAllMs('result')">Select All</a>
+                                <span class="ms-sep">|</span>
+                                <a href="javascript:void(0)" class="ms-link" onclick="clearAllMs('result')">Clear</a>
+                            </div>
+                            <div class="ms-options-list" id="msResultOptions"></div>
+                        </div>
+                    </div>
+
+                    <!-- Method Multi-Select -->
+                    <div class="custom-multiselect" id="msMethodContainer">
+                        <button type="button" class="multiselect-toggle" id="msMethodBtn" onclick="toggleMsMenu('msMethodContainer')" aria-haspopup="true" aria-expanded="false">
+                            <span class="ms-label" id="msMethodLabel">All Methods</span>
+                            <span class="ms-arrow">▾</span>
+                        </button>
+                        <div class="multiselect-menu" id="msMethodDropdown">
+                            <div class="ms-actions">
+                                <a href="javascript:void(0)" class="ms-link" onclick="selectAllMs('method')">Select All</a>
+                                <span class="ms-sep">|</span>
+                                <a href="javascript:void(0)" class="ms-link" onclick="clearAllMs('method')">Clear</a>
+                            </div>
+                            <div class="ms-options-list" id="msMethodOptions"></div>
+                        </div>
+                    </div>
+
+                    <!-- Funded Multi-Select -->
+                    <div class="custom-multiselect" id="msFundedContainer">
+                        <button type="button" class="multiselect-toggle" id="msFundedBtn" onclick="toggleMsMenu('msFundedContainer')" aria-haspopup="true" aria-expanded="false">
+                            <span class="ms-label" id="msFundedLabel">All Funded</span>
+                            <span class="ms-arrow">▾</span>
+                        </button>
+                        <div class="multiselect-menu" id="msFundedDropdown">
+                            <div class="ms-actions">
+                                <a href="javascript:void(0)" class="ms-link" onclick="selectAllMs('funded')">Select All</a>
+                                <span class="ms-sep">|</span>
+                                <a href="javascript:void(0)" class="ms-link" onclick="clearAllMs('funded')">Clear</a>
+                            </div>
+                            <div class="ms-options-list" id="msFundedOptions"></div>
+                        </div>
+                    </div>
                 </div>
-                <div style="display:flex; gap:0.5rem; align-items:center;">
+                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                    <button type="button" class="btn-secondary" id="downloadTxnCsvBtn" onclick="downloadTransactionsCsv()" style="padding:0.45rem 0.85rem; font-size:0.85rem;">⬇ Download CSV</button>
+                    <button type="button" class="btn-secondary" id="emailTxnReportBtn" onclick="openEmailTxnReportModal()" style="padding:0.45rem 0.85rem; font-size:0.85rem;">📧 Email Report</button>
                     <button type="button" class="btn-secondary" id="refreshTxnBtn" style="padding:0.45rem 0.9rem; font-size:0.85rem;" onclick="loadTransactions(1)">↻ Refresh</button>
                 </div>
             </div>
@@ -1776,6 +1926,44 @@
     </div>
 </div>
 
+<!-- ═══ Email Transactions Report Modal ═══ -->
+<div class="modal-overlay" id="emailTxnReportModal">
+    <div class="modal-card">
+        <h3>Email Transactions Report</h3>
+        <p style="font-size:0.82rem; color:#888; margin-bottom:1rem;">Email a filtered transaction report spreadsheet / summary directly to recipients.</p>
+        
+        <div class="field">
+            <label>Active Filter Scope</label>
+            <div id="txnReportScope" style="font-size:0.8rem; color:#aaa; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:0.5rem 0.75rem; line-height:1.4;">
+                All Transactions
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="txnReportSendTo">Recipient Email(s) <span class="req">*</span></label>
+            <input type="text" id="txnReportSendTo" placeholder="recipient@example.com (comma-separate multiple)" required>
+        </div>
+
+        <div class="field">
+            <label for="txnReportNotes">Optional Note</label>
+            <textarea id="txnReportNotes" rows="3" placeholder="Add an optional message for recipients…" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff; padding:0.6rem; font-family:'Inter',sans-serif; font-size:0.85rem; resize:vertical; box-sizing:border-box;"></textarea>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeEmailTxnReportModal()">Cancel</button>
+            <button type="button" class="btn-primary" id="btnSubmitTxnReport" onclick="submitEmailTxnReport()">Send Report</button>
+        </div>
+
+        <div class="error-alert" id="txnReportError" style="margin-top:1rem;">
+            <span class="err-icon">⚠</span>
+            <span id="txnReportErrorMessage"></span>
+        </div>
+        <div id="txnReportSuccess" style="display:none; margin-top:1rem; padding:0.75rem 1rem; border-radius:8px; background:rgba(81,207,102,0.12); border:1px solid rgba(81,207,102,0.3); color:#51cf66; font-size:0.85rem;">
+            ✓ Report sent successfully!
+        </div>
+    </div>
+</div>
+
 <!-- ═══ Add / Edit Team Modal ═══ -->
 <div class="modal-overlay" id="teamModal">
     <div class="modal-card">
@@ -2042,20 +2230,10 @@ function init() {
             }, 300);
         });
     }
-    const txnMethod = document.getElementById('txnMethodFilter');
-    if (txnMethod) {
-        txnMethod.addEventListener('change', (e) => {
-            currentTxnMethod = e.target.value;
-            loadTransactions(1);
-        });
-    }
-    const txnResult = document.getElementById('txnResultFilter');
-    if (txnResult) {
-        txnResult.addEventListener('change', (e) => {
-            currentTxnResult = e.target.value;
-            loadTransactions(1);
-        });
-    }
+    // Render initial multi-select dropdowns
+    renderMsDropdown('result');
+    renderMsDropdown('method');
+    renderMsDropdown('funded');
 
     // Reports preset pills
     const rptPills = document.getElementById('reportPresetPills');
@@ -2068,7 +2246,7 @@ function init() {
     }
 
     // Modal backdrop click-to-close
-    ['teamModal', 'campaignUserModal'].forEach(id => {
+    ['teamModal', 'campaignUserModal', 'emailTxnReportModal'].forEach(id => {
         const m = document.getElementById(id);
         if (m) {
             m.addEventListener('click', (e) => {
@@ -2535,8 +2713,235 @@ class CampaignSelector {
 
 /* ─── Transactions Management ─────────────────────────── */
 let currentTxnSearch = '';
-let currentTxnMethod = '';
-let currentTxnResult = '';
+let selectedTxnResults = [];
+let selectedTxnMethods = [];
+let selectedTxnFunded = [];
+
+let availableTxnResults = ['Approved', 'Declined', 'Void', 'Manual', 'Refunded'];
+let availableTxnMethods = ['Credit Card', 'Cardknox', 'USAePay', 'Check', 'Cash', 'Zelle', 'DAF', 'TDF'];
+let availableTxnFunded = ['Cleared', 'Pending', 'Unfunded'];
+
+function toggleMsMenu(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const isOpen = container.classList.contains('open');
+    document.querySelectorAll('.custom-multiselect.open').forEach(el => {
+        if (el !== container) el.classList.remove('open');
+    });
+    container.classList.toggle('open', !isOpen);
+}
+
+// Global click outside to close custom multiselects
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.custom-multiselect')) {
+        document.querySelectorAll('.custom-multiselect.open').forEach(el => el.classList.remove('open'));
+    }
+});
+
+function renderMsDropdown(type) {
+    let list, selected, optsContainer;
+    if (type === 'result') {
+        list = availableTxnResults;
+        selected = selectedTxnResults;
+        optsContainer = document.getElementById('msResultOptions');
+    } else if (type === 'method') {
+        list = availableTxnMethods;
+        selected = selectedTxnMethods;
+        optsContainer = document.getElementById('msMethodOptions');
+    } else if (type === 'funded') {
+        list = availableTxnFunded;
+        selected = selectedTxnFunded;
+        optsContainer = document.getElementById('msFundedOptions');
+    }
+    if (!optsContainer) return;
+
+    optsContainer.innerHTML = list.map(opt => {
+        const isChecked = selected.indexOf(opt) !== -1;
+        return `<label class="ms-option-item">
+            <input type="checkbox" value="${escapeHtml(opt)}" ${isChecked ? 'checked' : ''} onchange="toggleMsOption('${type}', '${escapeHtml(opt)}', this.checked)">
+            <span>${escapeHtml(opt)}</span>
+        </label>`;
+    }).join('');
+
+    updateMsLabel(type);
+}
+
+function updateMsLabel(type) {
+    let selected, labelEl, defaultLabel;
+    if (type === 'result') {
+        selected = selectedTxnResults;
+        labelEl = document.getElementById('msResultLabel');
+        defaultLabel = 'All Results';
+    } else if (type === 'method') {
+        selected = selectedTxnMethods;
+        labelEl = document.getElementById('msMethodLabel');
+        defaultLabel = 'All Methods';
+    } else if (type === 'funded') {
+        selected = selectedTxnFunded;
+        labelEl = document.getElementById('msFundedLabel');
+        defaultLabel = 'All Funded';
+    }
+    if (!labelEl) return;
+
+    if (selected.length === 0) {
+        labelEl.textContent = defaultLabel;
+    } else if (selected.length === 1) {
+        labelEl.textContent = selected[0];
+    } else if (selected.length === 2) {
+        labelEl.textContent = selected.join(', ');
+    } else {
+        labelEl.textContent = `${selected.length} Selected`;
+    }
+}
+
+function toggleMsOption(type, value, isChecked) {
+    let arr = type === 'result' ? selectedTxnResults : (type === 'method' ? selectedTxnMethods : selectedTxnFunded);
+    const idx = arr.indexOf(value);
+    if (isChecked && idx === -1) {
+        arr.push(value);
+    } else if (!isChecked && idx !== -1) {
+        arr.splice(idx, 1);
+    }
+    updateMsLabel(type);
+    loadTransactions(1);
+}
+
+function selectAllMs(type) {
+    if (type === 'result') {
+        selectedTxnResults = [...availableTxnResults];
+    } else if (type === 'method') {
+        selectedTxnMethods = [...availableTxnMethods];
+    } else if (type === 'funded') {
+        selectedTxnFunded = [...availableTxnFunded];
+    }
+    renderMsDropdown(type);
+    loadTransactions(1);
+}
+
+function clearAllMs(type) {
+    if (type === 'result') {
+        selectedTxnResults = [];
+    } else if (type === 'method') {
+        selectedTxnMethods = [];
+    } else if (type === 'funded') {
+        selectedTxnFunded = [];
+    }
+    renderMsDropdown(type);
+    loadTransactions(1);
+}
+
+function normalizeSheetResultLabel(r) {
+    const l = String(r || '').trim().toLowerCase();
+    if (l === 'a' || l === 'approved') return 'Approved';
+    if (l === 'd' || l === 'declined') return 'Declined';
+    if (l === 'void' || l === 'voided' || l === 'cancelled' || l === 'v') return 'Void';
+    if (l === 'manual') return 'Manual';
+    if (l === 'refunded') return 'Refunded';
+    return String(r || '').trim();
+}
+
+function getResultCanonicalClient(r) {
+    const l = String(r || '').trim().toLowerCase();
+    if (l === 'a' || l === 'approved') return 'approved';
+    if (l === 'd' || l === 'declined') return 'declined';
+    if (l === 'void' || l === 'voided' || l === 'cancelled' || l === 'v') return 'void';
+    if (l === 'manual') return 'manual';
+    if (l === 'refunded') return 'refunded';
+    return l;
+}
+
+function matchesFundedFilterClient(rowFunded, filterVal) {
+    const rf = String(rowFunded || '').trim().toLowerCase();
+    const ff = String(filterVal || '').trim().toLowerCase();
+    if (rf === ff) return true;
+    const isRowCleared = rf === 'cleared' || rf === 'funded' || rf === 'yes';
+    const isFiltCleared = ff === 'cleared' || ff === 'funded' || ff === 'yes';
+    if (isFiltCleared && isRowCleared) return true;
+    const isFiltPending = ff === 'pending' || ff === 'unfunded' || ff === 'no';
+    if (isFiltPending && !isRowCleared) return true;
+    return false;
+}
+
+function filterTransactionsClientSide(txList) {
+    if (!Array.isArray(txList)) return [];
+    const searchQ = (currentTxnSearch || '').trim().toLowerCase();
+    const resFilters = selectedTxnResults.map(s => s.toLowerCase());
+    const methFilters = selectedTxnMethods.map(s => s.toLowerCase());
+    const fundFilters = selectedTxnFunded.map(s => s.toLowerCase());
+
+    return txList.filter(tx => {
+        if (searchQ) {
+            const matchSearch =
+                String(tx.donorName || '').toLowerCase().includes(searchQ) ||
+                String(tx.reference || tx.id || '').toLowerCase().includes(searchQ) ||
+                String(tx.pledgeId || '').toLowerCase().includes(searchQ) ||
+                String(tx.customerId || '').toLowerCase().includes(searchQ);
+            if (!matchSearch) return false;
+        }
+        if (resFilters.length > 0) {
+            const rowCanon = getResultCanonicalClient(tx.result);
+            const rowRaw = String(tx.result || '').trim().toLowerCase();
+            const matchRes = resFilters.some(rf => getResultCanonicalClient(rf) === rowCanon || rf === rowRaw);
+            if (!matchRes) return false;
+        }
+        if (methFilters.length > 0) {
+            const mLower = String(tx.method || '').toLowerCase();
+            const cLower = String(tx.cardType || '').toLowerCase();
+            const matchMeth = methFilters.some(mf => mLower.includes(mf) || cLower.includes(mf));
+            if (!matchMeth) return false;
+        }
+        if (fundFilters.length > 0) {
+            const matchFund = fundFilters.some(ff => matchesFundedFilterClient(tx.funded, ff));
+            if (!matchFund) return false;
+        }
+        return true;
+    });
+}
+
+function mergeFilterOptions(filterOptions, transactions) {
+    let newResults = (filterOptions && Array.isArray(filterOptions.results)) ? [...filterOptions.results] : [];
+    let newMethods = (filterOptions && Array.isArray(filterOptions.methods)) ? [...filterOptions.methods] : [];
+    let newFunded = (filterOptions && Array.isArray(filterOptions.funded)) ? [...filterOptions.funded] : [];
+
+    // Scan transactions data to pull all distinct values from sheet columns
+    if (Array.isArray(transactions) && transactions.length > 0) {
+        transactions.forEach(tx => {
+            if (tx.result) {
+                const normRes = normalizeSheetResultLabel(tx.result);
+                if (normRes && !newResults.some(r => r.toLowerCase() === normRes.toLowerCase())) {
+                    newResults.push(normRes);
+                }
+            }
+            if (tx.method && !newMethods.some(m => m.toLowerCase() === String(tx.method).toLowerCase())) {
+                newMethods.push(tx.method);
+            }
+            if (tx.cardType && !newMethods.some(m => m.toLowerCase() === String(tx.cardType).toLowerCase())) {
+                newMethods.push(tx.cardType);
+            }
+            if (tx.funded && !newFunded.some(f => f.toLowerCase() === String(tx.funded).toLowerCase())) {
+                newFunded.push(tx.funded);
+            }
+        });
+    }
+
+    const mergeList = (targetArr, sourceArr) => {
+        sourceArr.forEach(item => {
+            const trimmed = String(item || '').trim();
+            if (!trimmed) return;
+            const exists = targetArr.some(t => t.toLowerCase() === trimmed.toLowerCase());
+            if (!exists) {
+                targetArr.push(trimmed);
+            }
+        });
+    };
+
+    mergeList(availableTxnResults, newResults);
+    mergeList(availableTxnMethods, newMethods);
+    mergeList(availableTxnFunded, newFunded);
+    renderMsDropdown('result');
+    renderMsDropdown('method');
+    renderMsDropdown('funded');
+}
 
 async function loadTransactions(page = 1) {
     const tbody = document.getElementById('transactionsTableBody');
@@ -2550,17 +2955,47 @@ async function loadTransactions(page = 1) {
             page: page,
             pageSize: txnPaginationInfo.pageSize,
             search: currentTxnSearch,
-            method: currentTxnMethod,
-            result: currentTxnResult
+            method: selectedTxnMethods.join(','),
+            result: selectedTxnResults.join(','),
+            funded: selectedTxnFunded.join(',')
         };
 
         const data = await authGet('getTransactions', params);
         if (data.status === 'success' && Array.isArray(data.transactions)) {
-            transactionsData = data.transactions;
-            txnPaginationInfo.total = data.total || 0;
-            renderTransactions();
-            if (data.summary) {
-                updateTransactionsSummary(data.summary);
+            if (data.filterOptions) {
+                // Backend supports native multi-select and filterOptions extraction
+                transactionsData = data.transactions;
+                txnPaginationInfo.total = data.total || 0;
+                renderTransactions();
+                if (data.summary) {
+                    updateTransactionsSummary(data.summary);
+                }
+                mergeFilterOptions(data.filterOptions, data.transactions);
+            } else {
+                // Fallback for older backend: fetch full campaign transactions and filter client-side
+                const fullRes = await authGet('getTransactions', {
+                    campaignId: CAMPAIGN_CONFIG.id,
+                    page: 1,
+                    pageSize: 10000
+                });
+                const allRows = (fullRes && fullRes.status === 'success' && Array.isArray(fullRes.transactions))
+                    ? fullRes.transactions
+                    : data.transactions;
+                mergeFilterOptions(null, allRows);
+                const filteredRows = filterTransactionsClientSide(allRows);
+                txnPaginationInfo.total = filteredRows.length;
+                const startIdx = (page - 1) * txnPaginationInfo.pageSize;
+                transactionsData = filteredRows.slice(startIdx, startIdx + txnPaginationInfo.pageSize);
+                renderTransactions();
+                const summary = filteredRows.reduce((acc, tx) => {
+                    acc.count++;
+                    acc.totalCharged += Number(tx.amount || 0);
+                    acc.totalFees += Number(tx.fees || 0);
+                    acc.totalFundCharge += Number(tx.fundCharge || 0);
+                    acc.totalNet += Number(tx.net || 0);
+                    return acc;
+                }, { count: 0, totalCharged: 0, totalFees: 0, totalFundCharge: 0, totalNet: 0 });
+                updateTransactionsSummary(summary);
             }
         } else {
             if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="table-empty">No transactions found.</td></tr>';
@@ -2584,8 +3019,25 @@ function renderTransactions() {
 
     tbody.innerHTML = transactionsData.map(tx => {
         const resLower = (tx.result || '').toLowerCase();
-        const badgeClass = resLower === 'a' ? 'fulfilled' : (resLower === 'd' ? 'overdue' : 'scheduled');
-        const displayResult = resLower === 'a' ? 'Approved' : (resLower === 'd' ? 'Declined' : (tx.result || 'Manual'));
+        let badgeClass = 'scheduled';
+        let displayResult = tx.result || 'Manual';
+
+        if (resLower === 'a' || resLower === 'approved') {
+            badgeClass = 'fulfilled';
+            displayResult = 'Approved';
+        } else if (resLower === 'd' || resLower === 'declined') {
+            badgeClass = 'overdue';
+            displayResult = 'Declined';
+        } else if (resLower === 'void' || resLower === 'v' || resLower === 'cancelled') {
+            badgeClass = 'void';
+            displayResult = 'Void';
+        } else if (resLower === 'refunded') {
+            badgeClass = 'refunded';
+            displayResult = 'Refunded';
+        } else if (resLower === 'manual') {
+            badgeClass = 'scheduled';
+            displayResult = 'Manual';
+        }
 
         const methodDisplay = [tx.cardType, tx.method].filter(Boolean).join(' ') || '—';
 
@@ -2647,6 +3099,208 @@ function changeTxnPage(delta) {
     }
 }
 
+async function downloadTransactionsCsv() {
+    const btn = document.getElementById('downloadTxnCsvBtn');
+    const origText = btn ? btn.textContent : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Preparing CSV…';
+    }
+
+    try {
+        const params = {
+            campaignId: CAMPAIGN_CONFIG.id,
+            all: 'true',
+            page: 1,
+            pageSize: 100000,
+            search: currentTxnSearch,
+            result: selectedTxnResults.join(','),
+            method: selectedTxnMethods.join(','),
+            funded: selectedTxnFunded.join(',')
+        };
+
+        const res = await authGet('getTransactions', params);
+        let txns = (res && res.status === 'success' && Array.isArray(res.transactions)) ? res.transactions : [];
+        if (res && !res.filterOptions) {
+            const fullRes = await authGet('getTransactions', {
+                campaignId: CAMPAIGN_CONFIG.id,
+                page: 1,
+                pageSize: 100000
+            });
+            const allRows = (fullRes && fullRes.status === 'success' && Array.isArray(fullRes.transactions))
+                ? fullRes.transactions
+                : txns;
+            txns = filterTransactionsClientSide(allRows);
+        }
+
+        if (txns.length === 0) {
+            alert('No transactions to export with current filters.');
+            return;
+        }
+
+        const headers = [
+            'Date & Time',
+            'Reference #',
+            'Donor Name',
+            'Method',
+            'Card Type',
+            'Amount Charged',
+            'Fees',
+            'Fund Charge',
+            'Net Amount',
+            'Result / Status',
+            'Pledge ID',
+            'Customer ID',
+            'Payment #',
+            'Funded',
+            'Funded Date',
+            'Deposit Batch ID'
+        ];
+
+        const escapeCsvField = (val) => {
+            const str = String(val == null ? '' : val).replace(/"/g, '""');
+            return `"${str}"`;
+        };
+
+        const rows = txns.map(tx => [
+            escapeCsvField(tx.date || tx.timestamp || ''),
+            escapeCsvField(tx.reference || tx.id || ''),
+            escapeCsvField(tx.donorName || ''),
+            escapeCsvField(tx.method || ''),
+            escapeCsvField(tx.cardType || ''),
+            escapeCsvField(tx.amount != null ? Number(tx.amount).toFixed(2) : '0.00'),
+            escapeCsvField(tx.fees != null ? Number(tx.fees).toFixed(2) : '0.00'),
+            escapeCsvField(tx.fundCharge != null ? Number(tx.fundCharge).toFixed(2) : '0.00'),
+            escapeCsvField(tx.net != null ? Number(tx.net).toFixed(2) : '0.00'),
+            escapeCsvField(tx.result || ''),
+            escapeCsvField(tx.pledgeId || ''),
+            escapeCsvField(tx.customerId || ''),
+            escapeCsvField(tx.paymentNum || ''),
+            escapeCsvField(tx.funded || ''),
+            escapeCsvField(tx.fundedDate || ''),
+            escapeCsvField(tx.depositBatchId || '')
+        ].join(','));
+
+        const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const dateStr = new Date().toISOString().slice(0, 10);
+        a.download = `transactions-${CAMPAIGN_CONFIG.id}-${dateStr}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error('Failed to download CSV:', err);
+        alert('Failed to download CSV: ' + (err.message || 'Unknown error'));
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = origText;
+        }
+    }
+}
+
+function openEmailTxnReportModal() {
+    const modal = document.getElementById('emailTxnReportModal');
+    if (!modal) return;
+
+    const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    const sendToInput = document.getElementById('txnReportSendTo');
+    if (sendToInput && !sendToInput.value) {
+        sendToInput.value = (user && user.email) ? user.email : '';
+    }
+
+    const scopeEl = document.getElementById('txnReportScope');
+    if (scopeEl) {
+        const parts = [];
+        if (currentTxnSearch) parts.push(`Search: "${currentTxnSearch}"`);
+        parts.push(`Results: ${selectedTxnResults.length > 0 ? selectedTxnResults.join(', ') : 'All'}`);
+        parts.push(`Methods: ${selectedTxnMethods.length > 0 ? selectedTxnMethods.join(', ') : 'All'}`);
+        parts.push(`Funded: ${selectedTxnFunded.length > 0 ? selectedTxnFunded.join(', ') : 'All'}`);
+        scopeEl.textContent = parts.join(' • ');
+    }
+
+    const err = document.getElementById('txnReportError');
+    if (err) err.classList.remove('visible');
+    const succ = document.getElementById('txnReportSuccess');
+    if (succ) succ.style.display = 'none';
+
+    modal.classList.add('visible');
+}
+
+function closeEmailTxnReportModal() {
+    const modal = document.getElementById('emailTxnReportModal');
+    if (modal) modal.classList.remove('visible');
+}
+
+async function submitEmailTxnReport() {
+    const sendTo = (document.getElementById('txnReportSendTo')?.value || '').trim();
+    const notes = (document.getElementById('txnReportNotes')?.value || '').trim();
+    const errEl = document.getElementById('txnReportError');
+    const errMsg = document.getElementById('txnReportErrorMessage');
+    const succEl = document.getElementById('txnReportSuccess');
+    const submitBtn = document.getElementById('btnSubmitTxnReport');
+
+    if (errEl) errEl.classList.remove('visible');
+    if (succEl) succEl.style.display = 'none';
+
+    if (!sendTo) {
+        if (errMsg) errMsg.textContent = 'Please enter at least one recipient email address.';
+        if (errEl) errEl.classList.add('visible');
+        return;
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending…';
+    }
+
+    try {
+        const payload = {
+            campaignId: CAMPAIGN_CONFIG.id,
+            sendTo: sendTo,
+            notes: notes,
+            all: true,
+            search: currentTxnSearch,
+            result: selectedTxnResults.join(','),
+            method: selectedTxnMethods.join(','),
+            funded: selectedTxnFunded.join(',')
+        };
+
+        let res = await authPost('emailTransactionsReport', payload);
+        if (res && res.status === 'error' && String(res.message || '').includes('Unknown action')) {
+            res = await authPost('generateReport', {
+                campaignId: CAMPAIGN_CONFIG.id,
+                sendTo: sendTo
+            });
+        }
+        if (res && (res.status === 'success' || res.success || res.emailSent)) {
+            if (succEl) {
+                succEl.textContent = '✓ ' + (res.message || `Report successfully sent to ${sendTo}!`);
+                succEl.style.display = 'block';
+            }
+            setTimeout(() => {
+                closeEmailTxnReportModal();
+            }, 2000);
+        } else {
+            if (errMsg) errMsg.textContent = res?.message || 'Failed to send transactions report.';
+            if (errEl) errEl.classList.add('visible');
+        }
+    } catch (err) {
+        console.error('Failed to email transactions report:', err);
+        if (errMsg) errMsg.textContent = 'Network error: ' + (err.message || 'Please try again.');
+        if (errEl) errEl.classList.add('visible');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send Report';
+        }
+    }
+}
+
 /* ─── Pledges Management ──────────────────────────────── */
 async function loadPledges() {
     const tbody = document.getElementById('pledgesTableBody');
@@ -2669,12 +3323,36 @@ async function loadPledges() {
 
 function renderPledges() {
     const tbody = document.getElementById('pledgesTableBody');
+    const parseNum = (v) => {
+        if (typeof v === 'number') return isNaN(v) ? 0 : v;
+        if (v === undefined || v === null || String(v).trim() === '') return NaN;
+        return parseFloat(String(v).replace(/[\$,]/g, ''));
+    };
+
     let filtered = pledgesData;
 
     if (currentPledgeFilter === 'outstanding') {
-        filtered = pledgesData.filter(p => p.status && p.status.toLowerCase() === 'outstanding');
+        filtered = pledgesData.filter(p => {
+            const amount = parseNum(p.amount) || 0;
+            const paidRaw = parseNum(p.paid !== undefined ? p.paid : p.amountPaid);
+            const paid = isNaN(paidRaw) ? 0 : paidRaw;
+            const balRaw = parseNum(p.balance);
+            const balance = !isNaN(balRaw) ? balRaw : Math.max(0, amount - paid);
+            const statusLower = (p.status || '').toLowerCase();
+            const isFulfilled = statusLower === 'fulfilled' || statusLower === 'processed' || (amount > 0 && balance <= 0.005);
+            return !isFulfilled && balance > 0.005;
+        });
     } else if (currentPledgeFilter === 'fulfilled') {
-        filtered = pledgesData.filter(p => p.status && p.status.toLowerCase() === 'fulfilled');
+        filtered = pledgesData.filter(p => {
+            const amount = parseNum(p.amount) || 0;
+            const paidRaw = parseNum(p.paid !== undefined ? p.paid : p.amountPaid);
+            const paid = isNaN(paidRaw) ? 0 : paidRaw;
+            const balRaw = parseNum(p.balance);
+            const balance = !isNaN(balRaw) ? balRaw : Math.max(0, amount - paid);
+            const statusLower = (p.status || '').toLowerCase();
+            const isFulfilled = statusLower === 'fulfilled' || statusLower === 'processed' || (amount > 0 && balance <= 0.005);
+            return isFulfilled;
+        });
     }
 
     if (filtered.length === 0) {
@@ -2683,46 +3361,61 @@ function renderPledges() {
     }
 
     tbody.innerHTML = filtered.map(p => {
-        const amount = Number(p.amount || 0);
-        const paid = Number(p.paid || 0);
-        const balance = amount - paid;
+        const amount = parseNum(p.amount) || 0;
+        const paidRaw = parseNum(p.paid !== undefined ? p.paid : p.amountPaid);
+        const paid = isNaN(paidRaw) ? 0 : paidRaw;
+        const balRaw = parseNum(p.balance);
+        const balance = !isNaN(balRaw) ? balRaw : Math.max(0, amount - paid);
+        const dateStr = p.date || p.createdDate || '—';
         const statusLower = (p.status || '').toLowerCase();
-        const statusClass = statusLower === 'fulfilled' ? 'fulfilled' : statusLower === 'overdue' ? 'overdue' : 'outstanding';
+        const isFulfilled = statusLower === 'fulfilled' || statusLower === 'processed' || (amount > 0 && balance <= 0.005);
+        const displayStatus = isFulfilled ? (statusLower === 'processed' ? 'Processed' : 'Fulfilled') : (p.status || 'Outstanding');
+        const statusClass = isFulfilled ? 'fulfilled' : (statusLower === 'overdue' ? 'overdue' : 'outstanding');
 
         return `<tr>
             <td style="font-family:monospace; font-size:0.75rem; color:#777;">${escapeHtml(p.pledgeId || p.id || '—')}</td>
-            <td>${escapeHtml(p.date || '—')}</td>
-            <td><strong style="color:#ddd;">${escapeHtml(p.donor || p.firstName + ' ' + p.lastName || '—')}</strong></td>
+            <td>${escapeHtml(dateStr)}</td>
+            <td><strong style="color:#ddd;">${escapeHtml(p.donor || (p.firstName ? p.firstName + ' ' + (p.lastName || '') : '') || '—')}</strong></td>
             <td>${formatCurrency(amount)}</td>
             <td>${formatCurrency(paid)}</td>
             <td>${formatCurrency(balance)}</td>
-            <td><span class="status-badge ${statusClass}">${escapeHtml(p.status || 'Outstanding')}</span></td>
+            <td><span class="status-badge ${statusClass}">${escapeHtml(displayStatus)}</span></td>
             <td>${escapeHtml(p.method || '—')}</td>
             <td>
-                ${statusLower !== 'fulfilled' ? `<button class="tbl-action-btn" onclick="openRecordPaymentModal('${escapeHtml(p.pledgeId || p.id || '')}', ${balance})">Record Payment</button>` : ''}
+                ${!isFulfilled && balance > 0.005 ? `<button class="tbl-action-btn" onclick="openRecordPaymentModal('${escapeHtml(p.pledgeId || p.id || '')}', ${balance})">Record Payment</button>` : ''}
             </td>
         </tr>`;
     }).join('');
 }
 
 function updatePledgeSummary() {
+    const parseNum = (v) => {
+        if (typeof v === 'number') return isNaN(v) ? 0 : v;
+        if (v === undefined || v === null || String(v).trim() === '') return NaN;
+        return parseFloat(String(v).replace(/[\$,]/g, ''));
+    };
+
     let totalOutstanding = 0;
     let totalFulfilled = 0;
     let overdueCount = 0;
 
     pledgesData.forEach(p => {
-        const amount = Number(p.amount || 0);
-        const paid = Number(p.paid || 0);
-        const balance = amount - paid;
+        const amount = parseNum(p.amount) || 0;
+        const paidRaw = parseNum(p.paid !== undefined ? p.paid : p.amountPaid);
+        const paid = isNaN(paidRaw) ? 0 : paidRaw;
+        const balRaw = parseNum(p.balance);
+        const balance = !isNaN(balRaw) ? balRaw : Math.max(0, amount - paid);
         const statusLower = (p.status || '').toLowerCase();
+        const isFulfilled = statusLower === 'fulfilled' || statusLower === 'processed' || (amount > 0 && balance <= 0.005);
 
-        if (statusLower === 'fulfilled') {
-            totalFulfilled += amount;
+        if (isFulfilled) {
+            totalFulfilled += (paid > 0 ? paid : amount);
         } else {
             totalOutstanding += balance;
+            if (paid > 0) totalFulfilled += paid;
         }
 
-        if (statusLower === 'overdue') {
+        if (statusLower === 'overdue' && !isFulfilled) {
             overdueCount++;
         }
     });
@@ -3615,8 +4308,15 @@ function downloadReportCsv() {
 }
 
 /* ─── Utility Functions ───────────────────────────────── */
+const parseNum = (v) => {
+    if (typeof v === 'number') return isNaN(v) ? 0 : v;
+    if (v === undefined || v === null || String(v).trim() === '') return NaN;
+    return parseFloat(String(v).replace(/[\$,]/g, ''));
+};
+
 function formatCurrency(amount) {
-    return Number(amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    const n = parseNum(amount);
+    return (isNaN(n) ? 0 : n).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 }
 
 function escapeHtml(str) {

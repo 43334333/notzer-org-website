@@ -1895,8 +1895,15 @@ const APP = {
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
+const parseNum = (v) => {
+    if (typeof v === 'number') return isNaN(v) ? 0 : v;
+    if (v === undefined || v === null || String(v).trim() === '') return NaN;
+    return parseFloat(String(v).replace(/[\$,]/g, ''));
+};
+
 function formatCurrency(n) {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
+    const num = parseNum(n);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(isNaN(num) ? 0 : num);
 }
 
 function formatDate(d) {
@@ -4088,23 +4095,35 @@ function renderPledgeTable() {
         updatePledgePagination();
         return;
     }
-    tbody.innerHTML = pledges.map(p => `<tr>
+    tbody.innerHTML = pledges.map(p => {
+        const amount = parseNum(p.amount) || 0;
+        const paidRaw = parseNum(p.paid !== undefined ? p.paid : p.amountPaid);
+        const paid = isNaN(paidRaw) ? 0 : paidRaw;
+        const balRaw = parseNum(p.balance);
+        const balance = !isNaN(balRaw) ? balRaw : Math.max(0, amount - paid);
+        const dateStr = p.date || p.createdDate || '—';
+        const statusLower = (p.status || '').toLowerCase();
+        const isFulfilled = statusLower === 'fulfilled' || statusLower === 'processed' || (amount > 0 && balance <= 0.005);
+        const displayStatus = isFulfilled ? (statusLower === 'processed' ? 'processed' : 'fulfilled') : (p.status || 'outstanding');
+
+        return `<tr>
         <td style="font-weight:500;color:var(--accent-light);font-size:0.78rem;">${p.pledgeId || '—'}</td>
-        <td>${formatDate(p.date)}</td>
+        <td>${formatDate(dateStr)}</td>
         <td style="font-weight:500;color:var(--text-primary);">${p.donor || '—'}</td>
         <td>${getStatusBadge(p.campaign || 'general')}</td>
-        <td>${formatCurrency(p.amount)}</td>
-        <td>${formatCurrency(p.paid)}</td>
-        <td style="font-weight:600;color:${(p.balance || 0) > 0 ? 'var(--warning)' : 'var(--success)'};">${formatCurrency(p.balance)}</td>
-        <td>${getStatusBadge(p.status)}</td>
+        <td>${formatCurrency(amount)}</td>
+        <td>${formatCurrency(paid)}</td>
+        <td style="font-weight:600;color:${balance > 0.005 ? 'var(--warning)' : 'var(--success)'};">${formatCurrency(balance)}</td>
+        <td>${getStatusBadge(displayStatus)}</td>
         <td>${p.method || '—'}</td>
         <td>
             <div style="display:flex;gap:4px;">
-                ${(p.balance || 0) > 0 ? `<button class="btn btn-success btn-sm" onclick="openRecordPayment('${p.pledgeId}','${p.campaign}',${p.balance || 0})">Pay</button>` : ''}
+                ${balance > 0.005 ? `<button class="btn btn-success btn-sm" onclick="openRecordPayment('${p.pledgeId}','${p.campaign}',${balance})">Pay</button>` : ''}
                 ${p.email ? `<button class="btn btn-secondary btn-sm" onclick="sendPledgeReminder('${p.pledgeId}','${p.campaign}')">📧</button>` : ''}
             </div>
         </td>
-    </tr>`).join('');
+    </tr>`;
+    }).join('');
     updatePledgePagination();
 }
 
